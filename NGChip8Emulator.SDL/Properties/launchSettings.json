@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "NGChip8Emulator": {
+      "commandName": "Project",
+      "commandLineArgs": "-r tetris"
+    }
+  }
+}

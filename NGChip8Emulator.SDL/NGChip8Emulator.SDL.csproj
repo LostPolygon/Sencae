@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <RootNamespace>NGChip8Emulator</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <OutputType>Exe</OutputType>
+        <LangVersion>default</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DefineConstants>TRACE;NETSTANDARD2_0</DefineConstants>
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DefineConstants>TRACE;NETSTANDARD2_0</DefineConstants>
+      <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\NGChip8Emulator.Core\NGChip8Emulator.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CommandLineParser" Version="2.9.1" />
+      <PackageReference Include="Cyotek.CircularBuffer" Version="1.2.1" />
+      <PackageReference Include="ppy.SDL2-CS" Version="1.0.630-alpha" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <NativeLibFiles Include="nativelibs/*.*" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="C:\Users\ZimM\.nuget\packages\ppy.sdl2-cs\1.0.630-alpha\contentFiles\any\netstandard2.0\app.config" />
+    </ItemGroup>
+
+    <Target Name="CopyNativeLibs" AfterTargets="AfterBuild">
+        <Copy SourceFiles="@(NativeLibFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    </Target>
+
+</Project>
