@@ -1,6 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Cyotek.Collections.Generic;
 using SDL2;
 using static NGChip8Emulator.SdlAssertions;
@@ -9,13 +7,7 @@ namespace NGChip8Emulator {
     public unsafe class SdlEmulator : Emulator {
         private const int BeepFrequency = 300;
         private const int BeepAmplitude = 20000;
-
-        /*
-         123C      1234
-         456D  ->  QWER
-         789E      ASDF
-         A0BF      ZXCV
-         */
+        
         private static SDL.SDL_Keycode[] KeyMapping = {
             SDL.SDL_Keycode.SDLK_x, // 0
             SDL.SDL_Keycode.SDLK_1, // 1
@@ -38,7 +30,7 @@ namespace NGChip8Emulator {
             SDL.SDL_Keycode.SDLK_v, // F
         };
 
-        private readonly SDL.SDL_Surface* _surface;
+        /*private readonly SDL.SDL_Surface* _surface;
         private readonly CircularBuffer<short> _soundCircularBuffer;
         private ulong _totalSoundSamples;
 
@@ -71,7 +63,7 @@ namespace NGChip8Emulator {
         public override void UpdateTimers(ref MachineState machineState) {
             base.UpdateTimers(ref machineState);
 
-            if (SDL.SDL_MUSTLOCK((IntPtr) _surface)) {
+            if (SdlUtility.SDL_MUSTLOCK((IntPtr) _surface)) {
                 AssertSdlSuccess(SDL.SDL_LockSurface((IntPtr) _surface));
             }
 
@@ -94,13 +86,13 @@ namespace NGChip8Emulator {
                 pixels[i] = (byte) newPixel;
             }
 
-            if (SDL.SDL_MUSTLOCK((IntPtr) _surface)) {
+            if (SdlUtility.SDL_MUSTLOCK((IntPtr) _surface)) {
                 SDL.SDL_UnlockSurface((IntPtr) _surface);
             }
         }
 
         protected override void Render(ref MachineState machineState) {
-            if (SDL.SDL_MUSTLOCK((IntPtr) _surface)) {
+            if (SdlUtility.SDL_MUSTLOCK((IntPtr) _surface)) {
                 AssertSdlSuccess(SDL.SDL_LockSurface((IntPtr) _surface));
             }
 
@@ -114,23 +106,7 @@ namespace NGChip8Emulator {
                 }
             }
 
-            /*for (int i = 0; i < screenLength; i++) {
-                int newPixel;
-                if (emulatorScreenMemory[i] == 1) {
-                    newPixel = 255;
-                }
-                else {
-                    newPixel = pixels[i];
-                    newPixel -= 32;
-                    if (newPixel < 0) {
-                        newPixel = 0;
-                    }
-                }
-
-                pixels[i] = (byte) newPixel;
-            }*/
-
-            if (SDL.SDL_MUSTLOCK((IntPtr) _surface)) {
+            if (SdlUtility.SDL_MUSTLOCK((IntPtr) _surface)) {
                 SDL.SDL_UnlockSurface((IntPtr) _surface);
             }
         }
@@ -162,6 +138,8 @@ namespace NGChip8Emulator {
                 1.27323954f * x - 0.405284735f * x * x;
 
             return x;
+        }*/
+        public SdlEmulator(Machine machine) : base(machine) {
         }
     }
 }

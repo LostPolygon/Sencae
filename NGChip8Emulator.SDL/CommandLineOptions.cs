@@ -2,25 +2,30 @@ using System.Collections.Generic;
 using CommandLine;
 using CommandLine.Text;
 
-namespace NGChip8Emulator.nativelibs {
+namespace NGChip8Emulator {
     public class CommandLineOptions {
         [Option(
             'r',
             "rom",
-            HelpText = "Path to CHIP8 ROM file",
+            HelpText = "Path to NES ROM file",
             //Default = "",
             SetName = "Source",
             Required = true
         )]
-        public string RomFilePath { get; private set; }
+        public string RomFilePath { get; set; }
 
-        [Usage(ApplicationAlias = "LostPolygon.MethodInlineInjector.Console")]
+        [Usage(ApplicationAlias = "NesCore")]
         public static IEnumerable<Example> Examples {
             get {
                 yield return new Example(
                     "Open ROM from file",
-                    new CommandLineOptions { RomFilePath = "game.ch8" });
+                    new CommandLineOptions { RomFilePath = "game.nes" });
             }
+        }
+
+        public CommandLineOptions()
+        {
+
         }
     }
 }

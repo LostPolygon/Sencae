@@ -1,12 +1,38 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <RootNamespace>NGChip8Emulator</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <OutputType>Exe</OutputType>
         <LangVersion>default</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
+
+	<PropertyGroup>
+		<PublishAot>true</PublishAot>
+		<TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+		<EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+		<DebuggerSupport>false</DebuggerSupport>
+		<EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+		<EventSourceSupport>false</EventSourceSupport>
+		<HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+		<UseNativeHttpHandler>true</UseNativeHttpHandler>
+		<UseSystemResourceKeys>true</UseSystemResourceKeys>
+		<SelfContained>true</SelfContained>
+		<PublishAot>true</PublishAot>
+		<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+		<StripSymbols>true</StripSymbols>
+		<PublishReadyToRun>false</PublishReadyToRun>
+		<IlcScanReflection>false</IlcScanReflection>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <IlcTrimMetadata>true</IlcTrimMetadata>
+    <IlcInvariantGlobalization>false</IlcInvariantGlobalization>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+    <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
+	</PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
       <DefineConstants>TRACE;NETSTANDARD2_0</DefineConstants>
@@ -27,11 +53,7 @@
       <PackageReference Include="Cyotek.CircularBuffer" Version="1.2.1" />
       <PackageReference Include="ppy.SDL2-CS" Version="1.0.630-alpha" />
     </ItemGroup>
-
-    <ItemGroup>
-        <NativeLibFiles Include="nativelibs/*.*" />
-    </ItemGroup>
-
+    
     <ItemGroup>
       <Content Remove="C:\Users\ZimM\.nuget\packages\ppy.sdl2-cs\1.0.630-alpha\contentFiles\any\netstandard2.0\app.config" />
     </ItemGroup>
@@ -39,5 +61,9 @@
     <Target Name="CopyNativeLibs" AfterTargets="AfterBuild">
         <Copy SourceFiles="@(NativeLibFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
     </Target>
+
+	<ItemGroup>
+
+	</ItemGroup>
 
 </Project>

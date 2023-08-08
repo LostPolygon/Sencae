@@ -6,18 +6,14 @@ namespace NGChip8Emulator {
     //[DebuggerTypeProxy(typeof(MachineStateDebugProxy))]
     public unsafe struct MachineState {
         // Machine RAM
-        public fixed byte Memory[4096];
+        //public fixed byte Memory[4096];
 
         // Machine RAM
-        public fixed byte Screen[Chip8Data.ScreenWidth * Chip8Data.ScreenHeight];
-
-        // Input
-        public fixed bool Keys[16];
-
+        //public fixed byte Screen[Chip8Data.ScreenWidth * Chip8Data.ScreenHeight];
+        
         public CpuState Cpu;
 
         public ulong ExecutedInstructionCount;
-
-        public bool WaitingForAnyKey;
+        public ulong Cycle;
     }
 }

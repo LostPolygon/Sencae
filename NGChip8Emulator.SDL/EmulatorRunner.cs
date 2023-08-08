@@ -2,9 +2,7 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using Cyotek.Collections.Generic;
-using NGChip8Emulator.nativelibs;
 using SDL2;
 using static NGChip8Emulator.SdlAssertions;
 
@@ -22,6 +20,9 @@ namespace NGChip8Emulator {
         }
 
         public void Run() {
+        }
+
+        /*public void Run() {
             // Create window
             AssertSdlSuccess(SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_AUDIO));
             IntPtr window = AssertSdlSuccess(SDL.SDL_CreateWindow(
@@ -170,6 +171,6 @@ namespace NGChip8Emulator {
 
             // Present the "Painting" (backbuffer) to the screen. Call this once per frame.
             SDL.SDL_RenderPresent(renderer);
-        }
+        }*/
     }
 }

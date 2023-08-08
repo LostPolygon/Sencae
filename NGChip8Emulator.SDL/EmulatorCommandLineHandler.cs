@@ -2,7 +2,6 @@ using System;
 using System.Reflection;
 using CommandLine;
 using CommandLine.Text;
-using NGChip8Emulator.nativelibs;
 
 namespace NGChip8Emulator {
     public class EmulatorCommandLineHandler {
@@ -20,6 +19,11 @@ namespace NGChip8Emulator {
         }
 
         private void Run() {
+            new EmulatorRunner(new CommandLineOptions
+            {
+                RomFilePath = _args[0]
+            }).Run();
+            return;
             Parser commandLineParser =
                 new Parser(settings => {
                     settings.IgnoreUnknownArguments = false;
@@ -68,7 +72,7 @@ namespace NGChip8Emulator {
                     HelpText.AutoBuild(_commandLineParserResult, text => text, example => example);
             helpText.AddEnumValuesToHelpText = true;
             helpText.AddDashesToOption = true;
-            helpText.Heading = $"MethodInlineInjector v{assemblyVersion} ({assemblyConfiguration}";
+            helpText.Heading = $"NesCore v{assemblyVersion} ({assemblyConfiguration}";
             helpText.Copyright = "© Lost Polygon";
             return helpText;
         }
