@@ -26,6 +26,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\NGChip8Emulator.Core\NGChip8Emulator.Core.csproj" />
+      <ProjectReference Include="..\Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj" />
     </ItemGroup>
 
 </Project>

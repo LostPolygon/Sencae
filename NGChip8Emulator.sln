@@ -11,6 +11,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NGChip8Emulator.Benchmark",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Senge.Tests", "Senge.Tests\Senge.Tests.csproj", "{E4E7E71F-3E38-4D8E-9804-7275E8C00570}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{2AC75054-9520-4BCA-A585-BD9DA167F6BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixty502DotNet.Shared", "Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj", "{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,11 +37,18 @@ Global
 		{E4E7E71F-3E38-4D8E-9804-7275E8C00570}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4E7E71F-3E38-4D8E-9804-7275E8C00570}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4E7E71F-3E38-4D8E-9804-7275E8C00570}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0BC84917-F035-415E-B2FF-AAFD6AE3C1EC}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206} = {2AC75054-9520-4BCA-A585-BD9DA167F6BA}
 	EndGlobalSection
 EndGlobal

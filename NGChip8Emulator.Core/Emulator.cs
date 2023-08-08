@@ -52,9 +52,7 @@ namespace NGChip8Emulator {
                 //cpu.Internal.Read = true;
                 //}
             } else {
-                cpu.Internal.DataLatch = cpu.Internal.DataBus;
                 cpu.Internal.DataBus = _machine.CpuBus.GetU8(cpu.Internal.AddressBus.Value);
-
             }
 
             /*if (cpu.Internal.State == CpuInternalState.ExecutionState.FinishingOldInstruction) {
@@ -69,79 +67,63 @@ namespace NGChip8Emulator {
         }
 
         private void ExecuteState() {
-            ref CpuState cpu = ref _machine.State.Cpu;
+            while (true) {
+                ref CpuState cpu = ref _machine.State.Cpu;
 
-            switch (cpu.Internal.State) {
-                case CpuInternalState.ExecutionState.FetchNextInstructionOpcode: {
-                    InstructionDefinition instructionDefinition = InstructionDefinitions.Data[cpu.Internal.IR];
-                    bool completed = InstructionCycle(instructionDefinition, true);
-                    
-                    cpu.Internal.Read = true;
-                    //cpu.Internal.OldIR = cpu.Internal.IR;
-                    //cpu.Internal.IR = cpu.Internal.DataBus;
-                    cpu.PC.Value++;
-                    cpu.Internal.AddressBus = cpu.PC;
-                    
-                    cpu.Internal.State = CpuInternalState.ExecutionState.InterpretOpcode;
+                switch (cpu.Internal.State) {
+                    case CpuInternalState.ExecutionState.FetchNextInstructionOpcode: {
+                        InstructionDefinition instructionDefinition = InstructionDefinitions.Data[cpu.Internal.InstructionOpcode];
+                        bool completed = InstructionCycle(instructionDefinition, true);
 
-                    break;
-                }
-                case CpuInternalState.ExecutionState.InterpretOpcode: {
-                    cpu.Internal.OldIR = cpu.Internal.IR;
-                    cpu.Internal.IR = cpu.Internal.DataBus;
-                    //cpu.PC.Value++;
-                    //cpu.Internal.AddressBus = cpu.PC;
-                    
-                    cpu.Internal.State = CpuInternalState.ExecutionState.ExecutingAddressing;
-                    cpu.Internal.OperationCycle = 0;
-                    ExecuteState();
-                    break;
-                } 
-                case CpuInternalState.ExecutionState.ExecutingAddressing: {
-                    InstructionDefinition instructionDefinition = InstructionDefinitions.Data[cpu.Internal.IR];
-                    bool completed =
-                        (instructionDefinition.Flags & InstructionFlags.CustomAddressing) != 0 ||
-                        LoadEffectiveAddress(instructionDefinition.Type, instructionDefinition.AddressMode);
-                    if (completed) {
-                        cpu.Internal.OperationCycle = -1;
-                        cpu.Internal.State = CpuInternalState.ExecutionState.ExecutingInstruction;
+                        cpu.Internal.Read = true;
 
-                        ExecuteState();
+                        //cpu.Internal.OldIR = cpu.Internal.IR;
+                        //cpu.Internal.IR = cpu.Internal.DataBus;
+                        cpu.PC.Value++;
+                        cpu.Internal.AddressBus = cpu.PC;
+
+                        cpu.Internal.State = CpuInternalState.ExecutionState.InterpretOpcode;
+
+                        break;
                     }
+                    case CpuInternalState.ExecutionState.InterpretOpcode: {
+                        cpu.Internal.InstructionOpcode = cpu.Internal.DataBus;
 
-                    break;
-                }
-                case CpuInternalState.ExecutionState.ExecutingInstruction: {
-                    InstructionDefinition instructionDefinition = InstructionDefinitions.Data[cpu.Internal.IR];
-                    bool completed = InstructionCycle(instructionDefinition, false);
-                    if (completed) {
-                        cpu.Internal.State = CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
-                        cpu.Internal.OperationCycle = 0;
-
-                        //cpu.Internal.AddressBus = cpu.PC;
-                        //  ExecuteState();
-                    }
-
-                    break;
-                }
-                /*case CpuInternalState.ExecutionState.FinishingOldInstruction: {
-                    InstructionDefinition instructionDefinition = InstructionDefinitions.Data[cpu.Internal.OldIR];
-                    InstructionCycle(instructionDefinition, true);
-                    //cpu.Internal.OldIR = cpu.Internal.IR;
-                    //cpu.Internal.IR = cpu.Internal.DataBus;
-                    cpu.Internal.State = CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
-                    cpu.Internal.OperationCycle = 0;
-                    //cpu.Internal.AddressBus = cpu.PC;
-
-                    if (_machine.State.Cycle != 0) {
                         //cpu.PC.Value++;
                         //cpu.Internal.AddressBus = cpu.PC;
+
+                        cpu.Internal.State = CpuInternalState.ExecutionState.ExecutingAddressing;
+                        cpu.Internal.OperationCycle = 0;
+                        continue;
                     }
+                    case CpuInternalState.ExecutionState.ExecutingAddressing: {
+                        InstructionDefinition instructionDefinition = InstructionDefinitions.Data[cpu.Internal.InstructionOpcode];
+                        bool completed = (instructionDefinition.Flags & InstructionFlags.CustomAddressing) != 0 || LoadEffectiveAddress(instructionDefinition.Type, instructionDefinition.AddressMode);
+                        if (completed) {
+                            cpu.Internal.OperationCycle = -1;
+                            cpu.Internal.State = CpuInternalState.ExecutionState.ExecutingInstruction;
 
-                    //ExecuteState();
+                            continue;
+                        }
 
-                    break;
-                }*/
+                        break;
+                    }
+                    case CpuInternalState.ExecutionState.ExecutingInstruction: {
+                        InstructionDefinition instructionDefinition = InstructionDefinitions.Data[cpu.Internal.InstructionOpcode];
+                        bool completed = InstructionCycle(instructionDefinition, false);
+                        if (completed) {
+                            cpu.Internal.State = CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
+                            cpu.Internal.OperationCycle = 0;
+
+                            //cpu.Internal.AddressBus = cpu.PC;
+                            //  ExecuteState();
+                        }
+
+                        break;
+                    }
+                }
+
+                break;
             }
         }
 
@@ -149,6 +131,8 @@ namespace NGChip8Emulator {
             in InstructionDefinition instructionDefinition,
             bool finishing
         ) {
+            const int AfterAddressingFinished = -1;
+            const int AfterNextOpcodeFetched = 100;
             ref CpuState cpu = ref _machine.State.Cpu;
             int operationCycle = finishing ? 100 : cpu.Internal.OperationCycle;
 
@@ -163,33 +147,24 @@ namespace NGChip8Emulator {
                     break;
                 case InstructionType.STA:
                     switch (operationCycle) {
-                        case -1:
+                        case AfterAddressingFinished:
                             cpu.Internal.Read = false;
                             cpu.Internal.DataBus = cpu.A;
-                            //cpu.Internal.AddressBus = cpu.PC;
-
-                            //cpu.PC.Value++;
                             completed = true;
                             break;
-                        case 100:
-                            cpu.Internal.Read = true;
-                            cpu.Internal.AddressBus = cpu.PC;
+                        case AfterNextOpcodeFetched:
                             break;
                     }
 
                     break;
                 case InstructionType.LDA:
                     switch (operationCycle) {
-                        case -1:
+                        case AfterAddressingFinished:
                             cpu.Internal.Read = true;
-                            //cpu.PC.Value++;
-                            //cpu.Internal.AddressBus = cpu.PC;
-                            //cpu.A = cpu.Internal.DataBus;
                             completed = true;
                             break;
-                        case 100:
+                        case AfterNextOpcodeFetched:
                             cpu.A = cpu.Internal.DataBus;
-                            //completed = true;
                             break;
                     }
 
@@ -199,7 +174,7 @@ namespace NGChip8Emulator {
                     switch (operationCycle) {
                         case 0:
                             cpu.Internal.Read = true;
-                            cpu.Internal.T = cpu.Internal.DataBus;
+                            cpu.Internal.Temporary = cpu.Internal.DataBus;
                             cpu.Internal.AddressBus.Value = stackAddress;
                             cpu.PC.Value++;
                             break;
@@ -226,7 +201,7 @@ namespace NGChip8Emulator {
 
                             UInt16Bytes u = new() {
                                 High = cpu.Internal.DataBus,
-                                Low = (byte) cpu.Internal.T
+                                Low = (byte) cpu.Internal.Temporary
                             };
                             cpu.PC = u;
                             cpu.Internal.AddressBus = cpu.PC;
@@ -271,20 +246,16 @@ namespace NGChip8Emulator {
                             cpu.Internal.AddressBus = cpu.PC;
                             break;
                         case 1:
-                            cpu.Internal.T = cpu.Internal.DataBus;
+                            cpu.Internal.Temporary = cpu.Internal.DataBus;
                             cpu.PC.Value++;
                             cpu.Internal.AddressBus = cpu.PC;
                             break;
                         case 2:
-                            cpu.Internal.AddressBus.Low = (byte) cpu.Internal.T;
+                            cpu.Internal.AddressBus.Low = (byte) cpu.Internal.Temporary;
                             cpu.Internal.AddressBus.High = cpu.Internal.DataBus;
                             //cpu.PC.Value++;
                             completed = true;
                             break;
-                    }
-
-                    if (instructionDefinitionType == InstructionType.JSR) {
-                    } else {
                     }
 
                     break;
