@@ -11,13 +11,13 @@ public struct Cpu {
         State.A = State.X = State.Y = 0;
         State.SP = 0xFD;
 
-        Memory.WriteU8(0x4017, 0x00); // frame irq enabled
-        Memory.WriteU8(0x4015, 0x00); // all APU channels disabled
+        Memory.GetU8(0x4017) = 0; // frame irq enabled
+        Memory.GetU8(0x4015) = 0; // all APU channels disabled
 
-        Memory.WriteU8(0x4010, 0x00);
-        Memory.WriteU8(0x4011, 0x00);
-        Memory.WriteU8(0x4012, 0x00);
-        Memory.WriteU8(0x4013, 0x00);
+        Memory.GetU8(0x4010) = 0;
+        Memory.GetU8(0x4011) = 0;
+        Memory.GetU8(0x4012) = 0;
+        Memory.GetU8(0x4013) = 0;
 
         /*
     P = $34[1] (IRQ disabled)[2]
@@ -42,6 +42,6 @@ public struct Cpu {
     public void Reset() {
         State.SP -= 3;
         State.P |= CpuState.StatusRegisterFlags.IrqDisable;
-        Memory.WriteU8(0x4015, 0x00); // all APU channels disabled
+        Memory.GetU8(0x4015); // all APU channels disabled
     }
 }

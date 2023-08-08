@@ -11,7 +11,7 @@ public class Cartridge {
         PrgRom = prgRom;
         ChrRom = chrRom;
 
-        PrgRomMemory = new ArrayMemory(PrgRom, PrgRom.Length);
+        PrgRomMemory = new ArrayMemory(PrgRom, PrgRom.Length - 0xFFFF);
         ChrRomMemory = new ArrayMemory(ChrRom, ChrRom.Length);
     }
 }

@@ -1,0 +1,2 @@
+set DOTNET_JitDisasm=1
+set DOTNET_JitDisasmSummary=1

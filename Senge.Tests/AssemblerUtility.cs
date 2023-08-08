@@ -44,6 +44,9 @@ public static class AssemblerUtility {
         assemblyState.StatementListings
             .Select(s => {
                 Match match = Regex.Match(s, "(?<!^)([A-Z]){3}", RegexOptions.Singleline);
+                if (!match.Success) {
+                    match = Regex.Match(s, "(?<!^)([A-Za-z]){3,}", RegexOptions.Singleline);
+                }
                 return s[..(match.Index - 34)] + s[match.Index..];
             })
             .ToList()

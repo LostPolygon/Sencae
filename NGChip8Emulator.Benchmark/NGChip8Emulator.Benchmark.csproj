@@ -4,11 +4,12 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net7.0</TargetFramework>
         <LangVersion>default</LangVersion>
+		<TieredPGO>true</TieredPGO>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <PlatformTarget>AnyCPU</PlatformTarget>
-      <Prefer32bit>true</Prefer32bit>
+      <Prefer32bit>false</Prefer32bit>
     </PropertyGroup>
 
     <ItemGroup>

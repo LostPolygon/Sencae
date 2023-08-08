@@ -6,8 +6,24 @@ using static AddressMode;
 using static InstructionType;
 using static InstructionFlags;
 
-public static class InstructionDefinitions {
-    public static IReadOnlyDictionary<byte, InstructionDefinition> Data = new Dictionary<byte, InstructionDefinition> {
+public static class Instructions {
+    public static readonly InstructionDescriptor[] DescriptorByOpcode;
+    public static readonly AddressMode[] AddressModeByOpcode;
+    public static readonly InstructionType[] InstructionTypeByOpcode;
+    
+    static Instructions() {
+        DescriptorByOpcode = new InstructionDescriptor[Map.Count];
+        AddressModeByOpcode = new AddressMode[Map.Count];
+        InstructionTypeByOpcode = new InstructionType[Map.Count];
+        
+        foreach ((byte opcode, InstructionDescriptor descriptor) in Map) {
+            DescriptorByOpcode[opcode] = descriptor;
+            AddressModeByOpcode[opcode] = descriptor.AddressMode;
+            InstructionTypeByOpcode[opcode] = descriptor.Type;
+        }
+    }
+    
+    private static IReadOnlyDictionary<byte, InstructionDescriptor> Map = new Dictionary<byte, InstructionDescriptor> {
         [0b_000_000_00 & 0x00 & 0] = new("BRK", BRK, Implied, None, 0x00),
         [0b_000_001_00 & 0x04 & 4] = new("NOP d", NOP, ZeroPage, Unofficial, 0x04),
         [0b_000_010_00 & 0x08 & 8] = new("PHP", PHP, Implied, None, 0x08),

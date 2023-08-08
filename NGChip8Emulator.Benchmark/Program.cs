@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -16,12 +17,22 @@ namespace NGChip8Emulator.Benchmark {
         static void Main(string[] args) {
             //TestRom = File.ReadAllBytes("Resources/BRIX_test");
 
-            /*Benchmarks benchmarks = new Benchmarks();
-            benchmarks.Test1();
-            benchmarks.Test1();*/
+            Benchmarks benchmarks = new Benchmarks();
+            benchmarks.Setup();
 
-            Summary summary = BenchmarkRunner.Run<Benchmarks>();
-            Console.WriteLine(summary);
+            const int iterations = 1000000;
+            Stopwatch sw = Stopwatch.StartNew();
+            for (int i = 0; i < iterations; i++)
+            {
+                benchmarks.Test1();
+            }
+            sw.Stop();
+
+            Console.WriteLine($"{iterations} tooks {sw.Elapsed}");
+            
+
+            //Summary summary = BenchmarkRunner.Run<Benchmarks>();
+            //Console.WriteLine(summary);
 
             //Test1();
             //Console.Read();
@@ -31,6 +42,7 @@ namespace NGChip8Emulator.Benchmark {
     [DisassemblyDiagnoser(
         printSource: true,
         exportHtml: true, 
+        printInstructionAddresses: true,
         maxDepth: 100
         )
     ]
@@ -39,7 +51,7 @@ namespace NGChip8Emulator.Benchmark {
     [InliningDiagnoser(allowedNamespaces: new []{ "NGChip8Emulator" })]
     public class Benchmarks {
         private Cartridge _cartridge;
-        private Emulator _emulator;
+        private Machine _machine;
 
         /*public void Interpreter() {
             BenchmarkEmulator emulator = new BenchmarkEmulator();
@@ -55,17 +67,16 @@ namespace NGChip8Emulator.Benchmark {
             //Console.WriteLine($"---- Executed instructions: {machineState.ExecutedInstructionCount}");
         }*/
 
-        private Machine Emulate(int cycles = 10000) {
-            Emulator emulator = _emulator;
-            Machine machine = emulator.Machine;
+        private Machine Emulate(int maxCycles = 10000) {
+            Machine machine = _machine;
             
-            emulator.Reset();
+            machine.Reset();
 
             //Console.WriteLine(FormatCpuState(state));
-            for (int i = 0; i < cycles; i++) {
-                emulator.Clock();
+            for (int i = 0; i < maxCycles; i++) {
+                machine.Clock();
 
-                //Console.WriteLine(FormatCpuState(state));
+                //Console.WriteLine(FormatCpuState(machine.State));
                 //Console.ReadLine();
                 if (machine.State.Cpu.Halted)
                     break;
@@ -103,7 +114,7 @@ namespace NGChip8Emulator.Benchmark {
 
                 """
             );
-            _emulator = new(new Machine(_cartridge));
+            _machine = new Machine(_cartridge);
         }
 
         [Benchmark(Baseline = true)]
@@ -120,7 +131,7 @@ namespace NGChip8Emulator.Benchmark {
                 $"DB: {cpu.Internal.DataBus:X2}, " +
                 $"PC: {cpu.PC.Value:X4}, " +
                 $"RW: {(cpu.Internal.Read ? 1 : 0)}, " +
-                $"OP: {cpu.Internal.InstructionOpcode:X2}, " +
+                $"OP: {cpu.Internal.Instruction.Opcode:X2}, " +
                 $"A: {cpu.A:X2}, " +
                 $"X: {cpu.X:X2}, " +
                 $"Y: {cpu.Y:X2}, " +

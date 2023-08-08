@@ -1,6 +1,6 @@
 namespace NGChip8Emulator;
 
-public readonly record struct InstructionDefinition(
+public readonly record struct InstructionDescriptor(
     string Mnemonic,
     InstructionType Type,
     AddressMode AddressMode,

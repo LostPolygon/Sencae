@@ -4,7 +4,7 @@ using SDL2;
 using static NGChip8Emulator.SdlAssertions;
 
 namespace NGChip8Emulator {
-    public unsafe class SdlEmulator : Emulator {
+    public unsafe class SdlEmulator  {
         private const int BeepFrequency = 300;
         private const int BeepAmplitude = 20000;
         
@@ -139,7 +139,6 @@ namespace NGChip8Emulator {
 
             return x;
         }*/
-        public SdlEmulator(Machine machine) : base(machine) {
-        }
+
     }
 }

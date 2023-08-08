@@ -8,7 +8,8 @@ public struct CpuInternalState {
     
     public int OperationCycle;
 
-    public byte InstructionOpcode;
+    //public byte InstructionOpcode;
+    public InstructionDescriptor Instruction;
 
     public ushort Temporary;
     
