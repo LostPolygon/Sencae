@@ -12,13 +12,13 @@ public readonly struct ArrayMemory : IMemory {
         Memory = memory;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodOptions.Options)]
     public ref byte GetU8(ushort address) {
         ref byte data = ref MemoryMarshal.GetArrayDataReference(Memory);
         int index = CalculateAddress(address);
         return ref Unsafe.Add(ref data, index);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodOptions.Options)]
     private int CalculateAddress(ushort address) => address + AddressOffset;
 }

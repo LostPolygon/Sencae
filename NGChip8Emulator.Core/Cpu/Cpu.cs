@@ -5,19 +5,7 @@ public struct Cpu {
     public required CpuState State;
 
     public void PowerUp() {
-        State.P = default;
-        State.P|= CpuState.StatusRegisterFlags.IrqDisable;
 
-        State.A = State.X = State.Y = 0;
-        State.SP = 0xFD;
-
-        Memory.GetU8(0x4017) = 0; // frame irq enabled
-        Memory.GetU8(0x4015) = 0; // all APU channels disabled
-
-        Memory.GetU8(0x4010) = 0;
-        Memory.GetU8(0x4011) = 0;
-        Memory.GetU8(0x4012) = 0;
-        Memory.GetU8(0x4013) = 0;
 
         /*
     P = $34[1] (IRQ disabled)[2]
@@ -41,7 +29,7 @@ public struct Cpu {
 
     public void Reset() {
         State.SP -= 3;
-        State.P |= CpuState.StatusRegisterFlags.IrqDisable;
+        State.P |= CpuStatusRegisterFlags.IrqDisable;
         Memory.GetU8(0x4015); // all APU channels disabled
     }
 }

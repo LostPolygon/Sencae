@@ -15,7 +15,7 @@ public unsafe class CpuMemoryBus : IMemory {
     
      
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodOptions.Options)]
     public ref byte GetU8(ushort address) {
         switch (address) {
             case >= 0x0000 and <= 0x1FFF: return ref Machine.State.Cpu.Memory[address % 0x800];
@@ -24,7 +24,7 @@ public unsafe class CpuMemoryBus : IMemory {
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodOptions.Options)]
     public ref ushort GetU16(ushort address) {
         return ref Unsafe.As<byte, ushort>(ref GetU8(address));
     }

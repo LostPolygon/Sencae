@@ -14,13 +14,15 @@ namespace NGChip8Emulator.Benchmark {
     class Program {
         public static byte[] TestRom;
 
+        public static ulong TotalCycles;
+
         static void Main(string[] args) {
             //TestRom = File.ReadAllBytes("Resources/BRIX_test");
 
             Benchmarks benchmarks = new Benchmarks();
             benchmarks.Setup();
 
-            const int iterations = 1000000;
+            const int iterations = 20000000;
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
             {
@@ -28,7 +30,7 @@ namespace NGChip8Emulator.Benchmark {
             }
             sw.Stop();
 
-            Console.WriteLine($"{iterations} tooks {sw.Elapsed}");
+            Console.WriteLine($"{iterations} tooks {sw.Elapsed}, cycles: {TotalCycles}, speed: {TotalCycles / sw.Elapsed.TotalSeconds / 1000} kilocycles/sec");
             
 
             //Summary summary = BenchmarkRunner.Run<Benchmarks>();
@@ -82,6 +84,7 @@ namespace NGChip8Emulator.Benchmark {
                     break;
             }
 
+            Program.TotalCycles += machine.State.Cycle; 
             return machine;
         }
 

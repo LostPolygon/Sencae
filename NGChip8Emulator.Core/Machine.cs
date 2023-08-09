@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace NGChip8Emulator;
 
@@ -7,26 +8,29 @@ public unsafe class Machine {
     public CpuMemoryBus CpuBus;
     public Cartridge Cartridge;
 
-    private CpuState* _cpu;
-    private CpuInternalState* _cpuInternal;
-
     public Machine(Cartridge cartridge) {
         Cartridge = cartridge;
         CpuBus = new CpuMemoryBus(this);
-
-        _cpu = &State.Cpu;
     }
 
     public void Reset() {
         State = default;
 
         ref CpuState cpu = ref State.Cpu;
+        
+        cpu.P = CpuStatusRegisterFlags.IrqDisable | CpuStatusRegisterFlags.BreakFlag | CpuStatusRegisterFlags.Unused;
 
-        cpu.A = 0xAA;
-        cpu.X = 0xC0;
-        cpu.Y = 0x0;
-        cpu.SP = 0xBD;
+        cpu.A = cpu.X = cpu.Y = 0x00;
+        cpu.SP = 0xFD;
 
+        CpuBus.GetU8(0x4017) = 0; // frame irq enabled
+        CpuBus.GetU8(0x4015) = 0; // all APU channels disabled
+        
+        CpuBus.GetU8(0x4010) = 0;
+        CpuBus.GetU8(0x4011) = 0;
+        CpuBus.GetU8(0x4012) = 0;
+        CpuBus.GetU8(0x4013) = 0;
+        
         ushort resetVector = CpuBus.GetU16(0xFFFC);
         cpu.Internal.State = CpuInternalState.ExecutionState.InterpretOpcode;
         cpu.Internal.DataBus = CpuBus.GetU8(resetVector);
@@ -40,7 +44,7 @@ public unsafe class Machine {
         return ref State;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodOptions.Options)]
     public void Clock() {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
@@ -57,7 +61,7 @@ public unsafe class Machine {
         State.Cycle++;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodOptions.Options)]
     private void ExecuteState() {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
@@ -65,15 +69,14 @@ public unsafe class Machine {
         while (true) {
             switch (cpuInternal.State) {
                 case CpuInternalState.ExecutionState.FetchNextInstructionOpcode: {
-                    bool completed = InstructionCycle(cpuInternal.Instruction.Type, true);
-
-                    cpuInternal.Read = true;
-
+                    cpuInternal.OperationCycle = 100;
+                    bool completed = InstructionCycle(cpuInternal.Instruction.Type);
+                    
                     cpu.PC.Value++;
                     cpuInternal.AddressBus = cpu.PC;
+                    cpuInternal.Read = true;
 
                     cpuInternal.State = CpuInternalState.ExecutionState.InterpretOpcode;
-
                     break;
                 }
                 case CpuInternalState.ExecutionState.InterpretOpcode: {
@@ -98,7 +101,7 @@ public unsafe class Machine {
                     break;
                 }
                 case CpuInternalState.ExecutionState.ExecutingInstruction: {
-                    bool completed = InstructionCycle(cpuInternal.Instruction.Type, false);
+                    bool completed = InstructionCycle(cpuInternal.Instruction.Type);
                     if (completed) {
                         cpuInternal.State = CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
                         cpuInternal.OperationCycle = 0;
@@ -112,85 +115,23 @@ public unsafe class Machine {
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private bool InstructionCycle(
-        InstructionType instructionType,
-        bool finishing
-    ) {
+    [MethodImpl(MethodOptions.Options)]
+    private bool InstructionCycle(InstructionType instructionType) {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
         
-        const int AfterAddressingFinished = -1;
-        const int AfterNextOpcodeFetched = 100;
-        int operationCycle = finishing ? 100 : cpuInternal.OperationCycle;
+        int operationCycle = cpuInternal.OperationCycle;
 
-        bool completed = false;
-        switch (instructionType) {
-            case InstructionType.BRK:
-                if (State.Cycle > 3) {
-                    cpu.Halted = true;
-                }
-
-                completed = true;
-                break;
-            case InstructionType.TAX:
-                switch (operationCycle) {
-                    case AfterAddressingFinished:
-                        completed = true;
-                        break;
-                    case AfterNextOpcodeFetched:
-                        cpu.X = cpu.A;
-                        break;
-                }
-
-                break;
-            case InstructionType.INX:
-                switch (operationCycle) {
-                    case AfterAddressingFinished:
-                        completed = true;
-                        break;
-                    case AfterNextOpcodeFetched:
-                        cpu.X++;
-
-                        if ((cpu.X & 0b10000000) != 0) {
-                            cpu.P |= CpuState.StatusRegisterFlags.NegativeOrSign;
-                        } else {
-                            cpu.P &= ~CpuState.StatusRegisterFlags.NegativeOrSign;
-                        }
-                        
-                        if (cpu.X == 0) {
-                            cpu.P |= CpuState.StatusRegisterFlags.Zero;
-                        } else {
-                            cpu.P &= ~CpuState.StatusRegisterFlags.Zero;
-                        }
-                        break;
-                }
-
-                break;
-            case InstructionType.STA:
-                switch (operationCycle) {
-                    case AfterAddressingFinished:
-                        cpuInternal.Read = false;
-                        cpuInternal.DataBus = cpu.A;
-                        completed = true;
-                        break;
-                    case AfterNextOpcodeFetched:
-                        break;
-                }
-
-                break;
-            case InstructionType.LDA:
-                switch (operationCycle) {
-                    case AfterAddressingFinished:
-                        cpuInternal.Read = true;
-                        completed = true;
-                        break;
-                    case AfterNextOpcodeFetched:
-                        cpu.A = cpuInternal.DataBus;
-                        break;
-                }
-
-                break;
+        bool completed = instructionType switch {
+            InstructionType.STA => InstructionLogic.STA(operationCycle, ref cpu, ref cpuInternal),
+            InstructionType.LDA => InstructionLogic.LDA(operationCycle, ref cpu, ref cpuInternal),
+            InstructionType.TAX => InstructionLogic.TAX(operationCycle, ref cpu, ref cpuInternal),
+            InstructionType.INX => InstructionLogic.INX(operationCycle, ref cpu, ref cpuInternal),
+            InstructionType.ADC => InstructionLogic.ADC(operationCycle, ref cpu, ref cpuInternal),
+            InstructionType.BRK => InstructionLogic.BRK(operationCycle, ref State, ref cpu, ref cpuInternal),
+            _ => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
+        };
+        /*switch (instructionType) {
             case InstructionType.JSR:
                 ushort stackAddress = (ushort) (0x0100 + cpu.SP);
                 switch (operationCycle) {
@@ -232,17 +173,13 @@ public unsafe class Machine {
                 }
 
                 break;
-            default:
-                completed = true;
-                break;
-        }
+        }*/
 
         cpuInternal.OperationCycle++;
-
         return completed;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodOptions.Options)]
     private bool LoadEffectiveAddress(InstructionType instructionDefinitionType, AddressMode addressMode) {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;

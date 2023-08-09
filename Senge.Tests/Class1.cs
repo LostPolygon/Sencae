@@ -75,7 +75,7 @@ public class Class1 {
             """
         );
 
-        Machine machine = Emulate(cartridge);
+        Machine machine = EmulateUntilBreak(cartridge);
 
         Assert.AreEqual(1, machine.CpuBus.GetU8(0x200));
         Assert.AreEqual(5, machine.CpuBus.GetU8(0x201));
@@ -96,24 +96,27 @@ public class Class1 {
             """
         );
 
-        Machine machine = Emulate(cartridge);
+        Machine machine = EmulateUntilBreak(cartridge, formatState: FormatCpuStateNesTest);
 
-        Assert.AreEqual(1, machine.CpuBus.GetU8(0x200));
-        Assert.AreEqual(5, machine.CpuBus.GetU8(0x201));
-        Assert.AreEqual(8, machine.CpuBus.GetU8(0x202));
+        Assert.AreEqual(0xC1, machine.State.Cpu.X);
+        Assert.AreEqual(0x84, machine.State.Cpu.A);
+        Assert.AreEqual(false, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Overflow));
     }
 
-    private static Machine Emulate(Cartridge cartridge, int cycles = 10000) {
-        Machine machine = new Machine(cartridge);
+    private static Machine EmulateUntilBreak(Cartridge cartridge, int cycles = 10000, Func<MachineState, string>? formatState = null) {
+        formatState ??= FormatCpuState;
+
+        static void OutputState(string s) => Console.WriteLine(s);
+
+        Machine machine = new(cartridge);
 
         ref MachineState state = ref machine.GetState();
-
         machine.Reset();
 
-        Debug.WriteLine(FormatCpuState(state));
+        OutputState(formatState(state));
         for (int i = 0; i < cycles; i++) {
             machine.Clock();
-            Debug.WriteLine(FormatCpuState(state));
+            OutputState(formatState(state));
             if (machine.State.Cpu.Halted)
                 break;
         }
@@ -121,7 +124,20 @@ public class Class1 {
         return machine;
     }
 
-    private static string FormatCpuState(in MachineState machine) {
+    private static string FormatCpuStateNesTest(MachineState machine) {
+        CpuState cpu = machine.Cpu;
+        return
+            $"{cpu.PC.Value:X4} " +
+            $"A: {cpu.A:X2} " +
+            $"X: {cpu.X:X2} " +
+            $"Y: {cpu.Y:X2} " +
+            $"P: {(int) cpu.P:X2} " +
+            $"SP: {cpu.SP:X2}"
+            ;
+
+    }
+
+    private static string FormatCpuState(MachineState machine) {
         CpuState cpu = machine.Cpu;
         return
             $"==== Cycle: {machine.Cycle}, " +
