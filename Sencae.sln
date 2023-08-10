@@ -1,0 +1,60 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30105.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sencae.SDL", "Sencae.SDL\Sencae.SDL.csproj", "{74D9E585-D4D9-4264-B53F-F1506A52C320}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sencae.Core", "Sencae.Core\Sencae.Core.csproj", "{3EB55859-773A-4319-9982-E8B69E468933}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sencae.Benchmark", "Sencae.Benchmark\Sencae.Benchmark.csproj", "{A840A4D2-A468-4988-988F-69579E4652D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sencae.Tests", "Sencae.Tests\Sencae.Tests.csproj", "{E4E7E71F-3E38-4D8E-9804-7275E8C00570}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{2AC75054-9520-4BCA-A585-BD9DA167F6BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixty502DotNet.Shared", "Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj", "{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sencae.SharedUtility", "Sencae.SharedUtility\Sencae.SharedUtility.csproj", "{69EC984D-416F-4060-9B88-48D0DACB4FBD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{74D9E585-D4D9-4264-B53F-F1506A52C320}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74D9E585-D4D9-4264-B53F-F1506A52C320}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74D9E585-D4D9-4264-B53F-F1506A52C320}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74D9E585-D4D9-4264-B53F-F1506A52C320}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EB55859-773A-4319-9982-E8B69E468933}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EB55859-773A-4319-9982-E8B69E468933}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EB55859-773A-4319-9982-E8B69E468933}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EB55859-773A-4319-9982-E8B69E468933}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A840A4D2-A468-4988-988F-69579E4652D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A840A4D2-A468-4988-988F-69579E4652D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A840A4D2-A468-4988-988F-69579E4652D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A840A4D2-A468-4988-988F-69579E4652D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4E7E71F-3E38-4D8E-9804-7275E8C00570}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4E7E71F-3E38-4D8E-9804-7275E8C00570}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4E7E71F-3E38-4D8E-9804-7275E8C00570}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4E7E71F-3E38-4D8E-9804-7275E8C00570}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69EC984D-416F-4060-9B88-48D0DACB4FBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69EC984D-416F-4060-9B88-48D0DACB4FBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69EC984D-416F-4060-9B88-48D0DACB4FBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69EC984D-416F-4060-9B88-48D0DACB4FBD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0BC84917-F035-415E-B2FF-AAFD6AE3C1EC}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206} = {2AC75054-9520-4BCA-A585-BD9DA167F6BA}
+	EndGlobalSection
+EndGlobal

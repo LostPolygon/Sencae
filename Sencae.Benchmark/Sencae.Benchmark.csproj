@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net7.0</TargetFramework>
+        <LangVersion>default</LangVersion>
+		<TieredPGO>true</TieredPGO>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <PlatformTarget>AnyCPU</PlatformTarget>
+      <Prefer32bit>false</Prefer32bit>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
+      <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Resources\BRIX_test" />
+      <Content Include="Resources\BRIX_test">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj" />
+      <ProjectReference Include="..\Sencae.SharedUtility\Sencae.SharedUtility.csproj" />
+      <ProjectReference Include="..\Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj" />
+    </ItemGroup>
+
+</Project>

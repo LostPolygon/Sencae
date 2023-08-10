@@ -1,0 +1,61 @@
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
+using NUnit.Framework;
+using static Sencae.SharedUtility.MachineStateFormatter;
+using static Sencae.SharedUtility.DebugEmulationRunner;
+
+namespace Sencae.Tests;
+
+public class BasicTests {
+    [Test]
+    public unsafe void NesTest() {
+        byte[] testRom = File.ReadAllBytes("Resources/01-basics.nes");
+        CartridgeData cartridgeData = NesFileParser.Parse(testRom);
+        Cartridge cartridge = new Cartridge(cartridgeData.PrgRom, cartridgeData.ChrRom);
+
+        Machine machine = EmulateUntilBreak(cartridge, 50000);
+    }
+
+    [Test]
+    public void Test1() {
+        Cartridge cartridge = CreateCodeCartridge(
+            """
+
+            .0000    a9 01        LDA #$01
+            .0002    8d 00 02     STA $0200
+            .0005    a9 05        LDA #$05
+            .0007    8d 01 02     STA $0201
+            .000a    a9 08        LDA #$08
+            .000c    8d 02 02     STA $0202
+
+            """
+        );
+
+        Machine machine = EmulateUntilBreak(cartridge);
+
+        Assert.AreEqual(1, machine.CpuBus.GetU8(0x200));
+        Assert.AreEqual(5, machine.CpuBus.GetU8(0x201));
+        Assert.AreEqual(8, machine.CpuBus.GetU8(0x202));
+    }
+
+    [Test]
+    public void Test2() {
+        Cartridge cartridge = CreateCodeCartridge(
+            """
+
+            .0000    a9 c0        LDA #$c0  ; Load the hex value $c0 into the A register
+            .0002    aa           TAX       ; Transfer the value in the A register to X
+            .0003    e8           INX       ; Increment the value in the X register
+            .0004    69 c4        ADC #$c4  ; Add the hex value $c4 to the A register
+            .0006    00           BRK       ; Break - we're done
+
+            """
+        );
+
+        Machine machine = EmulateUntilBreak(cartridge, formatState: FormatCpuStateNesTest);
+
+        Assert.AreEqual(0xC1, machine.State.Cpu.X);
+        Assert.AreEqual(0x84, machine.State.Cpu.A);
+        Assert.AreEqual(false, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Overflow));
+    }
+}
