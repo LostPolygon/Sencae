@@ -82,7 +82,7 @@ namespace Sencae {
             SDL.SDL_PauseAudioDevice(_sdlAudioDevice, 0);
 
             // Initialize the emulator
-            Machine machine = new(new Cartridge(new byte[16 * 1024], new byte[8 * 1024]));
+            Machine machine = new(new CartridgeDevice(new byte[16 * 1024], new byte[8 * 1024]));
 
             byte[] gameRom = {
                 0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85,
@@ -108,13 +108,13 @@ namespace Sencae {
             };
 
             for (int i = 0; i < gameRom.Length; i++) {
-                machine.CpuBus.GetU8((ushort) (0x0600 + i)) = gameRom[i];
+                machine.CpuMemoryBus.GetU8((ushort) (0x0600 + i)) = gameRom[i];
             }
             
             _emulator = new SdlEmulator(emulatorSurface, machine);
             _emulator.Reset(0x0600);
             
-            MainLoop(null, emulatorSurface, renderer, window);
+            MainLoop(emulatorSurface, renderer, window);
 
             // Clean up.
             SDL.SDL_CloseAudioDevice(_sdlAudioDevice);
@@ -144,7 +144,7 @@ namespace Sencae {
             }*/
         }
 
-        private void MainLoop(Machine machine, SDL.SDL_Surface* emulatorSurface, IntPtr renderer, IntPtr window) {
+        private void MainLoop(SDL.SDL_Surface* emulatorSurface, IntPtr renderer, IntPtr window) {
             bool quit = false;
             Stopwatch updateStopwatch = new Stopwatch();
             double frameDuration = 1.0 / NesConstants.Framerate;

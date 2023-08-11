@@ -5,5 +5,6 @@ public readonly record struct InstructionDescriptor(
     InstructionType Type,
     AddressingMode AddressingMode,
     InstructionFlags Flags,
-    byte Opcode
+    byte Opcode,
+    byte OpcodeSize
 );

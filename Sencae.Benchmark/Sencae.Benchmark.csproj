@@ -16,18 +16,16 @@
       <PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
       <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.7" />
     </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="Resources\BRIX_test" />
-      <Content Include="Resources\BRIX_test">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-    </ItemGroup>
-
     <ItemGroup>
       <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj" />
       <ProjectReference Include="..\Sencae.SharedUtility\Sencae.SharedUtility.csproj" />
       <ProjectReference Include="..\Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="Resources\nestest.nes">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

@@ -12,7 +12,7 @@ public class Instructions {
         Machine machine = EmulateUntilBreak(CreateCodeCartridge(
             """
 
-            LDA #$01
+            LDA #$04
             LSR
 
             """
@@ -24,7 +24,7 @@ public class Instructions {
         machine = EmulateUntilBreak(CreateCodeCartridge(
             """
 
-            LDA #$01
+            LDA #$04
             STA $10
             LDA #0
             LSR $10
@@ -32,23 +32,23 @@ public class Instructions {
             """
         ));
 
-        Assert.AreEqual(0x02, machine.CpuBus.GetU8(0x10));
+        Assert.AreEqual(0x02, machine.CpuMemoryBus.GetU8(0x10));
         Assert.AreEqual(12 + BRK_Cycles, machine.State.Cycle);
     }
     
     [Test]
     public void JSR() {
-        Cartridge cartridge = CreateCodeCartridge(
+        Machine machine = EmulateUntilBreak(CreateCodeCartridge(
             """
 
             .dsection "start",     $00, $20
             .dsection "sr",        $010E
-            
+
             .section "start"
             NOP
             NOP
             NOP
-            JSR $C10D // in cartridge space
+            JSR $C10E // in cartridge space
             NOP
             NOP
             NOP
@@ -57,28 +57,23 @@ public class Instructions {
             NOP
             NOP
             NOP
-            
+
             .section "sr"
             INX
             INX
 
             """
-        );
-
-        static void AfterReset(Machine machine) {
-        }
-
-        Machine machine = EmulateUntilBreak(cartridge, afterResetAction: AfterReset);
+        ));
 
         Assert.AreEqual(2, machine.State.Cpu.X);
-        Assert.AreEqual(0xC10F, machine.State.Cpu.PC.Value); // +1 due advancing to next opcode
+        Assert.AreEqual(0xC111, machine.State.Cpu.PC.Value); // +1 due advancing to next opcode
         Assert.AreEqual(16 + BRK_Cycles, machine.State.Cycle);
     }
     
     [Test]
     public void RTS() {
-        Cartridge cartridge = CreateCodeCartridge(
-            """ 
+        Machine machine = EmulateUntilBreak(CreateCodeCartridge(
+            """
 
             .dsection "start",     $00, $20
             .dsection "sr",        $010E
@@ -87,7 +82,7 @@ public class Instructions {
             NOP
             NOP
             NOP
-            RTS 
+            RTS
 
             .section "sr"
             // R-T-S jumps 1 byte before the next instruction
@@ -95,18 +90,16 @@ public class Instructions {
             INX
 
             """
-        );
-
+        ), new () { AfterResetAction = AfterReset });
+        
         static void AfterReset(Machine machine) {
-            machine.CpuBus.GetU8(0x01FE) = 0x0D - 1; // in cartridge space
-            machine.CpuBus.GetU8(0x01FF) = 0xC1;
+            machine.CpuMemoryBus.GetU8(0x01FE) = 0x0D; // in cartridge space
+            machine.CpuMemoryBus.GetU8(0x01FF) = 0xC1;
             machine.State.Cpu.SP = 0xFD;
         }
-
-        Machine machine = EmulateUntilBreak(cartridge, afterResetAction: AfterReset);
-
+        
         Assert.AreEqual(2, machine.State.Cpu.X);
-        Assert.AreEqual(0xC10F, machine.State.Cpu.PC.Value);
+        Assert.AreEqual(0xC111, machine.State.Cpu.PC.Value);
         Assert.AreEqual(16 + BRK_Cycles, machine.State.Cycle);
     }
     

@@ -32,12 +32,12 @@ namespace Sencae {
                 case SDL.SDL_EventType.SDL_KEYDOWN:
                     for (int i = 0; i < KeyMapping.Length; i++) {
                         if (evt.key.keysym.sym == KeyMapping[i]) {
-                            ref byte input = ref _machine.CpuBus.GetU8(inputAddress);
+                            ref byte input = ref _machine.CpuMemoryBus.GetU8(inputAddress);
                             input = KeyMapping[i] switch {
                                 SDL.SDL_Keycode.SDLK_UP => 0x77,
                                 SDL.SDL_Keycode.SDLK_DOWN => 0x73,
-                                SDL.SDL_Keycode.SDLK_LEFT => 0x64,
-                                SDL.SDL_Keycode.SDLK_RIGHT => 0x61,
+                                SDL.SDL_Keycode.SDLK_LEFT => 0x61,
+                                SDL.SDL_Keycode.SDLK_RIGHT => 0x64,
                             };
                         }
                     }
@@ -60,7 +60,7 @@ namespace Sencae {
             }
 
             int screenLength = NesConstants.ScreenWidth * NesConstants.ScreenHeight;
-            Span<byte> emulatorScreenMemory = MemoryMarshal.CreateSpan(ref _machine.CpuBus.GetU8(0x0200), screenLength);
+            Span<byte> emulatorScreenMemory = MemoryMarshal.CreateSpan(ref _machine.CpuMemoryBus.GetU8(0x0200), screenLength);
             byte* pixels = (byte*) _surface->pixels;
 
             for (int i = 0; i < screenLength; i++) {
@@ -73,11 +73,11 @@ namespace Sencae {
         }
 
         public void Update(int cycles) {
-            _machine.CpuBus.GetU8(0xFE) = (byte) Random.Shared.Next();
+            _machine.CpuMemoryBus.GetU8(0xFE) = (byte) Random.Shared.Next();
 
             for (int i = 0; i < cycles; i++) {
-                if (_machine.State.Cpu.Halted)
-                    break;
+                //if (_machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.BreakFlag))
+                //    break;
 
                 Console.WriteLine(FormatCpuState(_machine.State));
                 _machine.Clock();

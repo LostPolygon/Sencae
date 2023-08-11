@@ -3,7 +3,7 @@ using System;
 namespace Sencae;
 
 [Flags]
-public enum CpuStatusRegisterFlags {
+public enum CpuStatusRegisterFlags : byte {
     Carry = 1 << 0,          // 0 - C, Carry (0=No Carry, 1=Carry)
     Zero = 1 << 1,           // 1 - Z, Zero (0=Nonzero, 1=Zero)
     InterruptDisable = 1 << 2,     // 2 - I, IRQ Disable (0=IRQ Enable, 1=IRQ Disable)

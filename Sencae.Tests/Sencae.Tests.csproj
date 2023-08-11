@@ -15,24 +15,23 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Resources\" />
+      <Folder Include="Utility\" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove="Resources\nestest.nes" />
-      <Content Include="Resources\nestest.nes">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-      <None Remove="Resources\01-basics.nes" />
-      <Content Include="Resources\01-basics.nes">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj" />
       <ProjectReference Include="..\Sencae.SharedUtility\Sencae.SharedUtility.csproj" />
       <ProjectReference Include="..\Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="Resources\**">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

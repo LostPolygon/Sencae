@@ -16,16 +16,26 @@ internal static class Program {
         } else {
             Benchmarks benchmarks = new();
             benchmarks.Setup();
+            
+            Console.WriteLine("Warming up...");
+            for (int i = 0; i < 500; i++) {
+                benchmarks.Emulate(50000);
+            }
 
-            const int iterations = 20000000;
+            Console.WriteLine("Starting benchmark...");
+            
+            const int iterations = 10000;
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++) {
-                benchmarks.Test1();
+                TotalCycles += benchmarks.Emulate(50000);
             }
 
             sw.Stop();
 
-            Console.WriteLine($"{iterations} tooks {sw.Elapsed}, cycles: {TotalCycles}, speed: {TotalCycles / sw.Elapsed.TotalSeconds / 1000} kilocycles/sec");
+            Console.WriteLine(
+                $"{iterations} iterations took {sw.Elapsed}, " +
+                $"cycles: {TotalCycles}, " +
+                $"speed: {TotalCycles / sw.Elapsed.TotalSeconds / 1000 / 1000:0.##} megacycles/sec");
         }
     }
 }

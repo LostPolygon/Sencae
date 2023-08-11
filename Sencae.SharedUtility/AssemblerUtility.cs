@@ -5,7 +5,7 @@ using Environment = Sixty502DotNet.Shared.Environment;
 namespace Sencae.SharedUtility;
 
 public static class AssemblerUtility {
-    public static byte[] AssembleFromListing(string sourceListing) {
+    public static CodeOutput AssembleFromListing(string sourceListing) {
         Environment.Reset();
 
         Interpreter interpreter = new(new Options {
@@ -58,6 +58,6 @@ public static class AssemblerUtility {
             .ForEach(Console.WriteLine);
         Console.WriteLine("=== Asm End");
 
-        return assemblyState.Output.GetCompilation().ToArray();
+        return assemblyState.Output;
     }
 }

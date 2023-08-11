@@ -21,6 +21,7 @@ public static class AddressingModeLogic {
             AddressingMode.ZeroPageIndirectXPreIndexed => ZeroPageIndirectXPreIndexed(ref cpu, ref cpuInternal),
             AddressingMode.ZeroPageIndirectYPostIndexed => ZeroPageIndirectYPostIndexed(ref cpu, ref cpuInternal),
             AddressingMode.Relative => Relative(ref cpu, ref cpuInternal),
+
             //_ => throw new ArgumentOutOfRangeException(nameof(addressingMode), addressingMode, null)
         };
     }
@@ -108,24 +109,30 @@ public static class AddressingModeLogic {
                 cpuInternal.AddressBus = cpu.PC;
                 break;
             case 1: // fetch BAH
-                cpuInternal.Temporary = cpuInternal.DataBus;
+                cpuInternal.Temporary.Low = cpuInternal.DataBus;
                 cpu.PC.Value++;
                 cpuInternal.AddressBus = cpu.PC;
                 break;
-            case 2:
-                cpuInternal.AddressBus.Low = (byte) cpuInternal.Temporary;
+            case 2: // fetch ADL
+                cpuInternal.AddressBus.Low = cpuInternal.Temporary.Low;
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
 
                 break;
-            case 3:  // fetch ADL
-                cpuInternal.Temporary = cpuInternal.DataBus;
-                cpuInternal.AddressBus.Value++;
+            case 3: // fetch ADH
+                bool pageBoundaryBug = cpuInternal.Temporary.Low == 0xFF;
+                cpuInternal.Temporary.Low = cpuInternal.DataBus;
+
+                if (pageBoundaryBug) {
+                    cpuInternal.AddressBus.Value = (ushort) (cpuInternal.AddressBus.Value & 0xFF00);
+                } else {
+                    cpuInternal.AddressBus.Value++;
+                }
 
                 break;
-            case 4: // fetch ADH
-                cpuInternal.AddressBus.Low = (byte) cpuInternal.Temporary;
+            case 4:
+                cpuInternal.AddressBus.Low = cpuInternal.Temporary.Low;
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
-                
+
                 return true;
         }
 
@@ -140,18 +147,18 @@ public static class AddressingModeLogic {
                 cpuInternal.AddressBus = cpu.PC;
                 break;
             case 1: // fetch ADL
-                cpuInternal.AddressBus.Value = (ushort) (cpuInternal.DataBus + (sbyte) cpu.X);
+                cpuInternal.AddressBus.Value = (byte) (cpuInternal.DataBus + cpu.X);
 
                 break;
-            case 2:  // fetch ADH
+            case 2: // fetch ADH
                 cpuInternal.Temporary = cpuInternal.DataBus;
-                cpuInternal.AddressBus.Value++;
+                cpuInternal.AddressBus.Value = (byte) (cpuInternal.AddressBus.Value + 1);
 
                 break;
             case 3:
                 cpuInternal.AddressBus.Low = (byte) cpuInternal.Temporary;
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
-                
+
                 return true;
         }
 
@@ -169,16 +176,16 @@ public static class AddressingModeLogic {
                 cpuInternal.AddressBus.Value = cpuInternal.DataBus;
 
                 break;
-            case 2:  // fetch ADH
+            case 2: // fetch ADH
                 cpuInternal.Temporary = cpuInternal.DataBus;
-                cpuInternal.AddressBus.Value++;
+                cpuInternal.AddressBus.Value = (byte) (cpuInternal.AddressBus.Value + 1);
 
                 break;
             case 3:
                 cpuInternal.AddressBus.Low = (byte) cpuInternal.Temporary;
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
-                cpuInternal.AddressBus.Value = (ushort) (cpuInternal.AddressBus.Value + (sbyte) cpu.Y);
-                
+                cpuInternal.AddressBus.Value = (ushort) (cpuInternal.AddressBus.Value + cpu.Y);
+
                 return true;
         }
 
@@ -197,22 +204,24 @@ public static class AddressingModeLogic {
 
         return false;
     }
-    
+
     [MethodImpl(MethodOptions.Options)]
     private static bool AbsoluteIndexedInternal(ref CpuState cpu, ref CpuInternalState cpuInternal, byte index) {
         bool completed = Absolute(ref cpu, ref cpuInternal);
+
+        // FIXME: add extra cycle on page cross
         if (completed) {
             cpuInternal.AddressBus.Value += index;
         }
 
         return completed;
     }
-    
+
     [MethodImpl(MethodOptions.Options)]
     private static bool ZeroPageIndexedInternal(ref CpuState cpu, ref CpuInternalState cpuInternal, byte index) {
         bool completed = ZeroPage(ref cpu, ref cpuInternal);
         if (completed) {
-            cpuInternal.AddressBus.Value += index;
+            cpuInternal.AddressBus.Value = (byte) (cpuInternal.AddressBus.Value + index);
         }
 
         return completed;

@@ -1,3 +1,4 @@
+using System.IO;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using Sencae.SharedUtility;
@@ -14,24 +15,29 @@ namespace Sencae.Benchmark;
 [TailCallDiagnoser(filterByNamespace: false)]
 [InliningDiagnoser(allowedNamespaces: new[] { "Sencae" })]
 public class Benchmarks {
-    private Cartridge _cartridge;
-    private Machine _machine;
+    public CartridgeDevice CartridgeDevice { get; private set; }
+    public Machine Machine { get; private set; }
 
     public ulong Emulate(int maxCycles = 10000) {
         DebugEmulationRunner.EmulateUntilBreak(
-            _machine,
-            maxCycles,
-            formatState: _ => "",
-            outputState: _ => {
+            Machine,
+            new () {
+                MaxCycles = maxCycles,
+                FormatState = _ => "",
+                OutputState = _ => {}
             }
         );
 
-        return _machine.State.Cycle;
+        return Machine.State.Cycle;
     }
 
     [GlobalSetup]
     public void Setup() {
-        _cartridge = DebugEmulationRunner.CreateCodeCartridge(
+        byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
+        CartridgeData cartridgeData = NesFileParser.Parse(testRom);
+        CartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[0]);
+
+        /*CartridgeDevice = DebugEmulationRunner.CreateCodeCartridge(
             """
 
             .0000    a9 01        LDA #$01
@@ -42,8 +48,8 @@ public class Benchmarks {
             .000c    8d 02 02     STA $0202
 
             """
-        );
-        _machine = new Machine(_cartridge);
+        );*/
+        Machine = new Machine(CartridgeDevice);
     }
 
     [Benchmark(Baseline = true)]

@@ -1,44 +1,25 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public unsafe class Machine {
+public class Machine {
+    public readonly CartridgeDevice CartridgeDevice;
+    public readonly CpuDevice CpuDevice;
+    public readonly PpuDevice PpuDevice;
+    
     public MachineState State;
-    public CpuMemoryBus CpuBus;
-    public Cartridge Cartridge;
+    public CpuMemoryBus CpuMemoryBus;
 
-    public Machine(Cartridge cartridge) {
-        Cartridge = cartridge;
-        CpuBus = new CpuMemoryBus(this);
+    public Machine(CartridgeDevice cartridgeDevice) {
+        CartridgeDevice = cartridgeDevice;
+        CpuDevice = new CpuDevice(this);
+        PpuDevice = new PpuDevice(this);
+        CpuMemoryBus = new CpuMemoryBus(this);
     }
 
     public void Reset(ushort? overrideResetVector = null) {
-        //State = default;
-
-        ref CpuState cpu = ref State.Cpu;
-
-        cpu.P = CpuStatusRegisterFlags.InterruptDisable | CpuStatusRegisterFlags.BreakFlag | CpuStatusRegisterFlags.Unused;
-
-        cpu.A = cpu.X = cpu.Y = 0x00;
-        cpu.SP = 0xFF;
-
-        CpuBus.GetU8(0x4017) = 0; // frame irq enabled
-        CpuBus.GetU8(0x4015) = 0; // all APU channels disabled
-
-        CpuBus.GetU8(0x4010) = 0;
-        CpuBus.GetU8(0x4011) = 0;
-        CpuBus.GetU8(0x4012) = 0;
-        CpuBus.GetU8(0x4013) = 0;
-        
-        ushort resetVector = overrideResetVector ?? CpuBus.GetU16(0xFFFC);
-        cpu.Internal.State = CpuInternalState.ExecutionState.InterpretOpcode;
-        cpu.Internal.DataBus = CpuBus.GetU8(resetVector);
-        cpu.Internal.Instruction = Instructions.DescriptorByOpcode[cpu.Internal.DataBus];
-        
-        cpu.PC.Value = (ushort) (resetVector + 0);
-        cpu.Internal.AddressBus.Value = (ushort) (resetVector + 0);
-        cpu.Internal.Read = true;
+        CpuDevice.Reset(overrideResetVector);
+        PpuDevice.Reset();
     }
 
     public ref MachineState GetState() {
@@ -50,7 +31,7 @@ public unsafe class Machine {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
 
-        ref byte dataBus = ref CpuBus.GetU8(cpuInternal.AddressBus);
+        ref byte dataBus = ref CpuMemoryBus.GetU8(cpuInternal.AddressBus);
         if (!cpuInternal.Read) {
             dataBus = cpuInternal.DataBus;
         } else {
@@ -148,10 +129,10 @@ public unsafe class Machine {
 
             // Stack Instructions
 
-            InstructionType.PHA => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal), // push accumulator
-            InstructionType.PHP => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal), // push processor status register (with break flag set)
-            InstructionType.PLA => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal), // pull accumulator
-            InstructionType.PLP => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal), // pull processor status register 
+            InstructionType.PHA => InstructionLogic.PHA(operationCycle, ref cpu, ref cpuInternal), // push accumulator
+            InstructionType.PHP => InstructionLogic.PHP(operationCycle, ref cpu, ref cpuInternal), // push processor status register (with break flag set)
+            InstructionType.PLA => InstructionLogic.PLA(operationCycle, ref cpu, ref cpuInternal), // pull accumulator
+            InstructionType.PLP => InstructionLogic.PLP(operationCycle, ref cpu, ref cpuInternal), // pull processor status register 
 
             // Decrements & Increments
 
@@ -177,8 +158,8 @@ public unsafe class Machine {
 
             InstructionType.ASL => InstructionLogic.ASL(operationCycle, ref cpu, ref cpuInternal), // arithmetic shift left (shifts in a zero bit on the right)
             InstructionType.LSR => InstructionLogic.LSR(operationCycle, ref cpu, ref cpuInternal), // logical shift right (shifts in a zero bit on the left)
-            InstructionType.ROL => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal), // rotate left (shifts in carry bit on the right)
-            InstructionType.ROR => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal), // rotate right (shifts in zero bit on the left)
+            InstructionType.ROL => InstructionLogic.ROL(operationCycle, ref cpu, ref cpuInternal), // rotate left (shifts in carry bit on the right)
+            InstructionType.ROR => InstructionLogic.ROR(operationCycle, ref cpu, ref cpuInternal), // rotate right (shifts in zero bit on the left)
 
             // Flag Instructions
 
@@ -215,7 +196,7 @@ public unsafe class Machine {
             // Interrupts
 
             InstructionType.BRK => InstructionLogic.BRK(operationCycle, ref State, ref cpu, ref cpuInternal), // break / software interrupt
-            InstructionType.RTI => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal), // return from interrupt 
+            InstructionType.RTI => InstructionLogic.RTI(operationCycle, ref cpu, ref cpuInternal), // return from interrupt 
 
             // Other
 
@@ -234,15 +215,16 @@ public unsafe class Machine {
             InstructionType.SHY => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.ARR => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.SHX => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
-            InstructionType.SAX => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
+            InstructionType.SAX => InstructionLogic.SAX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.XAA => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.AHX => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.TAS => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
-            InstructionType.LAX => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
+            InstructionType.LAX => InstructionLogic.LAX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.LAS => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.DCP => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.AXS => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
             InstructionType.ISC => InstructionLogic.XXX(operationCycle, ref cpu, ref cpuInternal),
+
             //_ => true
         };
 

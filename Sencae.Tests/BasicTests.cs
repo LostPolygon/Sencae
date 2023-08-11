@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using static Sencae.SharedUtility.MachineStateFormatter;
 using static Sencae.SharedUtility.DebugEmulationRunner;
 
@@ -9,16 +7,26 @@ namespace Sencae.Tests;
 public class BasicTests {
     [Test]
     public unsafe void NesTest() {
-        byte[] testRom = File.ReadAllBytes("Resources/01-basics.nes");
+        byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        Cartridge cartridge = new Cartridge(cartridgeData.PrgRom, cartridgeData.ChrRom);
+        CartridgeDevice cartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom);
 
-        Machine machine = EmulateUntilBreak(cartridge, 50000);
+        Machine machine = EmulateUntilBreak(
+            cartridgeDevice, new() {
+                StopOnBRK = false,
+                MaxCycles = 5000000, 
+                OverrideResetVector = 0xC000
+            });
+
+        BusMemoryStream stream = new BusMemoryStream(machine.CpuMemoryBus);
+        stream.Seek(0x6004, SeekOrigin.Begin);
+
+        string message = TextUtility.ReadCString(stream);
     }
 
     [Test]
     public void Test1() {
-        Cartridge cartridge = CreateCodeCartridge(
+        Machine machine = EmulateUntilBreak(CreateCodeCartridge(
             """
 
             .0000    a9 01        LDA #$01
@@ -29,18 +37,16 @@ public class BasicTests {
             .000c    8d 02 02     STA $0202
 
             """
-        );
+        ));
 
-        Machine machine = EmulateUntilBreak(cartridge);
-
-        Assert.AreEqual(1, machine.CpuBus.GetU8(0x200));
-        Assert.AreEqual(5, machine.CpuBus.GetU8(0x201));
-        Assert.AreEqual(8, machine.CpuBus.GetU8(0x202));
+        Assert.AreEqual(1, machine.CpuMemoryBus.GetU8(0x200));
+        Assert.AreEqual(5, machine.CpuMemoryBus.GetU8(0x201));
+        Assert.AreEqual(8, machine.CpuMemoryBus.GetU8(0x202));
     }
 
     [Test]
     public void Test2() {
-        Cartridge cartridge = CreateCodeCartridge(
+        CartridgeDevice cartridgeDevice = CreateCodeCartridge(
             """
 
             .0000    a9 c0        LDA #$c0  ; Load the hex value $c0 into the A register
@@ -52,7 +58,7 @@ public class BasicTests {
             """
         );
 
-        Machine machine = EmulateUntilBreak(cartridge, formatState: FormatCpuStateNesTest);
+        Machine machine = EmulateUntilBreak(cartridgeDevice, new() { FormatState = FormatCpuStateNesTest });
 
         Assert.AreEqual(0xC1, machine.State.Cpu.X);
         Assert.AreEqual(0x84, machine.State.Cpu.A);

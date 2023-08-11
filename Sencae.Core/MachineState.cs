@@ -9,6 +9,7 @@ namespace Sencae {
         //public fixed byte Screen[NesConstants.ScreenWidth * NesConstants.ScreenHeight];
         
         public CpuState Cpu;
+        public PpuState Ppu;
 
         public ulong ExecutedInstructionCount;
         public ulong Cycle;
