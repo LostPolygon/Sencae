@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixty502DotNet.Shared", "Su
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sencae.SharedUtility", "Sencae.SharedUtility\Sencae.SharedUtility.csproj", "{69EC984D-416F-4060-9B88-48D0DACB4FBD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sencae.LibRetroCore", "Sencae.LibRetroCore\Sencae.LibRetroCore.csproj", "{22C52142-EC82-4ABF-9B71-F4860FB9E710}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{69EC984D-416F-4060-9B88-48D0DACB4FBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69EC984D-416F-4060-9B88-48D0DACB4FBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69EC984D-416F-4060-9B88-48D0DACB4FBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22C52142-EC82-4ABF-9B71-F4860FB9E710}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22C52142-EC82-4ABF-9B71-F4860FB9E710}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22C52142-EC82-4ABF-9B71-F4860FB9E710}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22C52142-EC82-4ABF-9B71-F4860FB9E710}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

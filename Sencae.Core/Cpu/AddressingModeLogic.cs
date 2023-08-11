@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.CompilerServices;
 
 namespace Sencae;
@@ -7,10 +6,10 @@ public static class AddressingModeLogic {
     //public delegate bool AddressingModeHandler(ref CpuState cpu, ref CpuInternalState cpuInternal);
 
     [MethodImpl(MethodOptions.Options)]
-    public static bool Execute(ref CpuState cpu, ref CpuInternalState cpuInternal, AddressingMode addressingMode) {
+    public static bool Dispatch(ref CpuState cpu, ref CpuInternalState cpuInternal, AddressingMode addressingMode) {
         return addressingMode switch {
             AddressingMode.Implied => Implied(ref cpu, ref cpuInternal),
-            AddressingMode.Immediate => Immediate(ref cpu, ref cpuInternal),
+            AddressingMode.Immediate => ImmediateOrRelative(ref cpu, ref cpuInternal),
             AddressingMode.Absolute => Absolute(ref cpu, ref cpuInternal),
             AddressingMode.AbsoluteXIndexed => AbsoluteXIndexed(ref cpu, ref cpuInternal),
             AddressingMode.AbsoluteYIndexed => AbsoluteYIndexed(ref cpu, ref cpuInternal),
@@ -20,9 +19,8 @@ public static class AddressingModeLogic {
             AddressingMode.AbsoluteIndirect => AbsoluteIndirect(ref cpu, ref cpuInternal),
             AddressingMode.ZeroPageIndirectXPreIndexed => ZeroPageIndirectXPreIndexed(ref cpu, ref cpuInternal),
             AddressingMode.ZeroPageIndirectYPostIndexed => ZeroPageIndirectYPostIndexed(ref cpu, ref cpuInternal),
-            AddressingMode.Relative => Relative(ref cpu, ref cpuInternal),
-
-            //_ => throw new ArgumentOutOfRangeException(nameof(addressingMode), addressingMode, null)
+            AddressingMode.Relative => ImmediateOrRelative(ref cpu, ref cpuInternal),
+            _ => true
         };
     }
 
@@ -32,15 +30,11 @@ public static class AddressingModeLogic {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private static bool Immediate(ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        switch (cpuInternal.OperationCycle) {
-            case 0:
-                cpu.PC.Value++;
-                cpuInternal.AddressBus = cpu.PC;
-                return true;
-        }
-
-        return false;
+    private static bool ImmediateOrRelative(ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        // fetch immediate value or relative offset
+        cpu.PC.Value++;
+        cpuInternal.AddressBus = cpu.PC;
+        return true;
     }
 
     [MethodImpl(MethodOptions.Options)]
@@ -66,14 +60,12 @@ public static class AddressingModeLogic {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private static bool AbsoluteXIndexed(ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        return AbsoluteIndexedInternal(ref cpu, ref cpuInternal, cpu.X);
-    }
+    private static bool AbsoluteXIndexed(ref CpuState cpu, ref CpuInternalState cpuInternal) => 
+        AbsoluteIndexedInternal(ref cpu, ref cpuInternal, cpu.X);
 
     [MethodImpl(MethodOptions.Options)]
-    private static bool AbsoluteYIndexed(ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        return AbsoluteIndexedInternal(ref cpu, ref cpuInternal, cpu.Y);
-    }
+    private static bool AbsoluteYIndexed(ref CpuState cpu, ref CpuInternalState cpuInternal) => 
+        AbsoluteIndexedInternal(ref cpu, ref cpuInternal, cpu.Y);
 
     [MethodImpl(MethodOptions.Options)]
     private static bool ZeroPage(ref CpuState cpu, ref CpuInternalState cpuInternal) {
@@ -92,14 +84,12 @@ public static class AddressingModeLogic {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private static bool ZeroPageXIndexed(ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        return ZeroPageIndexedInternal(ref cpu, ref cpuInternal, cpu.X);
-    }
+    private static bool ZeroPageXIndexed(ref CpuState cpu, ref CpuInternalState cpuInternal) => 
+        ZeroPageIndexedInternal(ref cpu, ref cpuInternal, cpu.X);
 
     [MethodImpl(MethodOptions.Options)]
-    private static bool ZeroPageYIndexed(ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        return ZeroPageIndexedInternal(ref cpu, ref cpuInternal, cpu.Y);
-    }
+    private static bool ZeroPageYIndexed(ref CpuState cpu, ref CpuInternalState cpuInternal) => 
+        ZeroPageIndexedInternal(ref cpu, ref cpuInternal, cpu.Y);
 
     [MethodImpl(MethodOptions.Options)]
     private static bool AbsoluteIndirect(ref CpuState cpu, ref CpuInternalState cpuInternal) {
@@ -186,19 +176,6 @@ public static class AddressingModeLogic {
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
                 cpuInternal.AddressBus.Value = (ushort) (cpuInternal.AddressBus.Value + cpu.Y);
 
-                return true;
-        }
-
-        return false;
-    }
-
-    [MethodImpl(MethodOptions.Options)]
-    private static bool Relative(ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        switch (cpuInternal.OperationCycle) {
-            case 0: // fetch offset
-                cpu.Internal.Read = true;
-                cpu.PC.Value++;
-                cpuInternal.AddressBus = cpu.PC;
                 return true;
         }
 

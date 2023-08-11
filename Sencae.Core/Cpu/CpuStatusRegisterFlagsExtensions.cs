@@ -4,8 +4,13 @@ namespace Sencae;
 
 public static class CpuStatusRegisterFlagsExtensions {
     [MethodImpl(MethodOptions.Options)]
-    public static bool HasFlag(this CpuStatusRegisterFlags value, CpuStatusRegisterFlags flag) {
+    public static bool HasFlagFast(this CpuStatusRegisterFlags value, CpuStatusRegisterFlags flag) {
         return (value & flag) != 0;
+    }
+    
+    [MethodImpl(MethodOptions.Options)]
+    public static bool HasNoFlag(this CpuStatusRegisterFlags value, CpuStatusRegisterFlags flag) {
+        return (value & flag) == 0;
     }
     
     [MethodImpl(MethodOptions.Options)]

@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PublishAot>true</PublishAot>
+        <SelfContained>true</SelfContained>
+        <NativeLib>Shared</NativeLib>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IlcDisableReflection>true</IlcDisableReflection>
+        <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
+        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
+        <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+        <IlcDisableUnhandledExceptionExperience>false</IlcDisableUnhandledExceptionExperience>
+        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+    </PropertyGroup>
+    
+    <PropertyGroup>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>full</TrimMode>
+        <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+
+        <AutoreleasePoolSupport>false</AutoreleasePoolSupport>
+        <DebuggerSupport>false</DebuggerSupport>
+        <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+        <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+        <EventSourceSupport>false</EventSourceSupport>
+        <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+        <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+        <UseNativeHttpHandler>true</UseNativeHttpHandler>
+        <UseSystemResourceKeys>true</UseSystemResourceKeys>
+        <InvariantGlobalization>true</InvariantGlobalization>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IlcGenerateMstatFile>true</IlcGenerateMstatFile>
+        <IlcGenerateDgmlFile>true</IlcGenerateDgmlFile>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="DllExport" Version="1.7.4" />
+        <PackageReference Include="Libretro.NET" Version="0.1.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj"/>
+    </ItemGroup>
+
+</Project>

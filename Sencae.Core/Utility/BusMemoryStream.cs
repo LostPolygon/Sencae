@@ -4,9 +4,9 @@ using System.IO;
 namespace Sencae;
 
 public class BusMemoryStream : Stream {
-    public MemoryDevice MemoryDevice { get; }
+    public IMemoryDevice MemoryDevice { get; }
 
-    public BusMemoryStream(MemoryDevice memoryDevice) {
+    public BusMemoryStream(IMemoryDevice memoryDevice) {
         MemoryDevice = memoryDevice;
     }
 

@@ -1,9 +1,8 @@
-using System;
 using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public unsafe class CpuDevice : MemoryDevice {
+public readonly unsafe struct CpuDevice : IMemoryDevice {
     public readonly Machine Machine;
 
     public CpuDevice(Machine machine) {

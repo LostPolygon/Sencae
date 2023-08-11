@@ -26,14 +26,14 @@ public static class DebugEmulationRunner {
         return cartridgeDevice;
     }
 
-    public static Machine EmulateUntilBreak(CartridgeDevice cartridgeDevice, RunnerOptions? options = null) {
+    public static Machine Emulate(CartridgeDevice cartridgeDevice, RunnerOptions? options = null) {
         Machine machine = new(cartridgeDevice);
-        EmulateUntilBreak(machine, options);
+        Emulate(machine, options);
 
         return machine;
     }
 
-    public static void EmulateUntilBreak(Machine machine, RunnerOptions? options = null) {
+    public static void Emulate(Machine machine, RunnerOptions? options = null) {
         options ??= new RunnerOptions();
 
         machine.Reset(options.OverrideResetVector);

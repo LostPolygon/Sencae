@@ -1,17 +1,11 @@
-namespace Sencae {
-    //[DebuggerDisplay("{DebuggerDisplay,nq}")]
-    //[DebuggerTypeProxy(typeof(MachineStateDebugProxy))]
-    public unsafe struct MachineState {
-        // Machine RAM
-        //public fixed byte Memory[4096];
+namespace Sencae; 
 
-        // Machine RAM
-        //public fixed byte Screen[NesConstants.ScreenWidth * NesConstants.ScreenHeight];
-        
-        public CpuState Cpu;
-        public PpuState Ppu;
+//[DebuggerDisplay("{DebuggerDisplay,nq}")]
+//[DebuggerTypeProxy(typeof(MachineStateDebugProxy))]
+public struct MachineState {
+    public CpuState Cpu;
+    public PpuState Ppu;
 
-        public ulong ExecutedInstructionCount;
-        public ulong Cycle;
-    }
+    public ulong ExecutedInstructionCount;
+    public ulong Cycles;
 }

@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using BenchmarkDotNet.Running;
 
-namespace Sencae.Benchmark; 
+namespace Sencae.Benchmark;
 
 internal static class Program {
     public static byte[] TestRom;
@@ -14,16 +14,19 @@ internal static class Program {
         if (args.Contains("-runner")) {
             BenchmarkRunner.Run<Benchmarks>();
         } else {
+            using Process p = Process.GetCurrentProcess();
+            p.PriorityClass = ProcessPriorityClass.High;
+
             Benchmarks benchmarks = new();
             benchmarks.Setup();
-            
+
             Console.WriteLine("Warming up...");
             for (int i = 0; i < 500; i++) {
                 benchmarks.Emulate(50000);
             }
 
             Console.WriteLine("Starting benchmark...");
-            
+
             const int iterations = 10000;
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++) {

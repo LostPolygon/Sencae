@@ -1,9 +1,8 @@
-using System;
-using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public unsafe class CartridgeDevice : MemoryDevice {
+public readonly struct CartridgeDevice : IMemoryDevice {
     public readonly byte[] PrgRom;
     public readonly byte[] ChrRom;
     public readonly byte[]? PrgRam;
@@ -22,6 +21,7 @@ public unsafe class CartridgeDevice : MemoryDevice {
         PrgRamMemoryDevice = new ArrayMemoryDevice(PrgRam, 0x6000);
     }
 
+    [MethodImpl(MethodOptions.Options)]
     public ref byte GetU8(ushort address) {
         switch (address) {
             case >= 0x8000 and <= 0xFFFF: return ref PrgRomMemoryDevice.GetU8(address);
@@ -37,7 +37,8 @@ public unsafe class CartridgeDevice : MemoryDevice {
         return ref DeviceUtility.OpenBus(address);
     }
     
+    [MethodImpl(MethodOptions.Options)]
     public ref ushort GetU16(ushort address) {
-        return ref ((MemoryDevice) this).GetU16(address);
+        return ref ((IMemoryDevice) this).GetU16(address);
     }
 }

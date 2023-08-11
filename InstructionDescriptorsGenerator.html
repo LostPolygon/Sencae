@@ -350,23 +350,6 @@
                         break;
                 }
 
-                switch (opcodeInstructionType) {
-                    case "JMP":
-                    case "BMI":
-                    case "BPL":
-                    case "BCC":
-                    case "BCS":
-                    case "BEQ":
-                    case "BNE":
-                    case "BVS":
-                    case "BVC":
-                    case "JSR":
-                    //case "RTS":
-                    case "RTI":
-                        instructionFlags += (instructionFlags ? " | " : "") + "FetchesNextOpcode";
-                        break;
-                }
-
                 let opcodeAddressMode;
                 let opcodeSize;
                 switch (opcodeAddressModeRaw) {
@@ -420,6 +403,69 @@
                         break;  
                     default:
                         throw new Error(desc + ", " + opcode + ", " + opcodeAddressModeRaw);
+                }
+
+                switch (opcodeInstructionType) {
+                    case "JMP":
+                    case "BMI":
+                    case "BPL":
+                    case "BCC":
+                    case "BCS":
+                    case "BEQ":
+                    case "BNE":
+                    case "BVS":
+                    case "BVC":
+                    case "JSR":
+                    //case "RTS":
+                    case "RTI":
+                        instructionFlags += (instructionFlags ? " | " : "") + "FetchesNextOpcode";
+                        break;
+                }
+
+                switch (opcodeInstructionType) {
+                    case "STA":
+                    case "STX":
+                    case "STY":
+                    case "PHA":
+                    case "PLA":
+                    case "PHP":
+                    case "PLP":
+                    case "INC":
+                    case "DEC":
+                    case "LSR":
+                    case "ASL":
+                    case "ROL":
+                    case "ROR":
+                    case "BCS":
+                    case "BCC":
+                    case "BEQ":
+                    case "BNE":
+                    case "BMI":
+                    case "BPL":
+                    case "BVS":
+                    case "BVC":
+                    case "JMP":
+                    case "JSR":
+                    case "RTS":
+                    case "BRK":
+                    case "RTI":
+                    case "SAX":
+                        let addFlag = true;
+                        switch (opcodeInstructionType) {
+                            case "LSR":
+                            case "ASL":
+                            case "ROL":
+                            case "ROR":
+                                if (opcodeAddressMode == "Implied") {
+                                    addFlag = false;
+                                }
+                                break;
+                        }
+
+                        if (addFlag) {
+                            instructionFlags += (instructionFlags ? " | " : "") + "ModifiesAddressingLogic";
+                        }
+                        break;
                 }
 
                 if (!instructionFlags) {

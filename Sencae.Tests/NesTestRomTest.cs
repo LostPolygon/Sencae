@@ -6,7 +6,7 @@ namespace Sencae.Tests;
 
 public class NesTestRomTest {
     [Test]
-    public unsafe void NesTest() {
+    public void NesTest() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
         CartridgeDevice cartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[0]);
@@ -17,13 +17,13 @@ public class NesTestRomTest {
         MachineState oldMachineState = default;
 
         try {
-            Machine machine = EmulateUntilBreak(
+            Machine machine = Emulate(
                 cartridgeDevice, new() {
                     StopOnBRK = false,
                     MaxCycles = 50000,
                     OverrideResetVector = 0xC000,
                     FormatState = FormatState,
-                    OutputState = _ => {
+                    OutputState = s => {
                     },
                     AfterResetAction = machine => {
                         // This is not 100% correct, but nestest.log uses it

@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae; 
 
-public unsafe class PpuDevice : MemoryDevice {
+public readonly unsafe struct PpuDevice : IMemoryDevice {
     public readonly Machine Machine;
 
     public PpuDevice(Machine machine) {

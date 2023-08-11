@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace Sencae; 
 
-public readonly struct ArrayMemoryDevice : MemoryDevice {
+public readonly struct ArrayMemoryDevice : IMemoryDevice {
     public readonly byte[] Memory;
     public readonly int AddressOffset;
 

@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae; 
 
-public interface MemoryDevice {
+public interface IMemoryDevice {
     [MethodImpl(MethodOptions.Options)]
     ref byte GetU8(ushort address);
     

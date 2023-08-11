@@ -19,7 +19,7 @@ public class Benchmarks {
     public Machine Machine { get; private set; }
 
     public ulong Emulate(int maxCycles = 10000) {
-        DebugEmulationRunner.EmulateUntilBreak(
+        DebugEmulationRunner.Emulate(
             Machine,
             new () {
                 MaxCycles = maxCycles,
@@ -28,7 +28,7 @@ public class Benchmarks {
             }
         );
 
-        return Machine.State.Cycle;
+        return Machine.State.Cycles;
     }
 
     [GlobalSetup]

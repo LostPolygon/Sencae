@@ -6,12 +6,12 @@ namespace Sencae.Tests;
 
 public class BasicTests {
     [Test]
-    public unsafe void NesTest() {
+    public void NesTest() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
         CartridgeDevice cartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom);
 
-        Machine machine = EmulateUntilBreak(
+        Machine machine = Emulate(
             cartridgeDevice, new() {
                 StopOnBRK = false,
                 MaxCycles = 5000000, 
@@ -26,7 +26,7 @@ public class BasicTests {
 
     [Test]
     public void Test1() {
-        Machine machine = EmulateUntilBreak(CreateCodeCartridge(
+        Machine machine = Emulate(CreateCodeCartridge(
             """
 
             .0000    a9 01        LDA #$01
@@ -58,7 +58,7 @@ public class BasicTests {
             """
         );
 
-        Machine machine = EmulateUntilBreak(cartridgeDevice, new() { FormatState = FormatCpuStateNesTest });
+        Machine machine = Emulate(cartridgeDevice, new() { FormatState = FormatCpuStateNesTest });
 
         Assert.AreEqual(0xC1, machine.State.Cpu.X);
         Assert.AreEqual(0x84, machine.State.Cpu.A);

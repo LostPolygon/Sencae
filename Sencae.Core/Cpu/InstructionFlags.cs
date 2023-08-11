@@ -8,4 +8,5 @@ public enum InstructionFlags : byte {
     Unofficial = 1 << 0,
     SpecialAddressing = 1 << 1,
     FetchesNextOpcode = 1 << 2,
+    ModifiesAddressingLogic = 1 << 3,
 }

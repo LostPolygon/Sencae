@@ -132,7 +132,7 @@ public class InstrTestV5 {
 
         Machine machine = new Machine(cartridgeDevice);
         try {
-            EmulateUntilBreak(
+            Emulate(
                 machine,
                 new() {
                     StopOnBRK = false,
