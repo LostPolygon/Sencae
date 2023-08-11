@@ -18,7 +18,7 @@ public class Benchmarks {
     public CartridgeDevice CartridgeDevice { get; private set; }
     public Machine Machine { get; private set; }
 
-    public ulong Emulate(int maxCycles = 10000) {
+    public ulong Emulate(ulong maxCycles = 10000) {
         DebugEmulationRunner.Emulate(
             Machine,
             new () {

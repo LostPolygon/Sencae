@@ -1,13 +1,13 @@
 using System;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Libretro.NET.Bindings;
+using static Libretro.NET.Bindings.RetroBindings;
 
 namespace Sencae.LibRetroCore;
 
 public static unsafe class Library {
-    private static readonly Type[] CdeclConv = { typeof(CallConvCdecl) };
-
     private static readonly sbyte* LibraryName = (sbyte*) Marshal.StringToHGlobalAnsi("Sencae");
     private static readonly sbyte* LibraryVersion = (sbyte*) Marshal.StringToHGlobalAnsi("0.1.0");
     private static readonly sbyte* ValidExtensions = (sbyte*) Marshal.StringToHGlobalAnsi("nes");
@@ -21,12 +21,12 @@ public static unsafe class Library {
     private static retro_input_state_t InputStateCallback;
 
     private static uint[] VideoBuffer = new uint[NesConstants.ScreenWidth * NesConstants.ScreenHeight];
+    private static Machine _machine;
 
-    //[DllExport("Init", CallingConvention.Cdecl)]
     [UnmanagedCallersOnly(EntryPoint = "retro_api_version", CallConvs = new[] { typeof(CallConvCdecl) })]
     public static nuint ApiVersion() {
         LogEntrypoint();
-        return RetroBindings.RETRO_API_VERSION;
+        return RETRO_API_VERSION;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_init", CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -34,10 +34,58 @@ public static unsafe class Library {
         LogEntrypoint();
 
         retro_log_callback logCallback;
-        EnvironmentCallback(RetroBindings.RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logCallback);
+        EnvironmentCallback(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logCallback);
         if (logCallback.log != IntPtr.Zero) {
             LogCallback = Marshal.GetDelegateForFunctionPointer<retro_log_printf_t>(logCallback.log);
         }
+
+        sbyte* buttonLeft = (sbyte*) Marshal.StringToHGlobalAnsi("Left!");
+        sbyte* buttonRight = (sbyte*) Marshal.StringToHGlobalAnsi("Right!");
+        sbyte* buttonUp = (sbyte*) Marshal.StringToHGlobalAnsi("Up!");
+        sbyte* buttonDown = (sbyte*) Marshal.StringToHGlobalAnsi("Down!");
+        
+        retro_input_descriptor[] inputDescriptors = {
+            new() { id = 0, index = 0,device =RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_LEFT, description = buttonLeft},
+            new() { id = 0, index = 0,device =RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_RIGHT, description = buttonRight},
+            new() { id = 0, index = 0,device =RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_UP, description = buttonUp},
+            new() { id = 0, index = 0,device =RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_DOWN, description = buttonDown},
+            default
+        };
+        
+        EnvironmentCallback(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, &inputDescriptors);
+
+        // Initialize the emulator
+        Machine machine = new(new CartridgeDevice(new byte[16 * 1024], new byte[8 * 1024]));
+
+        byte[] gameRom = {
+            0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85,
+            0x02, 0xa9, 0x04, 0x85, 0x03, 0xa9, 0x11, 0x85, 0x10, 0xa9, 0x10, 0x85, 0x12, 0xa9, 0x0f, 0x85,
+            0x14, 0xa9, 0x04, 0x85, 0x11, 0x85, 0x13, 0x85, 0x15, 0x60, 0xa5, 0xfe, 0x85, 0x00, 0xa5, 0xfe,
+            0x29, 0x03, 0x18, 0x69, 0x02, 0x85, 0x01, 0x60, 0x20, 0x4d, 0x06, 0x20, 0x8d, 0x06, 0x20, 0xc3,
+            0x06, 0x20, 0x19, 0x07, 0x20, 0x20, 0x07, 0x20, 0x2d, 0x07, 0x4c, 0x38, 0x06, 0xa5, 0xff, 0xc9,
+            0x77, 0xf0, 0x0d, 0xc9, 0x64, 0xf0, 0x14, 0xc9, 0x73, 0xf0, 0x1b, 0xc9, 0x61, 0xf0, 0x22, 0x60,
+            0xa9, 0x04, 0x24, 0x02, 0xd0, 0x26, 0xa9, 0x01, 0x85, 0x02, 0x60, 0xa9, 0x08, 0x24, 0x02, 0xd0,
+            0x1b, 0xa9, 0x02, 0x85, 0x02, 0x60, 0xa9, 0x01, 0x24, 0x02, 0xd0, 0x10, 0xa9, 0x04, 0x85, 0x02,
+            0x60, 0xa9, 0x02, 0x24, 0x02, 0xd0, 0x05, 0xa9, 0x08, 0x85, 0x02, 0x60, 0x60, 0x20, 0x94, 0x06,
+            0x20, 0xa8, 0x06, 0x60, 0xa5, 0x00, 0xc5, 0x10, 0xd0, 0x0d, 0xa5, 0x01, 0xc5, 0x11, 0xd0, 0x07,
+            0xe6, 0x03, 0xe6, 0x03, 0x20, 0x2a, 0x06, 0x60, 0xa2, 0x02, 0xb5, 0x10, 0xc5, 0x10, 0xd0, 0x06,
+            0xb5, 0x11, 0xc5, 0x11, 0xf0, 0x09, 0xe8, 0xe8, 0xe4, 0x03, 0xf0, 0x06, 0x4c, 0xaa, 0x06, 0x4c,
+            0x35, 0x07, 0x60, 0xa6, 0x03, 0xca, 0x8a, 0xb5, 0x10, 0x95, 0x12, 0xca, 0x10, 0xf9, 0xa5, 0x02,
+            0x4a, 0xb0, 0x09, 0x4a, 0xb0, 0x19, 0x4a, 0xb0, 0x1f, 0x4a, 0xb0, 0x2f, 0xa5, 0x10, 0x38, 0xe9,
+            0x20, 0x85, 0x10, 0x90, 0x01, 0x60, 0xc6, 0x11, 0xa9, 0x01, 0xc5, 0x11, 0xf0, 0x28, 0x60, 0xe6,
+            0x10, 0xa9, 0x1f, 0x24, 0x10, 0xf0, 0x1f, 0x60, 0xa5, 0x10, 0x18, 0x69, 0x20, 0x85, 0x10, 0xb0,
+            0x01, 0x60, 0xe6, 0x11, 0xa9, 0x06, 0xc5, 0x11, 0xf0, 0x0c, 0x60, 0xc6, 0x10, 0xa5, 0x10, 0x29,
+            0x1f, 0xc9, 0x1f, 0xf0, 0x01, 0x60, 0x4c, 0x35, 0x07, 0xa0, 0x00, 0xa5, 0xfe, 0x91, 0x00, 0x60,
+            0xa6, 0x03, 0xa9, 0x00, 0x81, 0x10, 0xa2, 0x00, 0xa9, 0x01, 0x81, 0x10, 0x60, 0xa2, 0x00, 0xea,
+            0xea, 0xca, 0xd0, 0xfb, 0x60
+        };
+
+        for (int i = 0; i < gameRom.Length; i++) {
+            machine.CpuMemoryBus.GetU8((ushort) (0x0600 + i)) = gameRom[i];
+        }
+
+        _machine = machine;
+        _machine.Reset(0x0600);
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_deinit", CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -46,7 +94,7 @@ public static unsafe class Library {
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_get_system_info", CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static void GetSystemInfo(retro_system_info* info) {
+    public static void GetSystemInfo([DNNE.C99Type("void*")] retro_system_info* info) {
         LogEntrypoint();
 
         info->library_name = LibraryName;
@@ -56,7 +104,7 @@ public static unsafe class Library {
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_get_system_av_info", CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static void GetSystemAVInfo(retro_system_av_info* info) {
+    public static void GetSystemAVInfo([DNNE.C99Type("void*")] retro_system_av_info* info) {
         LogEntrypoint();
 
         info->timing.fps = NesConstants.Framerate;
@@ -68,7 +116,7 @@ public static unsafe class Library {
         info->geometry.aspect_ratio = NesConstants.ScreenWidth / (float) NesConstants.ScreenHeight;
 
         retro_pixel_format pixelFormat = retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888;
-        EnvironmentCallback(RetroBindings.RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &pixelFormat);
+        EnvironmentCallback(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &pixelFormat);
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_set_environment", CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -78,7 +126,7 @@ public static unsafe class Library {
         EnvironmentCallback = Marshal.GetDelegateForFunctionPointer<retro_environment_t>(callback);
 
         bool value = true;
-        EnvironmentCallback(RetroBindings.RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &value);
+        EnvironmentCallback(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &value);
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_set_audio_sample_batch", CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -107,15 +155,15 @@ public static unsafe class Library {
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_load_game", CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static bool LoadGame(retro_game_info* infoPtr) {
+    public static int LoadGame([DNNE.C99Type("void*")] retro_game_info* infoPtr) {
         LogEntrypoint();
 
-        return true;
+        return 1;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_load_game_special", CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static bool LoadGameSpecial(nuint num_info, nuint game_type, retro_game_info* info) {
-        return false;
+    public static int LoadGameSpecial(uint num_info, nuint game_type, [DNNE.C99Type("void*")] retro_game_info* infoPtr) {
+        return 0;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_unload_game", CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -126,14 +174,67 @@ public static unsafe class Library {
     // Single frame of emulation
     [UnmanagedCallersOnly(EntryPoint = "retro_run", CallConvs = new[] { typeof(CallConvCdecl) })]
     public static void Run() {
-        LogEntrypoint();
+        //LogEntrypoint();
 
-        bool fillRed = Random.Shared.NextDouble() > 0.5;
-        for (int x = 0; x < NesConstants.ScreenWidth; x++) {
-            for (int y = 0; y < NesConstants.ScreenHeight; y++) {
-                VideoBuffer[y * NesConstants.ScreenWidth + x] =
-                    fillRed ? 0xFFFF0000 : (uint) Random.Shared.Next();
+        InputPollCallback();
+        
+        ref byte inputData = ref _machine.CpuMemoryBus.GetU8(0xFF);
+
+        if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT) != 0) {
+            inputData = 0x61;
+        }
+        
+        if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT) != 0) {
+            inputData = 0x64;
+        }
+        
+        if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP) != 0) {
+            inputData = 0x77;
+        }
+        
+        if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN) != 0) {
+            inputData = 0x73;
+        }
+        
+        try {
+            for (int i = 0; i < 100; i++) {
+                //Console.WriteLine(_machine.State.Cycles);
+                _machine.CpuMemoryBus.GetU8(0xFE) = (byte) Random.Shared.Next();
+                _machine.Clock();
             }
+        } catch (NotImplementedException e) {
+            Log(e.ToString());
+            _machine.Reset(0x600);
+            for (int i = 0x200; i < 0x5ff; i++) {
+                _machine.CpuMemoryBus.GetU8((ushort) i) = 0;
+            }
+
+            return;
+        }
+
+        int screenLength = NesConstants.ScreenWidth * NesConstants.ScreenHeight;
+        Span<byte> emulatorScreenMemory = MemoryMarshal.CreateSpan(ref _machine.CpuMemoryBus.GetU8(0x0200), screenLength);
+
+        Color[] paletteColors = new Color[256];
+        for (int i = 0; i < 256; i++) {
+            Color color = i switch {
+                0 => Color.Black,
+                1 => Color.White,
+                2 or 9 => Color.Gray,
+                3 or 10 => Color.Red,
+                4 or 11 => Color.Green,
+                5 or 12 => Color.Blue,
+                6 or 13 => Color.Magenta,
+                7 or 14 => Color.Yellow,
+                _ => Color.Cyan
+            };
+            paletteColors[i] = color;
+        }
+
+        for (int i = 0; i < screenLength; i++) {
+            VideoBuffer[i] = (uint) paletteColors[emulatorScreenMemory[i]].ToArgb();
+
+            //VideoBuffer[i] = (uint) (emulatorScreenMemory[i] != 0 ? 0xFFFF0000 : 0xFF00FF00);
         }
 
         fixed (uint* videoBuffer = VideoBuffer) {
@@ -153,7 +254,7 @@ public static unsafe class Library {
 
     [UnmanagedCallersOnly(EntryPoint = "retro_get_region", CallConvs = new[] { typeof(CallConvCdecl) })]
     public static nuint GetRegion() {
-        return RetroBindings.RETRO_REGION_PAL;
+        return RETRO_REGION_PAL;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_set_controller_port_device", CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -176,13 +277,13 @@ public static unsafe class Library {
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_serialize", CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static bool Serialize(nint size, void* data) {
-        return false;
+    public static int Serialize(nint size, void* data) {
+        return 0;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_unserialize", CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static bool Unserialize(nint size, void* data) {
-        return false;
+    public static int Unserialize(nint size, void* data) {
+        return 0;
     }
 
     // Cheats
@@ -191,7 +292,7 @@ public static unsafe class Library {
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_cheat_set", CallConvs = new[] { typeof(CallConvCdecl) })]
-    public static void CheatSet(char* code, nuint index, bool enabled) {
+    public static void CheatSet(char* code, nuint index, int enabled) {
     }
 
     private static void Log(string message) {

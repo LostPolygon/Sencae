@@ -43,7 +43,7 @@ public static class DebugEmulationRunner {
         Action<string> outputState = options.OutputState ?? Console.WriteLine;
 
         outputState(formatState(machine));
-        for (int i = 0; i < options.MaxCycles; i++) {
+        for (ulong i = 0; i < options.MaxCycles; i++) {
             machine.Clock();
             outputState(formatState(machine));
             if (options.StopOnBRK &&
@@ -56,7 +56,7 @@ public static class DebugEmulationRunner {
 
     public record RunnerOptions {
         public bool StopOnBRK { get; init; } = true;
-        public int MaxCycles { get; set; } = 10000;
+        public ulong MaxCycles { get; set; } = 10000;
         public ushort? OverrideResetVector { get; init; }
         public Action<Machine>? AfterResetAction { get; init; }
         public Func<Machine, string>? FormatState { get; init; }

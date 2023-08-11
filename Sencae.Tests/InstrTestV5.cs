@@ -21,7 +21,7 @@ public class InstrTestV5 {
 
     [Test]
     public void Test_03_Immediate() {
-        (string message, _) = GenericTest("rom_singles/03-immediate");
+        (string message, _) = GenericTest("rom_singles/03-immediate", ulong.MaxValue);
 
         Assert.AreEqual("\n01-basics\n\nPassed\n", message);
     }
@@ -124,7 +124,7 @@ public class InstrTestV5 {
         Assert.AreEqual("\n01-basics\n\nPassed\n", message);
     }
 
-    private(string message, Machine machine) GenericTest(string testRomName, int? maxCycles = null) {
+    private(string message, Machine machine) GenericTest(string testRomName, ulong? maxCycles = null) {
         byte[] testRom = File.ReadAllBytes($"Resources/instr_test-v5/{testRomName}.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
         CartridgeDevice cartridgeDevice =

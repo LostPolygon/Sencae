@@ -7,28 +7,30 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <PublishAot>true</PublishAot>
+    <PropertyGroup Label="DNNE">
         <SelfContained>true</SelfContained>
-        <NativeLib>Shared</NativeLib>
+        <EnableDynamicLoading>true</EnableDynamicLoading>
+        <DnneSelfContained_Experimental>true</DnneSelfContained_Experimental>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     </PropertyGroup>
-
-    <PropertyGroup>
+    
+    <PropertyGroup Condition="False">
+        <PublishAot>true</PublishAot>
+        <NativeLib>Shared</NativeLib>
+        
         <IlcDisableReflection>true</IlcDisableReflection>
         <RootAllApplicationAssemblies>false</RootAllApplicationAssemblies>
         <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
         <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
         <IlcDisableUnhandledExceptionExperience>false</IlcDisableUnhandledExceptionExperience>
         <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
-    </PropertyGroup>
-    
-    <PropertyGroup>
+        
         <PublishTrimmed>true</PublishTrimmed>
         <TrimMode>full</TrimMode>
-        <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
 
         <AutoreleasePoolSupport>false</AutoreleasePoolSupport>
-        <DebuggerSupport>false</DebuggerSupport>
+        <DebuggerSupport>true</DebuggerSupport>
         <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
         <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
         <EventSourceSupport>false</EventSourceSupport>
@@ -45,7 +47,7 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="DllExport" Version="1.7.4" />
+        <PackageReference Include="DNNE" Version="2.*" />
         <PackageReference Include="Libretro.NET" Version="0.1.0"/>
     </ItemGroup>
 
