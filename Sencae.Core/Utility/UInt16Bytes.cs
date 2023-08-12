@@ -17,7 +17,5 @@ public struct UInt16Bytes {
 
     public override string ToString() => $"{Value} (0x{Value:X00})";
 
-    public static implicit operator ushort(UInt16Bytes value) => value.Value;
-
-    public static implicit operator UInt16Bytes(ushort value) => new(value);
+    public static explicit operator ushort(UInt16Bytes value) => value.Value;
 }

@@ -5,6 +5,7 @@
         <TargetFramework>net7.0</TargetFramework>
         <LangVersion>default</LangVersion>
 		<TieredPGO>true</TieredPGO>
+		<Nullable>enable</Nullable>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

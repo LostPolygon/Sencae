@@ -22,16 +22,18 @@ internal static class Program {
 
             Console.WriteLine("Warming up...");
             for (int i = 0; i < 500; i++) {
-                benchmarks.Emulate(50000);
+                benchmarks.Emulate();
             }
 
             Console.WriteLine("Starting benchmark...");
 
-            const int iterations = 10000;
+            const int iterations = 25000;
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++) {
-                TotalCycles += benchmarks.Emulate(50000);
+                TotalCycles += benchmarks.Emulate();
             }
+            
+            benchmarks.EmulateWithStats();
 
             sw.Stop();
 

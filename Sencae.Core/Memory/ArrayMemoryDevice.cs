@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Sencae; 
+namespace Sencae;
 
 public readonly struct ArrayMemoryDevice : IMemoryDevice {
     public readonly byte[] Memory;
@@ -16,7 +16,7 @@ public readonly struct ArrayMemoryDevice : IMemoryDevice {
 
     [MethodImpl(MethodOptions.Options)]
     public ref byte GetU8(ushort address) {
-        int index = CalculateAddress(address) % Memory.Length;
+        int index = CalculateIndex(address);
         Debug.Assert(index is >= 0 and <= UInt16.MaxValue, "index is >= 0 and <= UInt16.MaxValue", index.ToString());
         ref byte data = ref MemoryMarshal.GetArrayDataReference(Memory);
         data = ref Unsafe.Add(ref data, index);
@@ -24,5 +24,5 @@ public readonly struct ArrayMemoryDevice : IMemoryDevice {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private int CalculateAddress(ushort address) => address - AddressOffset;
+    private int CalculateIndex(ushort address) => (address - AddressOffset) % Memory.Length;
 }

@@ -45,12 +45,12 @@ public static class AddressingModeLogic {
                 cpuInternal.AddressBus = cpu.PC;
                 break;
             case 1:
-                cpuInternal.Temporary = cpuInternal.DataBus;
+                cpuInternal.Temporary.Low = cpuInternal.DataBus;
                 cpu.PC.Value++;
                 cpuInternal.AddressBus = cpu.PC;
                 break;
             case 2:
-                cpuInternal.AddressBus.Low = (byte) cpuInternal.Temporary;
+                cpuInternal.AddressBus.Low = cpuInternal.Temporary.Low;
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
 
                 return true;
@@ -75,7 +75,7 @@ public static class AddressingModeLogic {
                 cpuInternal.AddressBus = cpu.PC;
                 break;
             case 1:
-                cpuInternal.AddressBus = cpuInternal.DataBus;
+                cpuInternal.AddressBus.Value = cpuInternal.DataBus;
 
                 return true;
         }
@@ -141,12 +141,12 @@ public static class AddressingModeLogic {
 
                 break;
             case 2: // fetch ADH
-                cpuInternal.Temporary = cpuInternal.DataBus;
+                cpuInternal.Temporary.Low = cpuInternal.DataBus;
                 cpuInternal.AddressBus.Value = (byte) (cpuInternal.AddressBus.Value + 1);
 
                 break;
             case 3:
-                cpuInternal.AddressBus.Low = (byte) cpuInternal.Temporary;
+                cpuInternal.AddressBus.Low = cpuInternal.Temporary.Low;
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
 
                 return true;
@@ -167,12 +167,12 @@ public static class AddressingModeLogic {
 
                 break;
             case 2: // fetch ADH
-                cpuInternal.Temporary = cpuInternal.DataBus;
+                cpuInternal.Temporary.Low = cpuInternal.DataBus;
                 cpuInternal.AddressBus.Value = (byte) (cpuInternal.AddressBus.Value + 1);
 
                 break;
             case 3:
-                cpuInternal.AddressBus.Low = (byte) cpuInternal.Temporary;
+                cpuInternal.AddressBus.Low = cpuInternal.Temporary.Low;
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
                 cpuInternal.AddressBus.Value = (ushort) (cpuInternal.AddressBus.Value + cpu.Y);
 

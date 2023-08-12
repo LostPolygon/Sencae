@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Sencae;
@@ -31,7 +30,7 @@ public class Machine {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
 
-        ref byte dataBus = ref CpuMemoryBus.GetU8(cpuInternal.AddressBus);
+        ref byte dataBus = ref CpuMemoryBus.GetU8(cpuInternal.AddressBus.Value);
         if (!cpuInternal.Read) {
             dataBus = cpuInternal.DataBus;
         } else {

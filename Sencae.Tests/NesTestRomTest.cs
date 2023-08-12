@@ -75,7 +75,8 @@ public class NesTestRomTest {
             if (machineState.Cpu.Internal.State != CpuInternalState.ExecutionState.InterpretOpcode)
                 return text;
 
-            machineState.Cpu.Internal.Instruction = Sencae.Instructions.DescriptorByOpcode[machine.CpuMemoryBus.GetU8(machineState.Cpu.PC)];
+            machineState.Cpu.Internal.Instruction = 
+                Sencae.Instructions.DescriptorByOpcode[machine.CpuMemoryBus.GetU8(machineState.Cpu.PC.Value)];
 
             text = FormatCpuStateNesTest(machine, machineState).Trim();
             logOutput.Add(text);
@@ -99,7 +100,7 @@ public class NesTestRomTest {
         string hexDump = "";
         byte instructionOpcodeSize = instruction.OpcodeSize;
         for (int i = 0; i < instructionOpcodeSize; i++) {
-            byte data = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC + i));
+            byte data = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + i));
             hexDump += $"{data:X2} ";
         }
 
@@ -107,7 +108,7 @@ public class NesTestRomTest {
         hexDump += (instruction.Flags & InstructionFlags.Unofficial) != 0 ? "*" : " ";
 
         string asmDump = $"{instruction.Type} ";
-        byte dataP1 = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC + 1));
+        byte dataP1 = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 1));
         UInt16Bytes dataU16 = default;
         dataU16.Low = dataP1;
 
@@ -123,8 +124,8 @@ public class NesTestRomTest {
                 asmDump += $"#${dataP1:X2}";
                 break;
             case AddressingMode.Absolute: {
-                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC + 2));
-                byte targetData = machine.CpuMemoryBus.GetU8(dataU16);
+                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 2));
+                byte targetData = machine.CpuMemoryBus.GetU8(dataU16.Value);
                 asmDump += $"${dataU16.Value:X4}";
                 if (!instruction.Flags.HasFlag(InstructionFlags.FetchesNextOpcode)) {
                     asmDump += $" = {targetData:X2}";
@@ -149,8 +150,8 @@ public class NesTestRomTest {
                         throw new ArgumentOutOfRangeException();
                 }
 
-                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC + 2));
-                ushort effectiveAddress = (ushort) (dataU16 + index);
+                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 2));
+                ushort effectiveAddress = (ushort) (dataU16.Value + index);
                 byte targetData = machine.CpuMemoryBus.GetU8(effectiveAddress);
                 asmDump += $"${dataU16.Value:X4},{indexName} @ {effectiveAddress:X4}";
                 if (true || instruction.Flags.HasFlag(InstructionFlags.FetchesNextOpcode)) {
@@ -187,16 +188,16 @@ public class NesTestRomTest {
                 break;
             }
             case AddressingMode.AbsoluteIndirect: {
-                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC + 2));
+                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 2));
                 UInt16Bytes effectiveAddressAddress = dataU16;
                 bool pageBoundaryBug = effectiveAddressAddress.Low == 0xFF;
 
                 UInt16Bytes effectiveAddress = default;
-                effectiveAddress.Low = machine.CpuMemoryBus.GetU8(effectiveAddressAddress);
+                effectiveAddress.Low = machine.CpuMemoryBus.GetU8(effectiveAddressAddress.Value);
                 effectiveAddress.High = machine.CpuMemoryBus.GetU8(
                     (ushort) (pageBoundaryBug ?
-                        effectiveAddressAddress & 0xFF00 :
-                        effectiveAddressAddress + 1)
+                        effectiveAddressAddress.Value & 0xFF00 :
+                        effectiveAddressAddress.Value + 1)
                 );
 
                 asmDump += $"(${effectiveAddressAddress.Value:X4}) = {effectiveAddress.Value:X4}";
@@ -220,7 +221,7 @@ public class NesTestRomTest {
                     Low = machine.CpuMemoryBus.GetU8((byte) effectiveAddressAddress),
                     High = machine.CpuMemoryBus.GetU8((byte) (effectiveAddressAddress + 1)),
                 };
-                ushort effectiveAddressIndexed = (ushort) (effectiveAddress + cpu.Y);
+                ushort effectiveAddressIndexed = (ushort) (effectiveAddress.Value + cpu.Y);
                 byte targetData = machine.CpuMemoryBus.GetU8(effectiveAddressIndexed);
 
                 asmDump += $"(${dataP1:X2}),Y = {effectiveAddress.Value:X4} @ {effectiveAddressIndexed:X4} = {targetData:X2}";
@@ -228,7 +229,7 @@ public class NesTestRomTest {
             }
             case AddressingMode.Relative: {
                 // +2 for instruction size itself
-                ushort effectiveAddress = (ushort) (machineState.Cpu.PC + (sbyte) dataP1 + 2);
+                ushort effectiveAddress = (ushort) (machineState.Cpu.PC.Value + (sbyte) dataP1 + 2);
                 asmDump += $"${effectiveAddress:X4}";
                 break;
             }

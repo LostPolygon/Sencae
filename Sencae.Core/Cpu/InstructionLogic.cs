@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+
 // ReSharper disable InconsistentNaming
 // ReSharper disable UnusedParameter.Local
 
@@ -10,12 +11,14 @@ using I = InstructionType;
 public static class InstructionLogic {
     public const int AfterAddressingFinished = -1;
     public const int AfterNextOpcodeFetched = 100;
-    
+
     #region Dispatcher
 
+    // Enabling inlining here actually reduces perf on x64 by about 25%!
+    //[MethodImpl(MethodOptions.Options)]
     public static bool Dispatch(ref CpuState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
         int operationCycle = cpuInternal.OperationCycle;
-        
+
         return instructionType switch {
             // Transfer Instructions
 
@@ -294,7 +297,7 @@ public static class InstructionLogic {
                 break;
             case 0:
                 cpuInternal.Read = false;
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 cpuInternal.DataBus = cpu.A;
                 cpu.SP--;
 
@@ -314,7 +317,7 @@ public static class InstructionLogic {
                 break;
             case 0:
                 cpu.SP++;
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 break;
             case 1:
                 cpuInternal.AddressBus = cpu.PC;
@@ -339,7 +342,7 @@ public static class InstructionLogic {
                 break;
             case 0:
                 cpuInternal.Read = false;
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
 
                 CpuStatusRegisterFlags statusFlags = cpu.P | CpuStatusRegisterFlags.BreakFlag;
                 cpuInternal.DataBus = (byte) statusFlags;
@@ -359,7 +362,7 @@ public static class InstructionLogic {
                 break;
             case 0:
                 cpu.SP++;
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 break;
             case 1:
                 cpuInternal.AddressBus = cpu.PC;
@@ -410,7 +413,7 @@ public static class InstructionLogic {
                 cpuInternal.Temporary.Low = (byte) (cpuInternal.DataBus - 1);
                 break;
             case 1:
-                cpuInternal.DataBus = (byte) cpuInternal.Temporary;
+                cpuInternal.DataBus = cpuInternal.Temporary.Low;
                 return true;
             case AfterNextOpcodeFetched:
                 SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpuInternal.Temporary.Low);
@@ -843,7 +846,7 @@ public static class InstructionLogic {
             case 0:
                 cpu.PC.Value++;
                 if (condition) {
-                    cpu.PC = (ushort) (cpu.PC + (sbyte) cpuInternal.DataBus);
+                    cpu.PC.Value = (ushort) (cpu.PC.Value + (sbyte) cpuInternal.DataBus);
                 }
 
                 cpuInternal.AddressBus = cpu.PC;
@@ -879,7 +882,7 @@ public static class InstructionLogic {
                 break;
             case 0:
                 cpuInternal.Temporary.Low = cpuInternal.DataBus;
-                cpuInternal.AddressBus = stackAddress;
+                cpuInternal.AddressBus.Value = stackAddress;
                 cpu.PC.Value++;
                 break;
             case 1:
@@ -895,11 +898,9 @@ public static class InstructionLogic {
                 break;
             case 3:
                 cpuInternal.Read = true;
-                cpuInternal.AddressBus.Value = cpu.PC;
+                cpuInternal.AddressBus = cpu.PC;
                 break;
             case 4:
-                cpuInternal.Read = true;
-
                 // subroutine address
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;
                 cpuInternal.AddressBus.Low = cpuInternal.Temporary.Low;
@@ -919,7 +920,7 @@ public static class InstructionLogic {
 
                 break;
             case 0:
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 break;
             case 1:
                 cpuInternal.AddressBus.Value++;
@@ -932,7 +933,7 @@ public static class InstructionLogic {
                 break;
             case 3:
                 cpu.PC.High = cpuInternal.DataBus;
-                cpuInternal.AddressBus.Value = cpu.PC;
+                cpuInternal.AddressBus = cpu.PC;
                 return true;
         }
 
@@ -954,29 +955,29 @@ public static class InstructionLogic {
             case 0:
                 cpuInternal.Read = false;
 
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 cpuInternal.DataBus = cpu.PC.High;
                 cpu.P.SetFlag(CpuStatusRegisterFlags.BreakFlag);
 
                 cpu.SP--;
                 break;
             case 1:
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 cpuInternal.DataBus = cpu.PC.Low;
                 cpu.SP--;
                 break;
             case 2:
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 cpuInternal.DataBus = (byte) cpu.P;
                 cpu.SP--;
                 break;
             case 3:
                 cpuInternal.Read = true;
-                cpuInternal.AddressBus = 0xFFFE;
+                cpuInternal.AddressBus.Value = 0xFFFE;
                 break;
             case 4:
                 cpu.PC.Low = cpuInternal.DataBus;
-                cpuInternal.AddressBus = 0xFFFF;
+                cpuInternal.AddressBus.Value = 0xFFFF;
                 break;
             case 5:
                 cpu.PC.High = cpuInternal.DataBus;
@@ -997,7 +998,7 @@ public static class InstructionLogic {
                 break;
             case 0:
                 cpu.SP++;
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 break;
             case 1:
                 cpu.P = (CpuStatusRegisterFlags) cpuInternal.DataBus &
@@ -1005,7 +1006,7 @@ public static class InstructionLogic {
                     CpuStatusRegisterFlags.Unused;
 
                 cpu.SP++;
-                cpuInternal.AddressBus = CalculateStackAddress(cpu.SP);
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 break;
             case 2:
                 cpu.PC.Low = cpuInternal.DataBus;
