@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <RootNamespace>Sencae</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <OutputType>Exe</OutputType>
+        <LangVersion>default</LangVersion>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PublishAot>true</PublishAot>
+        <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+        <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+        <DebuggerSupport>false</DebuggerSupport>
+        <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+        <EventSourceSupport>false</EventSourceSupport>
+        <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+        <UseNativeHttpHandler>true</UseNativeHttpHandler>
+        <UseSystemResourceKeys>true</UseSystemResourceKeys>
+        <SelfContained>true</SelfContained>
+        <PublishAot>true</PublishAot>
+        <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+        <StripSymbols>true</StripSymbols>
+        <PublishReadyToRun>false</PublishReadyToRun>
+        <IlcScanReflection>false</IlcScanReflection>
+        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+        <IlcTrimMetadata>true</IlcTrimMetadata>
+        <IlcInvariantGlobalization>false</IlcInvariantGlobalization>
+        <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
+        
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <DefineConstants>TRACE;NETSTANDARD2_0</DefineConstants>
+        <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <DefineConstants>TRACE;NETSTANDARD2_0</DefineConstants>
+        <PlatformTarget>x64</PlatformTarget>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
+        <PackageReference Include="Cyotek.CircularBuffer" Version="1.2.1"/>
+        <PackageReference Include="ImGui.SDL.Spectrum.NET" Version="1.89.0" />
+        <PackageReference Include="ppy.SDL2-CS" Version="1.0.671-alpha" />
+        <PackageReference Include="SDL-Sharp-DLL" Version="2.1.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Remove="C:\Users\ZimM\.nuget\packages\ppy.sdl2-cs\1.0.630-alpha\contentFiles\any\netstandard2.0\app.config"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="app.manifest" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="Resources\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <Target Name="CopyNativeLibs" AfterTargets="AfterBuild">
+        <Copy SourceFiles="@(NativeLibFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true"/>
+    </Target>
+
+
+</Project>

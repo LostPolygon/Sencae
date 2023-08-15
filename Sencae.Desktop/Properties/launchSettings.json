@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Sencae": {
+      "commandName": "Project",
+      "commandLineArgs": "-r tetris"
+    }
+  }
+}

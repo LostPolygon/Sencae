@@ -15,15 +15,11 @@ public static class CpuStatusRegisterFlagsExtensions {
     
     [MethodImpl(MethodOptions.Options)]
     public static void SetFlag(this ref CpuStatusRegisterFlags value, CpuStatusRegisterFlags flag, bool flagSet) {
-        // https://graphics.stanford.edu/~seander/bithacks.html#ConditionalSetOrClearBitsWithoutBranching
-        
-        value ^= (CpuStatusRegisterFlags) ((-(flagSet ? 1 : 0) ^ (int) value) & (int) flag);
-        
-        /*if (flagSet) {
+        if (flagSet) {
             SetFlag(ref value, flag);
         } else {
             RemoveFlag(ref value, flag);
-        }*/
+        }
     }
     
     [MethodImpl(MethodOptions.Options)]

@@ -8,15 +8,17 @@ using Sencae.SharedUtility;
 
 namespace Sencae.Benchmark;
 
-[DisassemblyDiagnoser(
+
+[RyuJitX86Job]
+[RyuJitX64Job]
+/*[DisassemblyDiagnoser(
     printSource: true,
     exportHtml: true,
     printInstructionAddresses: true,
     maxDepth: 100
-)]
-[RyuJitX64Job]
-[TailCallDiagnoser(filterByNamespace: false)]
-[InliningDiagnoser(allowedNamespaces: new[] { "Sencae" })]
+)]*/
+//[TailCallDiagnoser(filterByNamespace: false)]
+//[InliningDiagnoser(allowedNamespaces: new[] { "Sencae" })]
 public class Benchmarks {
     public CartridgeDevice CartridgeDevice { get; private set; }
     public Machine Machine { get; private set; }
@@ -74,24 +76,12 @@ public class Benchmarks {
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
         CartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[0]);
 
-        /*CartridgeDevice = DebugEmulationRunner.CreateCodeCartridge(
-            """
-
-            .0000    a9 01        LDA #$01
-            .0002    8d 00 02     STA $0200
-            .0005    a9 05        LDA #$05
-            .0007    8d 01 02     STA $0201
-            .000a    a9 08        LDA #$08
-            .000c    8d 02 02     STA $0202
-
-            """
-        );*/
         Machine = new Machine(CartridgeDevice);
     }
 
     [Benchmark(Baseline = true)]
-    [IterationCount(1000)]
+    [IterationCount(100)]
     public void Test1() {
-        Emulate();
+        Emulate(formatState: _ => "");
     }
 }

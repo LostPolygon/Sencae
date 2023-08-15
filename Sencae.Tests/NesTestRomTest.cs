@@ -9,13 +9,14 @@ public class NesTestRomTest {
     public void NesTest() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[0]);
+        CartridgeDevice cartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[8 * 1024]);
 
         List<string> logOutput = new();
 
         bool firstStateSet = false;
         MachineState oldMachineState = default;
 
+        Exception? emulationException = null;
         try {
             Machine machine = Emulate(
                 cartridgeDevice, new() {
@@ -28,11 +29,20 @@ public class NesTestRomTest {
                     AfterResetAction = machine => {
                         // This is not 100% correct, but nestest.log uses it
                         machine.State.Cpu.P = (CpuStatusRegisterFlags) 0x24;
+                        
+                        // nestest expects a certain (incorrect) state on powerup
+                        machine.CpuMemoryBus.GetU8(0x4004) = 0xFF;
+                        machine.CpuMemoryBus.GetU8(0x4005) = 0xFF;
+                        machine.CpuMemoryBus.GetU8(0x4006) = 0xFF;
+                        machine.CpuMemoryBus.GetU8(0x4007) = 0xFF;
+                        machine.CpuMemoryBus.GetU8(0x4015) = 0xFF;
                     }
                 });
         } catch (Exception e) {
             if (e is AssertionException)
                 throw;
+
+            emulationException = e;
             Console.WriteLine("Exception: " + e);
         }
 
@@ -61,6 +71,8 @@ public class NesTestRomTest {
         for (int i = 0; i < logSize; i++) {
             Console.WriteLine(logOutput[i]);
         }
+        
+        Assert.Null(emulationException);
 
         return;
 
@@ -107,7 +119,11 @@ public class NesTestRomTest {
         hexDump = hexDump.PadRight(9, ' ');
         hexDump += (instruction.Flags & InstructionFlags.Unofficial) != 0 ? "*" : " ";
 
-        string asmDump = $"{instruction.Type} ";
+        string asmDump = instruction.Type switch {
+            InstructionType.ISC => "ISB",
+            _ => $"{instruction.Type}"
+        };
+        asmDump += " ";
         byte dataP1 = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 1));
         UInt16Bytes dataU16 = default;
         dataU16.Low = dataP1;
@@ -252,11 +268,8 @@ public class NesTestRomTest {
             $"Y:{cpu.Y:X2} " +
             $"P:{(int) cpu.P:X2} " +
             $"SP:{cpu.SP:X2} " +
-
             //$"CYC:{machineState.Cycle + cycleOffset} " +
             ""
-
-            //$"({cpu.Internal.State} - {instruction.Type} - {instruction.AddressingMode})"
             ;
     }
 }

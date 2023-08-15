@@ -450,6 +450,12 @@
                     case "BRK":
                     case "RTI":
                     case "SAX":
+                    case "DCP":
+                    case "ISC":
+                    case "RLA":
+                    case "RRA":
+                    case "SLO":
+                    case "SRE":
                         let addFlag = true;
                         switch (opcodeInstructionType) {
                             case "LSR":
@@ -463,7 +469,7 @@
                         }
 
                         if (addFlag) {
-                            instructionFlags += (instructionFlags ? " | " : "") + "ModifiesAddressingLogic";
+                            instructionFlags += (instructionFlags ? " | " : "") + "HasMemoryReadWriteLogic";
                         }
                         break;
                 }

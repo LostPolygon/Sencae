@@ -30,12 +30,13 @@ internal static class Program {
             const int iterations = 25000;
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++) {
-                TotalCycles += benchmarks.Emulate();
+                ulong cycles = benchmarks.Emulate();
+                TotalCycles += cycles;
             }
-            
-            benchmarks.EmulateWithStats();
 
             sw.Stop();
+
+            benchmarks.EmulateWithStats();
 
             Console.WriteLine(
                 $"{iterations} iterations took {sw.Elapsed}, " +

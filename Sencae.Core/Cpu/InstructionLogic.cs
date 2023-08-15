@@ -10,12 +10,12 @@ using I = InstructionType;
 
 public static class InstructionLogic {
     public const int AfterAddressingFinished = -1;
-    public const int AfterNextOpcodeFetched = 100;
+    public const int AfterNextOpcodeFetched = -2;
 
     #region Dispatcher
 
     // Enabling inlining here actually reduces perf on x64 by about 25%!
-    //[MethodImpl(MethodOptions.Options)]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static bool Dispatch(ref CpuState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
         int operationCycle = cpuInternal.OperationCycle;
 
@@ -84,6 +84,12 @@ public static class InstructionLogic {
             I.CPX => CPX(operationCycle, ref cpu, ref cpuInternal), // compare with X
             I.CPY => CPY(operationCycle, ref cpu, ref cpuInternal), // compare with Y 
 
+            // Jumps & Subroutines
+
+            I.JMP => JMP(operationCycle, ref cpu, ref cpuInternal), // jump
+            I.JSR => JSR(operationCycle, ref cpu, ref cpuInternal), // jump subroutine
+            I.RTS => RTS(operationCycle, ref cpu, ref cpuInternal), // return from subroutine 
+
             // Conditional Branch Instructions
 
             I.BCS => BCS(operationCycle, ref cpu, ref cpuInternal), // branch on carry set
@@ -94,12 +100,6 @@ public static class InstructionLogic {
             I.BPL => BPL(operationCycle, ref cpu, ref cpuInternal), // branch on plus (negative clear)
             I.BVS => BVS(operationCycle, ref cpu, ref cpuInternal), // branch on overflow set 
             I.BVC => BVC(operationCycle, ref cpu, ref cpuInternal), // branch on overflow clear
-
-            // Jumps & Subroutines
-
-            I.JMP => JMP(operationCycle, ref cpu, ref cpuInternal), // jump
-            I.JSR => JSR(operationCycle, ref cpu, ref cpuInternal), // jump subroutine
-            I.RTS => RTS(operationCycle, ref cpu, ref cpuInternal), // return from subroutine 
 
             // Interrupts
 
@@ -114,12 +114,12 @@ public static class InstructionLogic {
             // Unofficial
 
             I.STP => XXX(operationCycle, ref cpu, ref cpuInternal),
-            I.SLO => XXX(operationCycle, ref cpu, ref cpuInternal),
+            I.SLO => SLO(operationCycle, ref cpu, ref cpuInternal),
             I.ANC => XXX(operationCycle, ref cpu, ref cpuInternal),
-            I.RLA => XXX(operationCycle, ref cpu, ref cpuInternal),
-            I.SRE => XXX(operationCycle, ref cpu, ref cpuInternal),
+            I.RLA => RLA(operationCycle, ref cpu, ref cpuInternal),
+            I.SRE => SRE(operationCycle, ref cpu, ref cpuInternal),
             I.ALR => XXX(operationCycle, ref cpu, ref cpuInternal),
-            I.RRA => XXX(operationCycle, ref cpu, ref cpuInternal),
+            I.RRA => RRA(operationCycle, ref cpu, ref cpuInternal),
             I.SHY => XXX(operationCycle, ref cpu, ref cpuInternal),
             I.ARR => XXX(operationCycle, ref cpu, ref cpuInternal),
             I.SHX => XXX(operationCycle, ref cpu, ref cpuInternal),
@@ -129,9 +129,9 @@ public static class InstructionLogic {
             I.TAS => XXX(operationCycle, ref cpu, ref cpuInternal),
             I.LAX => LAX(operationCycle, ref cpu, ref cpuInternal),
             I.LAS => XXX(operationCycle, ref cpu, ref cpuInternal),
-            I.DCP => XXX(operationCycle, ref cpu, ref cpuInternal),
+            I.DCP => DCP(operationCycle, ref cpu, ref cpuInternal),
             I.AXS => XXX(operationCycle, ref cpu, ref cpuInternal),
-            I.ISC => XXX(operationCycle, ref cpu, ref cpuInternal),
+            I.ISC => ISC(operationCycle, ref cpu, ref cpuInternal),
 
             _ => XXX(operationCycle, ref cpu, ref cpuInternal)
         };
@@ -292,7 +292,6 @@ public static class InstructionLogic {
     public static bool PHA(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         switch (operationCycle) {
             case AfterAddressingFinished:
-                //cpu.PC.Value++;
                 cpuInternal.AddressBus = cpu.PC;
                 break;
             case 0:
@@ -300,8 +299,6 @@ public static class InstructionLogic {
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 cpuInternal.DataBus = cpu.A;
                 cpu.SP--;
-
-                //cpu.PC.Value++;
                 return true;
         }
 
@@ -312,7 +309,6 @@ public static class InstructionLogic {
     public static bool PLA(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         switch (operationCycle) {
             case AfterAddressingFinished:
-                //cpu.PC.Value++;
                 cpuInternal.AddressBus = cpu.PC;
                 break;
             case 0:
@@ -336,10 +332,6 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool PHP(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         switch (operationCycle) {
-            case AfterAddressingFinished:
-                //cpu.PC.Value++;
-                //cpuInternal.AddressBus = cpu.PC;
-                break;
             case 0:
                 cpuInternal.Read = false;
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
@@ -356,10 +348,6 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool PLP(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         switch (operationCycle) {
-            case AfterAddressingFinished:
-                //cpu.PC.Value++;
-                cpuInternal.AddressBus = cpu.PC;
-                break;
             case 0:
                 cpu.SP++;
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
@@ -386,8 +374,6 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool INC(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         switch (operationCycle) {
-            case AfterAddressingFinished:
-                break;
             case 0:
                 cpuInternal.Read = false;
                 cpuInternal.Temporary.Low = (byte) (cpuInternal.DataBus + 1);
@@ -406,8 +392,6 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool DEC(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         switch (operationCycle) {
-            case AfterAddressingFinished:
-                break;
             case 0:
                 cpuInternal.Read = false;
                 cpuInternal.Temporary.Low = (byte) (cpuInternal.DataBus - 1);
@@ -697,75 +681,53 @@ public static class InstructionLogic {
 
     [MethodImpl(MethodOptions.Options)]
     public static bool CLC(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        switch (operationCycle) {
-            case AfterNextOpcodeFetched:
-                cpu.P.RemoveFlag(CpuStatusRegisterFlags.Carry);
-                break;
-        }
-
-        return false;
+        return RemoveFlagInternal(operationCycle, ref cpu, CpuStatusRegisterFlags.Carry);
     }
 
     [MethodImpl(MethodOptions.Options)]
     public static bool CLD(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        switch (operationCycle) {
-            case AfterNextOpcodeFetched:
-                cpu.P.RemoveFlag(CpuStatusRegisterFlags.DecimalMode);
-                break;
-        }
-
-        return false;
+        return RemoveFlagInternal(operationCycle, ref cpu, CpuStatusRegisterFlags.DecimalMode);
     }
 
     [MethodImpl(MethodOptions.Options)]
     public static bool CLI(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        switch (operationCycle) {
-            case AfterNextOpcodeFetched:
-                cpu.P.RemoveFlag(CpuStatusRegisterFlags.InterruptDisable);
-                break;
-        }
-
-        return false;
+        return RemoveFlagInternal(operationCycle, ref cpu, CpuStatusRegisterFlags.InterruptDisable);
     }
 
     [MethodImpl(MethodOptions.Options)]
     public static bool CLV(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        switch (operationCycle) {
-            case AfterNextOpcodeFetched:
-                cpu.P.RemoveFlag(CpuStatusRegisterFlags.Overflow);
-                break;
-        }
-
-        return false;
+        return RemoveFlagInternal(operationCycle, ref cpu, CpuStatusRegisterFlags.Overflow);
     }
 
     [MethodImpl(MethodOptions.Options)]
     public static bool SEC(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        switch (operationCycle) {
-            case AfterNextOpcodeFetched:
-                cpu.P.SetFlag(CpuStatusRegisterFlags.Carry);
-                break;
-        }
-
-        return false;
+        return SetFlagInternal(operationCycle, ref cpu, CpuStatusRegisterFlags.Carry);
     }
 
     [MethodImpl(MethodOptions.Options)]
     public static bool SED(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        return SetFlagInternal(operationCycle, ref cpu, CpuStatusRegisterFlags.DecimalMode);
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool SEI(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        return SetFlagInternal(operationCycle, ref cpu, CpuStatusRegisterFlags.InterruptDisable);
+    }
+
+    private static bool SetFlagInternal(int operationCycle, ref CpuState cpu, CpuStatusRegisterFlags flag) {
         switch (operationCycle) {
             case AfterNextOpcodeFetched:
-                cpu.P.SetFlag(CpuStatusRegisterFlags.DecimalMode);
+                cpu.P.SetFlag(flag);
                 break;
         }
 
         return false;
     }
 
-    [MethodImpl(MethodOptions.Options)]
-    public static bool SEI(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+    private static bool RemoveFlagInternal(int operationCycle, ref CpuState cpu, CpuStatusRegisterFlags flag) {
         switch (operationCycle) {
             case AfterNextOpcodeFetched:
-                cpu.P.SetFlag(CpuStatusRegisterFlags.InterruptDisable);
+                cpu.P.RemoveFlag(flag);
                 break;
         }
 
@@ -792,16 +754,35 @@ public static class InstructionLogic {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private static bool CMP_Internal(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal, ref byte comparedValue) {
+    private static bool CMP_Internal(
+        int operationCycle,
+        ref CpuState cpu,
+        ref CpuInternalState cpuInternal,
+        ref byte comparedValue
+    ) {
         switch (operationCycle) {
             case AfterNextOpcodeFetched:
-                byte result = (byte) (comparedValue - cpuInternal.DataBus);
-                cpu.P.SetFlag(CpuStatusRegisterFlags.Carry, cpuInternal.DataBus <= comparedValue);
-                SetGenericZeroAndNegativeSignFlags(ref cpu.P, result);
+                CMP_Internal_SetCompareFlags(operationCycle, ref cpu, ref cpuInternal, comparedValue);
                 break;
         }
 
         return false;
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    private static void CMP_Internal_SetCompareFlags(
+        int operationCycle,
+        ref CpuState cpu,
+        ref CpuInternalState cpuInternal,
+        byte comparedValue
+    ) {
+        byte result = (byte) (comparedValue - cpuInternal.DataBus);
+        switch (operationCycle) {
+            case AfterNextOpcodeFetched:
+                cpu.P.SetFlag(CpuStatusRegisterFlags.Carry, cpuInternal.DataBus <= comparedValue);
+                SetGenericZeroAndNegativeSignFlags(ref cpu.P, result);
+                break;
+        }
     }
 
     #endregion
@@ -873,7 +854,6 @@ public static class InstructionLogic {
 
     [MethodImpl(MethodOptions.Options)]
     public static bool JSR(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        ushort stackAddress = CalculateStackAddress(cpu.SP);
         switch (operationCycle) {
             case AfterAddressingFinished:
                 cpu.PC.Value++;
@@ -882,12 +862,12 @@ public static class InstructionLogic {
                 break;
             case 0:
                 cpuInternal.Temporary.Low = cpuInternal.DataBus;
-                cpuInternal.AddressBus.Value = stackAddress;
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 cpu.PC.Value++;
                 break;
             case 1:
                 cpuInternal.Read = false;
-                cpuInternal.AddressBus.Value = stackAddress;
+                cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 cpuInternal.DataBus = cpu.PC.High;
                 cpu.SP--;
                 break;
@@ -1046,11 +1026,6 @@ public static class InstructionLogic {
     #region Unofficial
 
     [MethodImpl(MethodOptions.Options)]
-    public static bool XXX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        throw new NotImplementedException($"!!! Unhandled opcode ({cpuInternal.Instruction})");
-    }
-
-    [MethodImpl(MethodOptions.Options)]
     public static bool LAX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         switch (operationCycle) {
             case AfterNextOpcodeFetched:
@@ -1073,6 +1048,86 @@ public static class InstructionLogic {
         }
 
         return false;
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool DCP(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        switch (operationCycle) {
+            case 0:
+            case 1:
+                return DEC(operationCycle, ref cpu, ref cpuInternal);
+            case AfterNextOpcodeFetched:
+                DEC(operationCycle, ref cpu, ref cpuInternal);
+                CMP_Internal_SetCompareFlags(operationCycle, ref cpu, ref cpuInternal, cpu.A);
+                break;
+        }
+
+        return false;
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool ISC(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        switch (operationCycle) {
+            default:
+                return INC(operationCycle, ref cpu, ref cpuInternal);
+            case AfterNextOpcodeFetched:
+                INC(operationCycle, ref cpu, ref cpuInternal);
+                SBC(operationCycle, ref cpu, ref cpuInternal);
+                return false;
+        }
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool RLA(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        switch (operationCycle) {
+            default:
+                return ROL(operationCycle, ref cpu, ref cpuInternal);
+            case AfterNextOpcodeFetched:
+                ROL(operationCycle, ref cpu, ref cpuInternal);
+                AND(operationCycle, ref cpu, ref cpuInternal);
+                return true;
+        }
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool RRA(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        switch (operationCycle) {
+            default:
+                return ROR(operationCycle, ref cpu, ref cpuInternal);
+            case AfterNextOpcodeFetched:
+                ROR(operationCycle, ref cpu, ref cpuInternal);
+                ADC(operationCycle, ref cpu, ref cpuInternal);
+                return true;
+        }
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool SLO(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        switch (operationCycle) {
+            default:
+                return ASL(operationCycle, ref cpu, ref cpuInternal);
+            case AfterNextOpcodeFetched:
+                ASL(operationCycle, ref cpu, ref cpuInternal);
+                ORA(operationCycle, ref cpu, ref cpuInternal);
+                return true;
+        }
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool SRE(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        switch (operationCycle) {
+            default:
+                return LSR(operationCycle, ref cpu, ref cpuInternal);
+            case AfterNextOpcodeFetched:
+                LSR(operationCycle, ref cpu, ref cpuInternal);
+                EOR(operationCycle, ref cpu, ref cpuInternal);
+                return true;
+        }
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool XXX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        throw new NotImplementedException($"!!! Unhandled opcode ({cpuInternal.Instruction})");
     }
 
     #endregion

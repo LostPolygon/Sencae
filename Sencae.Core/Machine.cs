@@ -21,8 +21,10 @@ public class Machine {
     }
 
     public void Reset(ushort? overrideResetVector = null) {
-        CpuDevice.Reset(overrideResetVector);
+        CpuDevice.HardReset(overrideResetVector);
         PpuDevice.Reset();
+
+        State.Reset();
     }
 
     [MethodImpl(MethodOptions.Options)]
@@ -73,16 +75,8 @@ public class Machine {
                         (cpuInternal.Instruction.Flags & InstructionFlags.SpecialAddressing) != 0 ||
                         DispatchAddressingLogic(cpuInternal.Instruction.AddressingMode);
                     if (completed) {
-                        if ((cpuInternal.Instruction.Flags & InstructionFlags.ModifiesAddressingLogic) == 0) {
-                            // Flow control instructions already setup PC and AB to needed values,
-                            // other instructions can just reuse common logic
-                            // for incrementing PC and fetching the next opcode
-                            cpuInternal.State =
-                                (cpuInternal.Instruction.Flags & InstructionFlags.FetchesNextOpcode) != 0 ?
-                                    CpuInternalState.ExecutionState.InterpretOpcode :
-                                    CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
-
-                            cpuInternal.OperationCycle = 0;
+                        if ((cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0) {
+                            FinishInstruction(ref cpuInternal);
                         } else {
                             cpuInternal.OperationCycle = InstructionLogic.AfterAddressingFinished;
                             cpuInternal.State = CpuInternalState.ExecutionState.ExecutingInstruction;
@@ -95,20 +89,11 @@ public class Machine {
                 case CpuInternalState.ExecutionState.ExecutingInstruction: {
                     Debug.Assert(
                         !(cpuInternal.OperationCycle == InstructionLogic.AfterAddressingFinished && 
-                            (cpuInternal.Instruction.Flags & InstructionFlags.ModifiesAddressingLogic) == 0)
+                            (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0)
                         );
                     bool completed = DispatchInstructionLogic(cpuInternal.Instruction.Type);
-
                     if (completed) {
-                        // Flow control instructions already setup PC and AB to needed values,
-                        // other instructions can just reuse common logic
-                        // for incrementing PC and fetching the next opcode
-                        cpuInternal.State =
-                            (cpuInternal.Instruction.Flags & InstructionFlags.FetchesNextOpcode) != 0 ?
-                                CpuInternalState.ExecutionState.InterpretOpcode :
-                                CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
-
-                        cpuInternal.OperationCycle = 0;
+                        FinishInstruction(ref cpuInternal);
                     }
 
                     break;
@@ -119,6 +104,18 @@ public class Machine {
             }
 
             break;
+        }
+
+        static void FinishInstruction(ref CpuInternalState cpuInternal) {
+            // Flow control instructions already setup PC and AB to needed values,
+            // other instructions can just reuse common logic
+            // for incrementing PC and fetching the next opcode
+            cpuInternal.State =
+                (cpuInternal.Instruction.Flags & InstructionFlags.FetchesNextOpcode) != 0 ?
+                    CpuInternalState.ExecutionState.InterpretOpcode :
+                    CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
+
+            cpuInternal.OperationCycle = 0;
         }
     }
 
