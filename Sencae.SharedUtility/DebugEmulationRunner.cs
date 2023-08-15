@@ -46,19 +46,20 @@ public static class DebugEmulationRunner {
         for (ulong i = 0; i < options.MaxCycles; i++) {
             machine.Clock();
             outputState(formatState(machine));
-            if (i == 40000) {
-                
-            }
-            if (options.StopOnBRK &&
-                machine.State.Cpu.Internal.Instruction.Type == InstructionType.BRK &&
-                machine.State.Cpu.Internal.State == CpuInternalState.ExecutionState.ExecutingInstruction) {
+
+            ref CpuInternalState cpuInternal = ref machine.State.Cpu.Internal;
+            bool shouldBreak =
+                (cpuInternal.Instruction.Type == InstructionType.BRK &&
+                    cpuInternal.State == CpuInternalState.ExecutionState.ExecutingInstruction) ||
+                cpuInternal.Halted;
+            if (options.StopOnBRKOrHalt && shouldBreak) {
                 break;
             }
         }
     }
 
     public record RunnerOptions {
-        public bool StopOnBRK { get; init; } = true;
+        public bool StopOnBRKOrHalt { get; init; } = true;
         public ulong MaxCycles { get; set; } = 10000;
         public ushort? OverrideResetVector { get; init; }
         public Action<Machine>? AfterResetAction { get; init; }

@@ -13,8 +13,8 @@ public class BasicTests {
 
         Machine machine = Emulate(
             cartridgeDevice, new() {
-                StopOnBRK = false,
-                MaxCycles = 5000000, 
+                StopOnBRKOrHalt = false,
+                MaxCycles = 50000, 
                 OverrideResetVector = 0xC000
             });
 

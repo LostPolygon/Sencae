@@ -13,6 +13,8 @@ public struct CpuInternalState {
     public UInt16Bytes Temporary;
     
     public ExecutionState State;
+    public bool PageBoundaryCrossed;
+    public bool Halted;
 
     public enum ExecutionState {
         ExecutingInstruction,

@@ -46,7 +46,13 @@ public static class AddressingModeLogic {
                 break;
             case 1:
                 cpuInternal.Temporary.Low = cpuInternal.DataBus;
+
+                //UInt16Bytes oldPC = cpu.PC;
                 cpu.PC.Value++;
+                /*if (oldPC.High != cpu.PC.High) {
+                    cpuInternal.PageBoundaryCrossed = true;
+                }*/
+                
                 cpuInternal.AddressBus = cpu.PC;
                 break;
             case 2:

@@ -20,7 +20,7 @@ public class NesTestRomTest {
         try {
             Machine machine = Emulate(
                 cartridgeDevice, new() {
-                    StopOnBRK = false,
+                    StopOnBRKOrHalt = false,
                     MaxCycles = 50000,
                     OverrideResetVector = 0xC000,
                     FormatState = FormatState,
@@ -47,7 +47,7 @@ public class NesTestRomTest {
         }
 
         List<string> referenceLogOutput =
-            File.ReadAllLines("Resources/nestest_cpuonly_nocycles.log")
+            File.ReadAllLines("Resources/nestest_cpuonly.log")
                 .Select(x => x.Trim())
                 .ToList();
 
@@ -268,7 +268,7 @@ public class NesTestRomTest {
             $"Y:{cpu.Y:X2} " +
             $"P:{(int) cpu.P:X2} " +
             $"SP:{cpu.SP:X2} " +
-            //$"CYC:{machineState.Cycle + cycleOffset} " +
+            $"CYC:{machineState.Cycles + cycleOffset} " +
             ""
             ;
     }

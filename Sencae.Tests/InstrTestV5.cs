@@ -4,6 +4,7 @@ using static Sencae.SharedUtility.DebugEmulationRunner;
 
 namespace Sencae.Tests;
 
+[Parallelizable(ParallelScope.All)]
 public class InstrTestV5 {
     [Test]
     public void Test_01_Basics() {
@@ -21,35 +22,35 @@ public class InstrTestV5 {
 
     [Test]
     public void Test_03_Immediate() {
-        (string message, _) = GenericTest("rom_singles/03-immediate", ulong.MaxValue);
+        (string message, _) = GenericTest("rom_singles/03-immediate", 50_000_000);
 
-        Assert.AreEqual("\n01-basics\n\nPassed\n", message);
+        Assert.AreEqual("\n03-immediate\n\nPassed\n", message);
     }
 
     [Test]
     public void Test_04_ZeroPage() {
         (string message, _) = GenericTest("rom_singles/04-zero_page");
 
-        Assert.AreEqual("\n01-basics\n\nPassed\n", message);
+        Assert.AreEqual("\n04-zero_page\n\nPassed\n", message);
     }
 
     [Test]
     public void Test_05_zp_xy() {
-        (string message, _) = GenericTest("rom_singles/05-zp_xy");
+        (string message, _) = GenericTest("rom_singles/05-zp_xy", 50_000_000);
 
-        Assert.AreEqual("\n01-basics\n\nPassed\n", message);
+        Assert.AreEqual("\n05-zp_xy\n\nPassed\n", message);
     }
 
     [Test]
     public void Test_06_Absolute() {
         (string message, _) = GenericTest("rom_singles/06-absolute");
 
-        Assert.AreEqual("\n01-basics\n\nPassed\n", message);
+        Assert.AreEqual("\n06-absolute\n\nPassed\n", message);
     }
 
     [Test]
     public void Test_07_AbsXY() {
-        (string message, _) = GenericTest("rom_singles/07-abs_xy");
+        (string message, _) = GenericTest("rom_singles/07-abs_xy", 50_000_000);
 
         Assert.AreEqual("\n01-basics\n\nPassed\n", message);
     }
@@ -58,14 +59,14 @@ public class InstrTestV5 {
     public void Test_08_IndX() {
         (string message, _) = GenericTest("rom_singles/08-ind_x");
 
-        Assert.AreEqual("\n01-basics\n\nPassed\n", message);
+        Assert.AreEqual("\n08-ind_x\n\nPassed\n", message);
     }
 
     [Test]
     public void Test_09_IndY() {
         (string message, _) = GenericTest("rom_singles/09-ind_y");
 
-        Assert.AreEqual("\n01-basics\n\nPassed\n", message);
+        Assert.AreEqual("\n09-ind_y\n\nPassed\n", message);
     }
 
     [Test]
@@ -105,21 +106,21 @@ public class InstrTestV5 {
 
     [Test]
     public void Test_15_BRK() {
-        (string message, _) = GenericTest("rom_singles/15-brk");
+        (string message, _) = GenericTest("rom_singles/15-brk", 500_000_000);
 
         Assert.AreEqual("\n01-basics\n\nPassed\n", message);
     }
 
     [Test]
     public void Test_16_Special() {
-        (string message, _) = GenericTest("rom_singles/16-special");
+        (string message, _) = GenericTest("rom_singles/16-special", 50_000_000);
 
-        Assert.AreEqual("\n01-basics\n\nPassed\n", message);
+        Assert.AreEqual("\n\n16-special\n\nPassed\n", message);
     }
 
     [Test]
     public void OfficialOnly() {
-        (string message, _) = GenericTest("official_only");
+        (string message, _) = GenericTest("official_only", 500_000_0);
 
         Assert.AreEqual("\n01-basics\n\nPassed\n", message);
     }
@@ -128,14 +129,14 @@ public class InstrTestV5 {
         byte[] testRom = File.ReadAllBytes($"Resources/instr_test-v5/{testRomName}.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
         CartridgeDevice cartridgeDevice =
-            new(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[4 * 1024]);
+            new(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[16 * 1024]);
 
         Machine machine = new Machine(cartridgeDevice);
         try {
             Emulate(
                 machine,
                 new() {
-                    StopOnBRK = false,
+                    StopOnBRKOrHalt = false,
                     MaxCycles = maxCycles ?? 5000000,
                     FormatState = _ => "",
                     OutputState = _ => {
@@ -144,6 +145,7 @@ public class InstrTestV5 {
             );
         } catch (Exception e) {
             Console.WriteLine(e);
+            throw;
         }
 
         Assert.AreEqual(0xDE, machine.CpuMemoryBus.GetU8(0x6001));

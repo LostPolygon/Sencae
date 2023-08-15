@@ -29,7 +29,7 @@ public class Benchmarks {
         DebugEmulationRunner.Emulate(
             Machine,
             new() {
-                StopOnBRK = false,
+                StopOnBRKOrHalt = false,
                 OverrideResetVector = 0xC000,
                 MaxCycles = maxCycles,
                 FormatState = formatState,

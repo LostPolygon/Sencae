@@ -38,14 +38,7 @@ public readonly unsafe struct CpuDevice : IMemoryDevice {
             cpuMemoryBus.GetU8(i) = 0;
         }
 
-        ushort resetVector = overrideResetVector ?? cpuMemoryBus.GetU16(0xFFFC);
-        cpu.Internal.State = CpuInternalState.ExecutionState.InterpretOpcode;
-        cpu.Internal.DataBus = cpuMemoryBus.GetU8(resetVector);
-        cpu.Internal.Instruction = Instructions.DescriptorByOpcode[0x00];
-
-        cpu.PC.Value = (ushort) (resetVector + 0);
-        cpu.Internal.AddressBus.Value = (ushort) (resetVector + 0);
-        cpu.Internal.Read = true;
+        GenericReset(overrideResetVector);
     }
 
     public void SoftReset(ushort? overrideResetVector = null) {
@@ -55,6 +48,24 @@ public readonly unsafe struct CpuDevice : IMemoryDevice {
         cpu.P |= CpuStatusRegisterFlags.InterruptDisable;
         cpu.SP -= 3;
 
+        GenericReset(overrideResetVector);
+    }
+
+    private void GenericReset(ushort? overrideResetVector) {
+        ref CpuState cpu = ref Machine.State.Cpu;
+        CpuMemoryBus cpuMemoryBus = Machine.CpuMemoryBus;
+
         cpuMemoryBus.GetU8(0x4015) = 0; // all APU channels disabled
+
+        ushort resetVector = overrideResetVector ?? cpuMemoryBus.GetU16(0xFFFC);
+        cpu.Internal.State = CpuInternalState.ExecutionState.InterpretOpcode;
+        cpu.Internal.DataBus = cpuMemoryBus.GetU8(resetVector);
+        cpu.Internal.Instruction = Instructions.DescriptorByOpcode[0x00];
+
+        cpu.PC.Value = (ushort) (resetVector + 0);
+        cpu.Internal.AddressBus.Value = (ushort) (resetVector + 0);
+        cpu.Internal.Read = true;
+
+        cpu.Internal.Halted = false;
     }
 }
