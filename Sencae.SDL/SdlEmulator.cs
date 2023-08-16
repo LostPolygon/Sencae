@@ -33,13 +33,14 @@ public unsafe class SdlEmulator {
             case SDL.SDL_EventType.SDL_KEYDOWN:
                 for (int i = 0; i < KeyMapping.Length; i++) {
                     if (evt.key.keysym.sym == KeyMapping[i]) {
-                        ref byte input = ref _machine.CpuMemoryBus.GetU8(inputAddress);
-                        input = KeyMapping[i] switch {
+                        byte input = KeyMapping[i] switch {
                             SDL.SDL_Keycode.SDLK_UP => 0x77,
                             SDL.SDL_Keycode.SDLK_DOWN => 0x73,
                             SDL.SDL_Keycode.SDLK_LEFT => 0x61,
                             SDL.SDL_Keycode.SDLK_RIGHT => 0x64,
                         };
+
+                        _machine.CpuMemoryBus.Write(inputAddress, input);
                     }
                 }
 
@@ -61,11 +62,10 @@ public unsafe class SdlEmulator {
         }
 
         int screenLength = NesConstants.ScreenWidth * NesConstants.ScreenHeight;
-        Span<byte> emulatorScreenMemory = MemoryMarshal.CreateSpan(ref _machine.CpuMemoryBus.GetU8(0x0200), screenLength);
         byte* pixels = (byte*) _surface->pixels;
 
         for (int i = 0; i < screenLength; i++) {
-            pixels[i] = emulatorScreenMemory[i];
+            pixels[i] =  _machine.CpuMemoryBus.Read((ushort) (0x0200 + i));
         }
 
         if (SdlUtility.SDL_MUSTLOCK((IntPtr) _surface)) {
@@ -74,7 +74,7 @@ public unsafe class SdlEmulator {
     }
 
     public void Update(int cycles) {
-        _machine.CpuMemoryBus.GetU8(0xFE) = (byte) Random.Shared.Next();
+        _machine.CpuMemoryBus.Write(0xFE, (byte) Random.Shared.Next());
 
         for (int i = 0; i < cycles; i++) {
             //if (_machine.State.Cpu.P.HasFlagFast(CpuStatusRegisterFlags.BreakFlag))

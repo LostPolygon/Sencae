@@ -32,7 +32,7 @@ public class Instructions {
             """
         ));
 
-        Assert.AreEqual(0x02, machine.CpuMemoryBus.GetU8(0x10));
+        Assert.AreEqual(0x02, machine.CpuMemoryBus.Read(0x10));
         Assert.AreEqual(12 + BRK_Cycles, machine.State.ProgramCycles);
     }
     
@@ -93,8 +93,8 @@ public class Instructions {
         ), new () { AfterResetAction = AfterReset });
         
         static void AfterReset(Machine machine) {
-            machine.CpuMemoryBus.GetU8(0x01FE) = 0x0D; // in cartridge space
-            machine.CpuMemoryBus.GetU8(0x01FF) = 0xC1;
+            machine.CpuMemoryBus.Write(0x01FE, 0x0D); // in cartridge space
+            machine.CpuMemoryBus.Write(0x01FF, 0xC1);
             machine.State.Cpu.SP = 0xFD;
         }
         

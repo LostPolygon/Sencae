@@ -184,11 +184,11 @@ public class InstrTestV5 {
             (int? mismatchLine, _, _) = NintendulatorLog.CompareLogs(referenceLogOutput, logOutput);
         }
 
-        Assert.AreEqual(0xDE, machine.CpuMemoryBus.GetU8(0x6001));
-        Assert.AreEqual(0xB0, machine.CpuMemoryBus.GetU8(0x6002));
-        Assert.AreEqual(0x61, machine.CpuMemoryBus.GetU8(0x6003));
+        Assert.AreEqual(0xDE, machine.CpuMemoryBus.Read(0x6001));
+        Assert.AreEqual(0xB0, machine.CpuMemoryBus.Read(0x6002));
+        Assert.AreEqual(0x61, machine.CpuMemoryBus.Read(0x6003));
 
-        byte status = machine.CpuMemoryBus.GetU8(0x6000);
+        byte status = machine.CpuMemoryBus.Read(0x6000);
 
         BusMemoryStream stream = new(machine.CpuMemoryBus);
         stream.Seek(0x6004, SeekOrigin.Begin);

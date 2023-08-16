@@ -46,10 +46,10 @@ public class AddressingModes {
         ), new () { AfterResetAction = AfterReset });
 
         static void AfterReset(Machine machine) {
-            machine.CpuMemoryBus.GetU8(0x0200) = 42;
+            machine.CpuMemoryBus.Write(0x0200, 42);
         }
 
-        Assert.AreEqual(42, machine.CpuMemoryBus.GetU8(0x0200));
+        Assert.AreEqual(42, machine.CpuMemoryBus.Read(0x0200));
         Assert.AreEqual(4 + BRK_Cycles, machine.State.ProgramCycles);
     }
 
@@ -67,7 +67,7 @@ public class AddressingModes {
             """
         ));
 
-        Assert.AreEqual(42, machine.CpuMemoryBus.GetU8(0x203));
+        Assert.AreEqual(42, machine.CpuMemoryBus.Read(0x203));
         Assert.AreEqual(2 + 2 + 2 + 2 + 5 + BRK_Cycles, machine.State.ProgramCycles);
     }
 
@@ -85,7 +85,7 @@ public class AddressingModes {
             """
         ));
 
-        Assert.AreEqual(42, machine.CpuMemoryBus.GetU8(0x203));
+        Assert.AreEqual(42, machine.CpuMemoryBus.Read(0x203));
         Assert.AreEqual(2 + 2 + 2 + 2 + 5 + BRK_Cycles, machine.State.ProgramCycles);
     }
 
@@ -103,7 +103,7 @@ public class AddressingModes {
         ), new () { AfterResetAction = AfterReset });
 
         static void AfterReset(Machine machine) {
-            machine.CpuMemoryBus.GetU8(0x20 + 3) = 42;
+            machine.CpuMemoryBus.Write(0x20 + 3, 42);
         }
 
         Assert.AreEqual(42, machine.State.Cpu.Y);
@@ -121,7 +121,7 @@ public class AddressingModes {
         ), new () { AfterResetAction = AfterReset });
 
         static void AfterReset(Machine machine) {
-            machine.CpuMemoryBus.GetU8(0x20) = 42;
+            machine.CpuMemoryBus.Write(0x20, 42);
         }
 
         Assert.AreEqual(42, machine.State.Cpu.A);
@@ -142,7 +142,7 @@ public class AddressingModes {
         ), new () { AfterResetAction = AfterReset });
 
         static void AfterReset(Machine machine) {
-            machine.CpuMemoryBus.GetU8(0x20 + 3) = 42;
+            machine.CpuMemoryBus.Write(0x20 + 3, 42);
         }
 
         Assert.AreEqual(42, machine.State.Cpu.X);
@@ -163,8 +163,8 @@ public class AddressingModes {
         ), new () { AfterResetAction = AfterReset });
 
         static void AfterReset(Machine machine) {
-            machine.CpuMemoryBus.GetU8(0x7) = 0x20;
-            machine.CpuMemoryBus.GetU8(0x20) = 0x42;
+            machine.CpuMemoryBus.Write(0x7, 0x20);
+            machine.CpuMemoryBus.Write(0x20, 0x42);
         }
 
         Assert.AreEqual(0x42, machine.State.Cpu.A);
@@ -185,8 +185,8 @@ public class AddressingModes {
         ), new () { AfterResetAction = AfterReset });
 
         static void AfterReset(Machine machine) {
-            machine.CpuMemoryBus.GetU8(0x4) = 0x20;
-            machine.CpuMemoryBus.GetU8(0x23) = 0x42;
+            machine.CpuMemoryBus.Write(0x4, 0x20);
+            machine.CpuMemoryBus.Write(0x23, 0x42);
         }
 
         Assert.AreEqual(0x42, machine.State.Cpu.A);
@@ -212,8 +212,8 @@ public class AddressingModes {
         ), new () { AfterResetAction = AfterReset });
 
         static void AfterReset(Machine machine) {
-            machine.CpuMemoryBus.GetU8(0xC109) = 0x0E;
-            machine.CpuMemoryBus.GetU8(0xC109 + 1) = 0xC2;
+            machine.CpuMemoryBus.Write(0xC109, 0x0E);
+            machine.CpuMemoryBus.Write(0xC109 + 1, 0xC2);
         }
 
         Assert.AreEqual(2, machine.State.Cpu.X);

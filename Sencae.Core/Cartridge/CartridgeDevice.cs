@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public readonly struct CartridgeDevice : IMemoryDevice {
+public readonly struct CartridgeDevice : IBusDevice {
     public readonly byte[] PrgRom;
     public readonly byte[] ChrRom;
     public readonly byte[]? PrgRam;
@@ -30,23 +30,36 @@ public readonly struct CartridgeDevice : IMemoryDevice {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    public ref byte GetU8(ushort address) {
+    public void HandleBus(ushort address, bool isWrite, ref byte bus) {
+        bool isMapped = true;
+        byte dummyByte = 0;
+        ref byte mappedData = ref dummyByte;
         switch (address) {
-            case >= 0x8000 and <= 0xFFFF: return ref PrgRomMemoryDevice.GetU8(address);
-            case >= 0x6000 and < 0x8000: {
-                if (PrgRam != null) {
-                    return ref PrgRamMemoryDevice.GetU8(address);
-                }
-
+            case >= 0x8000 and <= 0xFFFF: {
+                mappedData = ref PrgRomMemoryDevice.GetU8(address);
                 break;
             }
+            case >= 0x6000 and < 0x8000: {
+                if (PrgRam != null) {
+                    mappedData = ref PrgRamMemoryDevice.GetU8(address);
+                    break;
+                }
+
+                isMapped = false;
+                break;
+            }
+            default:
+                isMapped = false;
+                break;
         }
-        
-        return ref DeviceUtility.OpenBus(address);
-    }
-    
-    [MethodImpl(MethodOptions.Options)]
-    public ref ushort GetU16(ushort address) {
-        return ref ((IMemoryDevice) this).GetU16(address);
+
+        if (!isMapped)
+            return;
+
+        if (isWrite) {
+            mappedData = bus;
+        } else {
+            bus = mappedData;
+        }
     }
 }

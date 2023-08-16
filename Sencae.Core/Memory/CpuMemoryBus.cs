@@ -2,29 +2,36 @@
 
 namespace Sencae;
 
-public readonly struct CpuMemoryBus : IMemoryDevice {
+public struct CpuMemoryBus : IBusDevice {
     public readonly Machine Machine;
+    public byte LastBusData;
 
     public CpuMemoryBus(Machine machine) {
         Machine = machine;
     }
 
     [MethodImpl(MethodOptions.Options)]
-    public ref byte GetU8(ushort address) {
-        switch (address) {
-            case >= 0x0000 and <= 0x1FFF: return ref Machine.CpuDevice.GetU8(address);
-            case >= 0x2000 and <= 0x3FFF: return ref Machine.PpuDevice.GetU8(address);
-            case >= 0x4000 and <= 0x401F: return ref Machine.CpuDevice.GetU8(address);
-            case >= 0x4020 and <= 0xFFFF: return ref Machine.CartridgeDevice.GetU8(address);
-        }
-        
-        return ref DeviceUtility.OpenBus(address);
+    public void Write(ushort address, byte data) {
+        HandleBus(address, true, ref data);
     }
-
+    
     [MethodImpl(MethodOptions.Options)]
-    public ref ushort GetU16(ushort address) {
-        ref byte data = ref GetU8(address);
-        ref ushort data16 = ref Unsafe.As<byte, ushort>(ref data);
-        return ref data16;
+    public byte Read(ushort address) {
+        byte data = 0;
+        HandleBus(address, false, ref data);
+
+        return data;
+    }
+    
+    [MethodImpl(MethodOptions.Options)]
+    public ushort GetU16(ushort address) {
+        return (ushort) (Read((ushort) (address + 1)) << 8 | Read(address));
+    }
+    
+    [MethodImpl(MethodOptions.Options)]
+    public void HandleBus(ushort address, bool isWrite, ref byte bus) {
+        Machine.CpuDevice.HandleBus(address, isWrite, ref bus);
+        Machine.PpuDevice.HandleBus(address, isWrite, ref bus);
+        Machine.CartridgeDevice.HandleBus(address, isWrite, ref bus);
     }
 }

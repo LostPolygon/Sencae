@@ -81,7 +81,7 @@ public static unsafe class Library {
         };
 
         for (int i = 0; i < gameRom.Length; i++) {
-            machine.CpuMemoryBus.GetU8((ushort) (0x0600 + i)) = gameRom[i];
+            machine.CpuMemoryBus.Write((ushort) (0x0600 + i), gameRom[i]);
         }
 
         _machine = machine;
@@ -178,42 +178,28 @@ public static unsafe class Library {
 
         InputPollCallback();
         
-        ref byte inputData = ref _machine.CpuMemoryBus.GetU8(0xFF);
-
         if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT) != 0) {
-            inputData = 0x61;
+            _machine.CpuMemoryBus.Write(0xFF, 0x61);
         }
         
         if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT) != 0) {
-            inputData = 0x64;
+            _machine.CpuMemoryBus.Write(0xFF, 0x64);
         }
         
         if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP) != 0) {
-            inputData = 0x77;
+             _machine.CpuMemoryBus.Write(0xFF, 0x77);
         }
         
         if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN) != 0) {
-            inputData = 0x73;
+            _machine.CpuMemoryBus.Write(0xFF, 0x73);
         }
         
-        try {
-            for (int i = 0; i < 100; i++) {
-                //Console.WriteLine(_machine.State.Cycles);
-                _machine.CpuMemoryBus.GetU8(0xFE) = (byte) Random.Shared.Next();
-                _machine.Clock();
-            }
-        } catch (NotImplementedException e) {
-            Log(e.ToString());
-            _machine.Reset(0x600);
-            for (int i = 0x200; i < 0x5ff; i++) {
-                _machine.CpuMemoryBus.GetU8((ushort) i) = 0;
-            }
-
-            return;
+        for (int i = 0; i < 100; i++) {
+            //Console.WriteLine(_machine.State.Cycles);
+            _machine.CpuMemoryBus.Write(0xFE, (byte) Random.Shared.Next());
+            _machine.Clock();
         }
 
-        int screenLength = NesConstants.ScreenWidth * NesConstants.ScreenHeight;
-        Span<byte> emulatorScreenMemory = MemoryMarshal.CreateSpan(ref _machine.CpuMemoryBus.GetU8(0x0200), screenLength);
 
         Color[] paletteColors = new Color[256];
         for (int i = 0; i < 256; i++) {
@@ -231,8 +217,9 @@ public static unsafe class Library {
             paletteColors[i] = color;
         }
 
+        int screenLength = NesConstants.ScreenWidth * NesConstants.ScreenHeight;
         for (int i = 0; i < screenLength; i++) {
-            VideoBuffer[i] = (uint) paletteColors[emulatorScreenMemory[i]].ToArgb();
+            VideoBuffer[i] = (uint) paletteColors[_machine.CpuMemoryBus.Read((ushort) (0x0200 + i))].ToArgb();
 
             //VideoBuffer[i] = (uint) (emulatorScreenMemory[i] != 0 ? 0xFFFF0000 : 0xFF00FF00);
         }

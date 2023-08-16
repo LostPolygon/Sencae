@@ -15,7 +15,7 @@ public class CartridgeTests {
         CartridgeDevice cartridgeDevice = new CartridgeDevice(0, programRom, characterRom);
         Machine machine = new Machine(cartridgeDevice);
         
-        Assert.AreEqual(0x69, machine.CpuMemoryBus.GetU8(0xFFFC));
-        Assert.AreEqual(0x42, machine.CpuMemoryBus.GetU8(0xFFFD));
+        Assert.AreEqual(0x69, machine.CpuMemoryBus.Read(0xFFFC));
+        Assert.AreEqual(0x42, machine.CpuMemoryBus.Read(0xFFFD));
     }
 }

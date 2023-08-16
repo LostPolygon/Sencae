@@ -32,11 +32,10 @@ public class Machine {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
 
-        ref byte dataBus = ref CpuMemoryBus.GetU8(cpuInternal.AddressBus.Value);
         if (!cpuInternal.Read) {
-            dataBus = cpuInternal.DataBus;
+            CpuMemoryBus.Write(cpuInternal.AddressBus.Value, cpuInternal.DataBus);
         } else {
-            cpuInternal.DataBus = dataBus;
+            cpuInternal.DataBus = CpuMemoryBus.Read(cpuInternal.AddressBus.Value);
         }
 
         ExecuteState();

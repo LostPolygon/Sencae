@@ -4,10 +4,10 @@ using System.IO;
 namespace Sencae;
 
 public class BusMemoryStream : Stream {
-    public IMemoryDevice MemoryDevice { get; }
+    public IBusDevice BusDevice { get; }
 
-    public BusMemoryStream(IMemoryDevice memoryDevice) {
-        MemoryDevice = memoryDevice;
+    public BusMemoryStream(IBusDevice busDevice) {
+        BusDevice = busDevice;
     }
 
     private long _position;
@@ -21,7 +21,9 @@ public class BusMemoryStream : Stream {
             if (_position == UInt16.MaxValue)
                 break;
 
-            buffer[offset + i] = MemoryDevice.GetU8((ushort) _position);
+            byte data = 0;
+            BusDevice.HandleBus((ushort) _position, false, ref data);
+            buffer[offset + i] = data;
             Position++;
             resultCount++;
         }
@@ -34,7 +36,8 @@ public class BusMemoryStream : Stream {
             if (_position == UInt16.MaxValue)
                 break;
 
-            MemoryDevice.GetU8((ushort) _position) = buffer[offset + i];
+            byte data = buffer[offset + i];
+            BusDevice.HandleBus((ushort) _position, true, ref data);
             Position++;
         }
     }

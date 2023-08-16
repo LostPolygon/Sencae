@@ -7,18 +7,18 @@ public static class NintendulatorLog {
         machine.State.Cpu.P = (CpuStatusRegisterFlags) 0x24;
             
         for (ushort i = 0x2000; i <= 0x2007; i++) {
-            cpuMemoryBus.GetU8(i) = 0xFF;
+            cpuMemoryBus.Write(i, 0xFF);
         }
             
-        cpuMemoryBus.GetU8(0x4017) = 0xFF; // frame irq enabled
-        cpuMemoryBus.GetU8(0x4015) = 0xFF; // all APU channels disabled
+        cpuMemoryBus.Write(0x4017, 0xFF); // frame irq enabled
+        cpuMemoryBus.Write(0x4015, 0xFF); // all APU channels disabled
 
         for (ushort i = 0x4000; i <= 0x400F; i++) {
-            cpuMemoryBus.GetU8(i) = 0xFF;
+            cpuMemoryBus.Write(i, 0xFF);
         }
 
         for (ushort i = 0x4010; i <= 0x4013; i++) {
-            cpuMemoryBus.GetU8(i) = 0xFF;
+            cpuMemoryBus.Write(i, 0xFF);
         }
     }
     
@@ -70,7 +70,7 @@ public static class NintendulatorLog {
             return null;
 
         machineState.Cpu.Internal.Instruction =
-            Sencae.Instructions.DescriptorByOpcode[machine.CpuMemoryBus.GetU8(machineState.Cpu.PC.Value)];
+            Sencae.Instructions.DescriptorByOpcode[machine.CpuMemoryBus.Read(machineState.Cpu.PC.Value)];
 
         string text = FormatCpuStateNesTest(machine, machineState).Trim();
         return text;
@@ -88,7 +88,7 @@ public static class NintendulatorLog {
         string hexDump = "";
         byte instructionOpcodeSize = instruction.OpcodeSize;
         for (int i = 0; i < instructionOpcodeSize; i++) {
-            byte data = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + i));
+            byte data = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + i));
             hexDump += $"{data:X2} ";
         }
 
@@ -100,7 +100,7 @@ public static class NintendulatorLog {
             _ => $"{instruction.Type}"
         };
         asmDump += " ";
-        byte dataP1 = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 1));
+        byte dataP1 = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + 1));
         UInt16Bytes dataU16 = default;
         dataU16.Low = dataP1;
 
@@ -116,8 +116,8 @@ public static class NintendulatorLog {
                 asmDump += $"#${dataP1:X2}";
                 break;
             case AddressingMode.Absolute: {
-                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 2));
-                byte targetData = machine.CpuMemoryBus.GetU8(dataU16.Value);
+                dataU16.High = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + 2));
+                byte targetData = machine.CpuMemoryBus.Read(dataU16.Value);
                 asmDump += $"${dataU16.Value:X4}";
                 if (!instruction.Flags.HasFlag(InstructionFlags.FetchesNextOpcode)) {
                     asmDump += $" = {targetData:X2}";
@@ -142,9 +142,9 @@ public static class NintendulatorLog {
                         throw new ArgumentOutOfRangeException();
                 }
 
-                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 2));
+                dataU16.High = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + 2));
                 ushort effectiveAddress = (ushort) (dataU16.Value + index);
-                byte targetData = machine.CpuMemoryBus.GetU8(effectiveAddress);
+                byte targetData = machine.CpuMemoryBus.Read(effectiveAddress);
                 asmDump += $"${dataU16.Value:X4},{indexName} @ {effectiveAddress:X4}";
                 if (true || instruction.Flags.HasFlag(InstructionFlags.FetchesNextOpcode)) {
                     asmDump += $" = {targetData:X2}";
@@ -153,7 +153,7 @@ public static class NintendulatorLog {
                 break;
             }
             case AddressingMode.ZeroPage: {
-                byte targetData = machine.CpuMemoryBus.GetU8(dataP1);
+                byte targetData = machine.CpuMemoryBus.Read(dataP1);
                 asmDump += $"${dataP1:X2} = {targetData:X2}";
                 break;
             }
@@ -175,18 +175,18 @@ public static class NintendulatorLog {
                 }
 
                 ushort effectiveAddress = (byte) (dataP1 + index);
-                byte targetData = machine.CpuMemoryBus.GetU8(effectiveAddress);
+                byte targetData = machine.CpuMemoryBus.Read(effectiveAddress);
                 asmDump += $"${dataP1:X2},{indexName} @ {effectiveAddress:X2} = {targetData:X2}";
                 break;
             }
             case AddressingMode.AbsoluteIndirect: {
-                dataU16.High = machine.CpuMemoryBus.GetU8((ushort) (machineState.Cpu.PC.Value + 2));
+                dataU16.High = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + 2));
                 UInt16Bytes effectiveAddressAddress = dataU16;
                 bool pageBoundaryBug = effectiveAddressAddress.Low == 0xFF;
 
                 UInt16Bytes effectiveAddress = default;
-                effectiveAddress.Low = machine.CpuMemoryBus.GetU8(effectiveAddressAddress.Value);
-                effectiveAddress.High = machine.CpuMemoryBus.GetU8(
+                effectiveAddress.Low = machine.CpuMemoryBus.Read(effectiveAddressAddress.Value);
+                effectiveAddress.High = machine.CpuMemoryBus.Read(
                     (ushort) (pageBoundaryBug ?
                         effectiveAddressAddress.Value & 0xFF00 :
                         effectiveAddressAddress.Value + 1)
@@ -198,11 +198,11 @@ public static class NintendulatorLog {
             case AddressingMode.ZeroPageIndirectXPreIndexed: {
                 ushort effectiveAddressAddress = (byte) (dataP1 + cpu.X);
                 UInt16Bytes effectiveAddress = new() {
-                    Low = machine.CpuMemoryBus.GetU8((byte) effectiveAddressAddress),
-                    High = machine.CpuMemoryBus.GetU8((byte) (effectiveAddressAddress + 1)),
+                    Low = machine.CpuMemoryBus.Read((byte) effectiveAddressAddress),
+                    High = machine.CpuMemoryBus.Read((byte) (effectiveAddressAddress + 1)),
                 };
 
-                byte targetData = machine.CpuMemoryBus.GetU8(effectiveAddress.Value);
+                byte targetData = machine.CpuMemoryBus.Read(effectiveAddress.Value);
 
                 asmDump += $"(${dataP1:X2},X) @ {effectiveAddressAddress:X2} = {effectiveAddress.Value:X4} = {targetData:X2}";
                 break;
@@ -210,11 +210,11 @@ public static class NintendulatorLog {
             case AddressingMode.ZeroPageIndirectYPostIndexed: {
                 ushort effectiveAddressAddress = dataP1;
                 UInt16Bytes effectiveAddress = new() {
-                    Low = machine.CpuMemoryBus.GetU8((byte) effectiveAddressAddress),
-                    High = machine.CpuMemoryBus.GetU8((byte) (effectiveAddressAddress + 1)),
+                    Low = machine.CpuMemoryBus.Read((byte) effectiveAddressAddress),
+                    High = machine.CpuMemoryBus.Read((byte) (effectiveAddressAddress + 1)),
                 };
                 ushort effectiveAddressIndexed = (ushort) (effectiveAddress.Value + cpu.Y);
-                byte targetData = machine.CpuMemoryBus.GetU8(effectiveAddressIndexed);
+                byte targetData = machine.CpuMemoryBus.Read(effectiveAddressIndexed);
 
                 asmDump += $"(${dataP1:X2}),Y = {effectiveAddress.Value:X4} @ {effectiveAddressIndexed:X4} = {targetData:X2}";
                 break;

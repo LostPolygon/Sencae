@@ -109,7 +109,7 @@ public unsafe class EmulatorRunner {
         };
 
         for (int i = 0; i < gameRom.Length; i++) {
-            machine.CpuMemoryBus.GetU8((ushort) (0x0600 + i)) = gameRom[i];
+            machine.CpuMemoryBus.Write((ushort) (0x0600 + i), gameRom[i]);
         }
             
         _emulator = new SdlEmulator(emulatorSurface, machine);

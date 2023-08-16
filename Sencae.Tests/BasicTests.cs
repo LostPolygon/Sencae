@@ -39,9 +39,9 @@ public class BasicTests {
             """
         ));
 
-        Assert.AreEqual(1, machine.CpuMemoryBus.GetU8(0x200));
-        Assert.AreEqual(5, machine.CpuMemoryBus.GetU8(0x201));
-        Assert.AreEqual(8, machine.CpuMemoryBus.GetU8(0x202));
+        Assert.AreEqual(1, machine.CpuMemoryBus.Read(0x200));
+        Assert.AreEqual(5, machine.CpuMemoryBus.Read(0x201));
+        Assert.AreEqual(8, machine.CpuMemoryBus.Read(0x202));
     }
 
     [Test]

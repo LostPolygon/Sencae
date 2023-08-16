@@ -21,7 +21,7 @@ internal static class Program {
             benchmarks.Setup();
 
             Console.WriteLine("Warming up...");
-            for (int i = 0; i < 500; i++) {
+            for (int i = 0; i < 600; i++) {
                 benchmarks.Emulate();
             }
 
