@@ -19,7 +19,7 @@ public class Instructions {
         ));
 
         Assert.AreEqual(0x02, machine.State.Cpu.A);
-        Assert.AreEqual(4 + BRK_Cycles, machine.State.Cycles);
+        Assert.AreEqual(4 + BRK_Cycles, machine.State.ProgramCycles);
         
         machine = Emulate(CreateCodeCartridge(
             """
@@ -33,7 +33,7 @@ public class Instructions {
         ));
 
         Assert.AreEqual(0x02, machine.CpuMemoryBus.GetU8(0x10));
-        Assert.AreEqual(12 + BRK_Cycles, machine.State.Cycles);
+        Assert.AreEqual(12 + BRK_Cycles, machine.State.ProgramCycles);
     }
     
     [Test]
@@ -67,7 +67,7 @@ public class Instructions {
 
         Assert.AreEqual(2, machine.State.Cpu.X);
         Assert.AreEqual(0xC111, machine.State.Cpu.PC.Value); // +1 due advancing to next opcode
-        Assert.AreEqual(16 + BRK_Cycles, machine.State.Cycles);
+        Assert.AreEqual(16 + BRK_Cycles, machine.State.ProgramCycles);
     }
     
     [Test]
@@ -100,7 +100,7 @@ public class Instructions {
         
         Assert.AreEqual(2, machine.State.Cpu.X);
         Assert.AreEqual(0xC111, machine.State.Cpu.PC.Value);
-        Assert.AreEqual(16 + BRK_Cycles, machine.State.Cycles);
+        Assert.AreEqual(16 + BRK_Cycles, machine.State.ProgramCycles);
     }
     
     [Test]

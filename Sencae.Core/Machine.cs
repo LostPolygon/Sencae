@@ -42,6 +42,7 @@ public class Machine {
         ExecuteState();
 
         State.Cycles++;
+        State.ProgramCycles++;
     }
 
     [MethodImpl(MethodOptions.Options)]
@@ -92,6 +93,11 @@ public class Machine {
                             (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0)
                         );
                     bool completed = DispatchInstructionLogic(cpuInternal.Instruction.Type);
+                    if (cpuInternal.State == CpuInternalState.ExecutionState.FetchNextInstructionOpcode) {
+                        cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
+                        DispatchInstructionLogic(cpuInternal.Instruction.Type);
+                    }
+
                     if (completed) {
                         FinishInstruction(ref cpuInternal);
                     }

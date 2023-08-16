@@ -161,7 +161,7 @@ public static class Instructions {
 [0b_100_100_00 & 0x90 & 144] = new("BCC *+d", BCC, Relative, FetchesNextOpcode | HasMemoryReadWriteLogic, 0x90, 2),
 [0b_100_101_00 & 0x94 & 148] = new("STY d,x", STY, ZeroPageXIndexed, HasMemoryReadWriteLogic, 0x94, 2),
 [0b_100_110_00 & 0x98 & 152] = new("TYA", TYA, Implied, None, 0x98, 1),
-[0b_100_111_00 & 0x9C & 156] = new("SHY a,x", SHY, AbsoluteXIndexed, Unofficial | HasMemoryReadWriteLogic, 0x9C, 3),
+[0b_100_111_00 & 0x9C & 156] = new("SHY a,x", SHY, AbsoluteXIndexed, Unofficial, 0x9C, 3),
 [0b_100_000_01 & 0x81 & 129] = new("STA (d,x)", STA, ZeroPageIndirectXPreIndexed, HasMemoryReadWriteLogic, 0x81, 2),
 [0b_100_001_01 & 0x85 & 133] = new("STA d", STA, ZeroPage, HasMemoryReadWriteLogic, 0x85, 2),
 [0b_100_010_01 & 0x89 & 137] = new("NOP #i", NOP, Immediate, Unofficial, 0x89, 2),

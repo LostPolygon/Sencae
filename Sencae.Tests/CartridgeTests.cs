@@ -12,7 +12,7 @@ public class CartridgeTests {
 
         byte[] characterRom = new byte[8 * 1024];
 
-        CartridgeDevice cartridgeDevice = new CartridgeDevice(programRom, characterRom);
+        CartridgeDevice cartridgeDevice = new CartridgeDevice(0, programRom, characterRom);
         Machine machine = new Machine(cartridgeDevice);
         
         Assert.AreEqual(0x69, machine.CpuMemoryBus.GetU8(0xFFFC));

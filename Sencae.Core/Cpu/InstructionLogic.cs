@@ -598,6 +598,7 @@ public static class InstructionLogic {
         return ROR_Internal(operationCycle, ref cpu, ref cpuInternal, impliedAddressing);
     }
 
+    [MethodImpl(MethodOptions.Options)]
     private static bool ROR_Internal(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal, bool impliedAddressing) {
         bool completed = RmwWithImpliedInternal(
             operationCycle,
@@ -625,6 +626,7 @@ public static class InstructionLogic {
         return completed;
     }
 
+    [MethodImpl(MethodOptions.Options)]
     private static bool LSR_Internal(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal, bool impliedAddressing) {
         bool completed = RmwWithImpliedInternal(
             operationCycle,
@@ -721,6 +723,7 @@ public static class InstructionLogic {
         return SetFlagInternal(operationCycle, ref cpu, CpuStatusRegisterFlags.InterruptDisable);
     }
 
+    [MethodImpl(MethodOptions.Options)]
     private static bool SetFlagInternal(int operationCycle, ref CpuState cpu, CpuStatusRegisterFlags flag) {
         switch (operationCycle) {
             case AfterNextOpcodeFetched:
@@ -731,6 +734,7 @@ public static class InstructionLogic {
         return false;
     }
 
+    [MethodImpl(MethodOptions.Options)]
     private static bool RemoveFlagInternal(int operationCycle, ref CpuState cpu, CpuStatusRegisterFlags flag) {
         switch (operationCycle) {
             case AfterNextOpcodeFetched:
@@ -835,16 +839,29 @@ public static class InstructionLogic {
         switch (operationCycle) {
             case 0:
                 cpu.PC.Value++;
+                cpuInternal.AddressBus = cpu.PC;
 
-                bool pageBoundaryCrossed;
-                if (condition) {
-                    cpu.PC.Value = (ushort) (cpu.PC.Value + (sbyte) cpuInternal.DataBus);
+                cpuInternal.Temporary.Low = cpuInternal.DataBus; // offset
+                return !condition;
+            case 1: // branch taken
+                cpuInternal.Temporary.Value = (ushort) (cpu.PC.Value + (sbyte) cpuInternal.Temporary.Low);
+                cpuInternal.PageBoundaryCrossedCarry = (sbyte) (cpuInternal.Temporary.High - cpu.PC.High);
+                cpuInternal.AddressBus.Low = cpuInternal.Temporary.Low;
+                if (cpuInternal.PageBoundaryCrossedCarry == 0) {
+                    cpu.PC = cpuInternal.AddressBus;
                 }
 
-                cpuInternal.AddressBus = cpu.PC;
+                return cpuInternal.PageBoundaryCrossedCarry == 0;
+            case 2: // page boundary crossed
+                cpu.PC.Low = cpuInternal.Temporary.Low;
+                cpuInternal.Temporary.High = (byte) (cpu.PC.High + cpuInternal.PageBoundaryCrossedCarry);
+                cpuInternal.AddressBus = cpuInternal.Temporary;
+                cpuInternal.State = CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
                 return true;
-            case 1: // page boundary crossed
-                return true;
+            case AfterNextOpcodeFetched: // fixup PC after page boundary cross
+                cpu.PC.High = cpuInternal.Temporary.High;
+                cpuInternal.PageBoundaryCrossedCarry = 0;
+                break;
         }
 
         return false;
@@ -990,10 +1007,12 @@ public static class InstructionLogic {
 
                 break;
             case 0:
+                break;
+            case 1:
                 cpu.SP++;
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 break;
-            case 1:
+            case 2:
                 cpu.P = (CpuStatusRegisterFlags) cpuInternal.DataBus &
                     ~CpuStatusRegisterFlags.BreakFlag |
                     CpuStatusRegisterFlags.Unused;
@@ -1001,10 +1020,13 @@ public static class InstructionLogic {
                 cpu.SP++;
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 break;
-            case 2:
-                cpu.PC.Low = cpuInternal.DataBus;
-                cpuInternal.AddressBus = cpu.PC;
+            case 3:
+                cpuInternal.Temporary.Low = cpuInternal.DataBus;
                 cpu.SP++;
+                break;
+            case 4:
+                cpu.PC.Low = cpuInternal.Temporary.Low;
+                cpuInternal.AddressBus = cpu.PC;
                 return true;
         }
 
@@ -1150,7 +1172,6 @@ public static class InstructionLogic {
         }
     }
 
-    
     [MethodImpl(MethodOptions.Options)]
     public static bool ARR(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         // https://forums.nesdev.org/viewtopic.php?t=3831&start=15
@@ -1159,10 +1180,11 @@ public static class InstructionLogic {
             case AfterNextOpcodeFetched:
                 AND(operationCycle, ref cpu, ref cpuInternal);
                 ROR_Internal(operationCycle, ref cpu, ref cpuInternal, true);
-                
+
                 SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
                 cpu.P.SetFlag(CpuStatusRegisterFlags.Carry, (cpu.A & 1 << 6) != 0);
                 cpu.P.SetFlag(CpuStatusRegisterFlags.Overflow, (((cpu.A & 1 << 5) >> 5) ^ ((cpu.A & 1 << 6) >> 6)) != 0);
+
                 //cpu.P.SetFlag(CpuStatusRegisterFlags.NegativeOrSign, oldCarry);
 
                 return true;
@@ -1173,7 +1195,7 @@ public static class InstructionLogic {
 
     // the result to be written is used as MSB of the
     // storage address if we cross a page boundary
-    
+    [MethodImpl(MethodOptions.Options)]
     public static bool SHX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         switch (operationCycle) {
             case 0:
@@ -1197,7 +1219,7 @@ public static class InstructionLogic {
 
         return false;
     }
-    
+
     [MethodImpl(MethodOptions.Options)]
     public static bool AHX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         // A AND X AND (H+1) -> M
@@ -1222,7 +1244,7 @@ public static class InstructionLogic {
 
         return false;
     }
-    
+
     /////////////
 
     [MethodImpl(MethodOptions.Options)]
@@ -1243,7 +1265,7 @@ public static class InstructionLogic {
 
         return false;
     }
-    
+
     [MethodImpl(MethodOptions.Options)]
     public static bool XXX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         throw new NotImplementedException($"!!! Unhandled opcode ({cpuInternal.Instruction})");

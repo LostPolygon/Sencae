@@ -22,7 +22,7 @@ public static class DebugEmulationRunner {
         byte[] characterRom = new byte[8 * 1024];
         byte[] programRam = new byte[programRamSize];
 
-        CartridgeDevice cartridgeDevice = new(programRom, characterRom, programRam);
+        CartridgeDevice cartridgeDevice = new(0, programRom, characterRom, programRam);
         return cartridgeDevice;
     }
 

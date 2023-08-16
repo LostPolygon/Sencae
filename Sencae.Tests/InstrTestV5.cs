@@ -106,7 +106,11 @@ public class InstrTestV5 {
 
     [Test]
     public void Test_15_BRK() {
-        (string message, _) = GenericTest("rom_singles/15-brk", 500_000_000);
+        (string message, _) = GenericTest(
+            "rom_singles/15-brk",
+            1_000_000,
+            referenceLogFile: "Resources/instr_test-v5/rom_singles/15-brk_cpu.log"
+        );
 
         Assert.AreEqual("\n01-basics\n\nPassed\n", message);
     }
@@ -120,32 +124,64 @@ public class InstrTestV5 {
 
     [Test]
     public void OfficialOnly() {
-        (string message, _) = GenericTest("official_only", 500_000_0);
+        (string message, _) = GenericTest("official_only", 70_000_000);
 
-        Assert.AreEqual("\n01-basics\n\nPassed\n", message);
+        Assert.AreEqual("All 16 tests passed\n\n\n", message);
     }
 
-    private(string message, Machine machine) GenericTest(string testRomName, ulong? maxCycles = null) {
+    [Test]
+    public void AllInstrs() {
+        (string message, _) = GenericTest("all_instrs", 70_000_000);
+
+        Assert.AreEqual("All 16 tests passed\n\n\n", message);
+    }
+
+    private(string message, Machine machine) GenericTest(
+        string testRomName,
+        ulong? maxCycles = null,
+        string? referenceLogFile = null
+    ) {
         byte[] testRom = File.ReadAllBytes($"Resources/instr_test-v5/{testRomName}.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
         CartridgeDevice cartridgeDevice =
-            new(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[16 * 1024]);
+            new(
+                cartridgeData.Mapper,
+                cartridgeData.PrgRom,
+                cartridgeData.ChrRom,
+                new byte[16 * 1024]
+            );
 
+        List<string> logOutput = new();
         Machine machine = new Machine(cartridgeDevice);
         try {
+            Func<Machine, string> formatStateFunc =
+                referenceLogFile == null ?
+                    _ => "" :
+                    m => {
+                        NintendulatorLog.FormatState(m, logOutput);
+                        return "";
+                    };
             Emulate(
                 machine,
                 new() {
                     StopOnBRKOrHalt = false,
                     MaxCycles = maxCycles ?? 5000000,
-                    FormatState = _ => "",
+                    FormatState = formatStateFunc,
                     OutputState = _ => {
-                    }
+                    },
+                    AfterResetAction = NintendulatorLog.ResetMachineToNintendulatorInitialState
                 }
             );
         } catch (Exception e) {
             Console.WriteLine(e);
             throw;
+        }
+
+
+
+        if (referenceLogFile != null) {
+            List<string> referenceLogOutput = NintendulatorLog.ReadLogFromFile(referenceLogFile);
+            (int? mismatchLine, _, _) = NintendulatorLog.CompareLogs(referenceLogOutput, logOutput);
         }
 
         Assert.AreEqual(0xDE, machine.CpuMemoryBus.GetU8(0x6001));

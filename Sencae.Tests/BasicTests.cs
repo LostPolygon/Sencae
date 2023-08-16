@@ -9,7 +9,7 @@ public class BasicTests {
     public void NesTest() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom);
+        CartridgeDevice cartridgeDevice = new CartridgeDevice(0, cartridgeData.PrgRom, cartridgeData.ChrRom);
 
         Machine machine = Emulate(
             cartridgeDevice, new() {

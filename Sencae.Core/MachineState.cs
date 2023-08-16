@@ -8,9 +8,11 @@ public struct MachineState {
 
     public ulong ExecutedInstructionCount;
     public ulong Cycles;
+    public ulong ProgramCycles;
 
     public void Reset() {
         ExecutedInstructionCount = 0;
-        Cycles = 0;
+        Cycles = 7;
+        ProgramCycles = 0;
     }
 }

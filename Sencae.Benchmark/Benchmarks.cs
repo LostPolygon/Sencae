@@ -8,7 +8,6 @@ using Sencae.SharedUtility;
 
 namespace Sencae.Benchmark;
 
-
 [RyuJitX86Job]
 [RyuJitX64Job]
 /*[DisassemblyDiagnoser(
@@ -38,7 +37,7 @@ public class Benchmarks {
             }
         );
 
-        return Machine.State.Cycles;
+        return Machine.State.ProgramCycles;
     }
 
     public ulong EmulateWithStats(ulong maxCycles = 16000) {
@@ -56,7 +55,7 @@ public class Benchmarks {
         );
 
         Console.WriteLine("=== stats begin");
-        
+
         KeyValuePair<InstructionType, ulong>[] sortedOpcodeStats = opcodeStats.OrderByDescending(kv => kv.Value).ToArray();
         for (int i = 0; i < sortedOpcodeStats.Length; i++) {
             if (sortedOpcodeStats[i].Value == 0)
@@ -74,7 +73,12 @@ public class Benchmarks {
     public void Setup() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice = new CartridgeDevice(cartridgeData.PrgRom, cartridgeData.ChrRom, new byte[0]);
+        CartridgeDevice = new CartridgeDevice(
+            cartridgeData.Mapper,
+            cartridgeData.PrgRom,
+            cartridgeData.ChrRom,
+            new byte[0]
+        );
 
         Machine = new Machine(CartridgeDevice);
     }

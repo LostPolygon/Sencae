@@ -27,6 +27,6 @@ public static unsafe class NesFileParser {
         position += prgRomSize;
         Span<byte> chrRom = byteSpan[position..(position + chrRomSize)];
 
-        return new CartridgeData(prgRom.ToArray(), chrRom.ToArray());
+        return new CartridgeData(mapper, prgRom.ToArray(), chrRom.ToArray());
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Sencae;
@@ -11,7 +12,14 @@ public readonly struct CartridgeDevice : IMemoryDevice {
     public readonly ArrayMemoryDevice ChrRomMemoryDevice;
     public readonly ArrayMemoryDevice PrgRamMemoryDevice;
 
-    public CartridgeDevice(byte[] prgRom, byte[] chrRom, byte[]? prgRam = null) {
+    public CartridgeDevice(int mapper, byte[] prgRom, byte[] chrRom, byte[]? prgRam = null) {
+        switch (mapper) {
+            case 0:
+                break;
+            default:
+                throw new NotImplementedException($"Mapper {mapper} is not supported");
+        }
+        
         PrgRom = prgRom;
         ChrRom = chrRom;
         PrgRam = prgRam;

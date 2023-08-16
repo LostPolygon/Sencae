@@ -13,7 +13,7 @@ public struct CpuInternalState {
     public UInt16Bytes Temporary;
     
     public ExecutionState State;
-    public bool PageBoundaryCrossed;
+    public sbyte PageBoundaryCrossedCarry;
     public bool Halted;
 
     public enum ExecutionState {

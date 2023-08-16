@@ -88,7 +88,7 @@ public unsafe class SdlEmulator {
     private static string FormatCpuState(MachineState machine) {
         CpuState cpu = machine.Cpu;
         return
-            $"==== Cycle: {machine.Cycles}, " +
+            $"==== Cycle: {machine.ProgramCycles}, " +
             $"AB: {cpu.Internal.AddressBus.Value:X4}, " +
             $"DB: {cpu.Internal.DataBus:X2}, " +
             $"PC: {cpu.PC.Value:X4}, " +
