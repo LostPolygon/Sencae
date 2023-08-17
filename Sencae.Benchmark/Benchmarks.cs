@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using Sencae.SharedUtility;
@@ -21,6 +22,7 @@ namespace Sencae.Benchmark;
 public class Benchmarks {
     public CartridgeDevice CartridgeDevice { get; private set; }
     public Machine Machine { get; private set; }
+    //private GCHandle _machineGcHandle;
 
     public ulong Emulate(ulong maxCycles = 16000, Func<Machine, string>? formatState = null) {
         formatState ??= _ => "";
@@ -81,6 +83,13 @@ public class Benchmarks {
         );
 
         Machine = new Machine(CartridgeDevice);
+        //_machineGcHandle = GCHandle.Alloc(Machine, GCHandleType.Pinned);
+    }
+
+    [GlobalCleanup]
+    public void Cleanup() {
+        Machine.Dispose();
+        //_machineGcHandle.Free();
     }
 
     [Benchmark(Baseline = true)]

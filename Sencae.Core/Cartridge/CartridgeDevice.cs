@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public readonly struct CartridgeDevice : IBusDevice {
+public unsafe struct CartridgeDevice : IBusDevice {
     public readonly byte[] PrgRom;
     public readonly byte[] ChrRom;
     public readonly byte[]? PrgRam;
@@ -19,7 +19,7 @@ public readonly struct CartridgeDevice : IBusDevice {
             default:
                 throw new NotImplementedException($"Mapper {mapper} is not supported");
         }
-        
+
         PrgRom = prgRom;
         ChrRom = chrRom;
         PrgRam = prgRam;
@@ -28,38 +28,38 @@ public readonly struct CartridgeDevice : IBusDevice {
         ChrRomMemoryDevice = new ArrayMemoryDevice(ChrRom, -ChrRom.Length);
         PrgRamMemoryDevice = new ArrayMemoryDevice(PrgRam, 0x6000);
     }
-
+    
     [MethodImpl(MethodOptions.Options)]
-    public void HandleBus(ushort address, bool isWrite, ref byte bus) {
-        bool isMapped = true;
-        byte dummyByte = 0;
-        ref byte mappedData = ref dummyByte;
+    public bool HandleBus(ushort address, bool isWrite, ref byte bus) {
+        [MethodImpl(MethodOptions.Options)]
+        static void Handle(ref byte mappedData, bool isWrite, ref byte bus) {
+            byte temp;
+            if (isWrite) {
+                temp = bus;
+                mappedData = temp;
+            } else {
+                temp = mappedData;
+                bus = temp;
+            }
+        }
+
         switch (address) {
             case >= 0x8000 and <= 0xFFFF: {
-                mappedData = ref PrgRomMemoryDevice.GetU8(address);
-                break;
+                ref byte mappedData = ref PrgRomMemoryDevice.GetU8(address);
+                Handle(ref mappedData, isWrite, ref bus);
+                return true;
             }
             case >= 0x6000 and < 0x8000: {
                 if (PrgRam != null) {
-                    mappedData = ref PrgRamMemoryDevice.GetU8(address);
-                    break;
+                    ref byte mappedData = ref PrgRamMemoryDevice.GetU8(address);
+                    Handle(ref mappedData, isWrite, ref bus);
+                    return true;
                 }
 
-                isMapped = false;
-                break;
+                return false;
             }
-            default:
-                isMapped = false;
-                break;
         }
 
-        if (!isMapped)
-            return;
-
-        if (isWrite) {
-            mappedData = bus;
-        } else {
-            bus = mappedData;
-        }
+        return false;
     }
 }

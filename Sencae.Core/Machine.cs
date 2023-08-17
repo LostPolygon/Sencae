@@ -1,10 +1,12 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Sencae;
 
-public class Machine {
-    public CartridgeDevice CartridgeDevice;
+public unsafe class Machine : IDisposable {
+    public IBusDevice CartridgeDevice;
 
     public CpuDevice CpuDevice;
     public CpuMemoryBus CpuMemoryBus;
@@ -12,8 +14,9 @@ public class Machine {
     public PpuDevice PpuDevice;
 
     public MachineState State;
-
-    public Machine(CartridgeDevice cartridgeDevice) {
+    
+    public Machine(IBusDevice cartridgeDevice) {
+        State = new MachineState();
         CartridgeDevice = cartridgeDevice;
         CpuDevice = new CpuDevice(this);
         PpuDevice = new PpuDevice(this);
@@ -144,5 +147,17 @@ public class Machine {
         
         cpuInternal.OperationCycle++;
         return completed;
+    }
+
+    private void ReleaseUnmanagedResources() {
+    }
+
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    ~Machine() {
+        ReleaseUnmanagedResources();
     }
 }

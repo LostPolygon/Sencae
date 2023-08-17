@@ -8,7 +8,7 @@ public static class AddressingModeLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool Dispatch(ref CpuState cpu, ref CpuInternalState cpuInternal, AddressingMode addressingMode) {
         return addressingMode switch {
-            AddressingMode.Implied => Implied(ref cpu, ref cpuInternal),
+            //AddressingMode.Implied => Implied(ref cpu, ref cpuInternal),
             AddressingMode.Immediate => ImmediateOrRelative(ref cpu, ref cpuInternal),
             AddressingMode.Absolute => Absolute(ref cpu, ref cpuInternal),
             AddressingMode.AbsoluteXIndexed => AbsoluteXIndexed(ref cpu, ref cpuInternal),
@@ -186,7 +186,7 @@ public static class AddressingModeLogic {
 
                 return 
                     cpuInternal.PageBoundaryCrossedCarry == 0 && 
-                    !cpuInternal.Instruction.Flags.HasFlag(InstructionFlags.HasMemoryReadWriteLogic);
+                    (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0;
             case 4:
                 cpuInternal.AddressBus.High = (byte) (cpuInternal.AddressBus.High + cpuInternal.PageBoundaryCrossedCarry);
                 return true;
@@ -208,7 +208,7 @@ public static class AddressingModeLogic {
 
                 return 
                     cpuInternal.PageBoundaryCrossedCarry == 0 && 
-                    !cpuInternal.Instruction.Flags.HasFlag(InstructionFlags.HasMemoryReadWriteLogic);
+                    (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0;
             case 3:
                 cpuInternal.AddressBus.High = (byte) (cpuInternal.AddressBus.High + cpuInternal.PageBoundaryCrossedCarry);
                 return true;

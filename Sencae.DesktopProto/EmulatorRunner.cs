@@ -65,7 +65,8 @@ public unsafe class EmulatorRunner {
             ImGuiConfigFlags.NavEnableGamepad |
             ImGuiConfigFlags.NavEnableKeyboard |
             ImGuiConfigFlags.DpiEnableScaleFonts |
-            ImGuiConfigFlags.DpiEnableScaleViewports;
+            ImGuiConfigFlags.DpiEnableScaleViewports | 
+            ImGuiConfigFlags.ViewportsEnable;
 
         //io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors;
         //io.BackendFlags |= ImGuiBackendFlags.HasSetMousePos;
@@ -374,6 +375,12 @@ public unsafe class EmulatorRunner {
             Sdl2Renderer.ImGui_ImplSDLRenderer2_RenderDrawData(ImGui.GetDrawData());
 
             SDL_RenderPresent(renderer);
+            
+            if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
+            {
+                ImGui.UpdatePlatformWindows();
+                ImGui.RenderPlatformWindowsDefault();
+            }
 
             updateStopwatch.Stop();
             double updateElapsed = updateStopwatch.Elapsed.TotalSeconds;

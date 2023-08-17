@@ -548,9 +548,9 @@ public static class InstructionLogic {
 
         if (mustHandle) {
             ref CpuStatusRegisterFlags status = ref cpu.P;
-            ref byte value = ref cpu.A;
-            if (!impliedAddressing) {
-                value = ref cpuInternal.Temporary.Low;
+            ref byte value = ref cpuInternal.Temporary.Low;
+            if (impliedAddressing) {
+                value = ref cpu.A;
             }
 
             byte input = value;
@@ -575,9 +575,9 @@ public static class InstructionLogic {
 
         if (mustHandle) {
             ref CpuStatusRegisterFlags status = ref cpu.P;
-            ref byte value = ref cpu.A;
-            if (!impliedAddressing) {
-                value = ref cpuInternal.Temporary.Low;
+            ref byte value = ref cpuInternal.Temporary.Low;
+            if (impliedAddressing) {
+                value = ref cpu.A;
             }
 
             byte input = value;
@@ -609,9 +609,9 @@ public static class InstructionLogic {
 
         if (mustHandle) {
             ref CpuStatusRegisterFlags status = ref cpu.P;
-            ref byte value = ref cpu.A;
-            if (!impliedAddressing) {
-                value = ref cpuInternal.Temporary.Low;
+            ref byte value = ref cpuInternal.Temporary.Low;
+            if (impliedAddressing) {
+                value = ref cpu.A;
             }
 
             byte input = value;
@@ -637,9 +637,10 @@ public static class InstructionLogic {
 
         if (!completed && mustHandle) {
             ref CpuStatusRegisterFlags status = ref cpu.P;
-            ref byte value = ref cpu.A;
-            if (!impliedAddressing) {
-                value = ref cpuInternal.Temporary.Low;
+            ref byte value = ref cpuInternal.Temporary.Low;
+            ;
+            if (impliedAddressing) {
+                value = ref cpu.A;
             }
 
             byte input = value;
@@ -1275,8 +1276,15 @@ public static class InstructionLogic {
 
     [MethodImpl(MethodOptions.Options)]
     private static void SetGenericZeroAndNegativeSignFlags(ref CpuStatusRegisterFlags status, byte value) {
+        status =
+            (CpuStatusRegisterFlags) ((byte) status & ~((byte) CpuStatusRegisterFlags.NegativeOrSign | (byte) CpuStatusRegisterFlags.Zero) |
+                (value & (byte) CpuStatusRegisterFlags.NegativeOrSign) |
+                (value == 0 ? (byte) CpuStatusRegisterFlags.Zero : 0));
+        
+        /*
         status.SetFlag(CpuStatusRegisterFlags.Zero, value == 0);
         status.SetFlag(CpuStatusRegisterFlags.NegativeOrSign, (value & 1 << 7) != 0);
+        */
     }
 
     [MethodImpl(MethodOptions.Options)]

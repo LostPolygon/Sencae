@@ -1,58 +1,55 @@
-using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Sencae;
 
-public readonly unsafe struct CpuDevice : IBusDevice {
+public readonly struct CpuDevice : IBusDevice {
     public readonly Machine Machine;
-    
-    private readonly MemoryType[] _memoryMap;
+    private readonly byte[] _memory;
+    private readonly byte[] _ioRegisters;
 
     public CpuDevice(Machine machine) {
         Machine = machine;
-        _memoryMap = new MemoryType[UInt16.MaxValue];
-    }
-
-    private enum MemoryType : byte {
-        Ram = 0,
-        IORegisters = 1
+        _memory = machine.State.Cpu.Memory;
+        _ioRegisters = machine.State.Cpu.IORegisters;
     }
 
     [MethodImpl(MethodOptions.Options)]
-    public void HandleBus(ushort address, bool isWrite, ref byte bus) {
+    public bool HandleBus(ushort address, bool isWrite, ref byte bus) {
         /*
         $2000–$2007 ($0008) NES PPU registers
         $2008–$3FFF ($1FF8) Mirrors of $2000–$2007 (repeats every 8 bytes)
         */
 
-        bool isMapped = true;
-        byte dummyByte = 0;
-        ref byte mappedData = ref dummyByte;
+        [MethodImpl(MethodOptions.Options)]
+        static void Handle(ref byte mappedData, bool isWrite, ref byte bus) {
+            if (isWrite) {
+                mappedData = bus;
+            } else {
+                bus = mappedData;
+            }
+        }
+
         switch (address) {
             case >= 0x0000 and <= 0x1FFF: {
-                mappedData = ref Machine.State.Cpu.Memory[address % 0x800];
-                break;
+                ref byte arrayDataReference = ref MemoryMarshal.GetArrayDataReference(_memory);
+                ref byte mappedData = ref Unsafe.Add(ref arrayDataReference, address % 0x800);
+                Handle(ref mappedData, isWrite, ref bus);
+                return true;
             }
             case >= 0x4000 and <= 0x401F: {
-                mappedData = ref Machine.State.Cpu.IORegisters[address % (0x18 + 0x08)];
-                break;
+                ref byte arrayDataReference = ref MemoryMarshal.GetArrayDataReference(_ioRegisters);
+                ref byte mappedData = ref Unsafe.Add(ref arrayDataReference, address % (0x18 + 0x08));
+                Handle(ref mappedData, isWrite, ref bus);
+                return true;
             }
-            default:
-                isMapped = false;
-                break;
         }
 
-        if (!isMapped)
-            return;
+        return false;
+    }
 
-        byte temp;
-        if (isWrite) {
-            temp = bus;
-            mappedData = temp;
-        } else {
-            temp = mappedData;
-            bus = temp;
-        }
+    public unsafe delegate*<IBusDevice, ushort, bool, ref byte, bool> CreateDelegate() {
+        return null;
     }
 
     public void HardReset(ushort? overrideResetVector = null) {
@@ -103,7 +100,5 @@ public readonly unsafe struct CpuDevice : IBusDevice {
         cpu.Internal.Read = true;
 
         cpu.Internal.Halted = false;
-        
-        //Array.Clear(_memoryMap);
     }
 }

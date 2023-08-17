@@ -13,7 +13,7 @@ public readonly unsafe struct PpuDevice : IBusDevice {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    public void HandleBus(ushort address, bool isWrite, ref byte bus) {
+    public bool HandleBus(ushort address, bool isWrite, ref byte bus) {
         /*
         $2000–$2007 ($0008) NES PPU registers
         $2008–$3FFF ($1FF8) Mirrors of $2000–$2007 (repeats every 8 bytes)
@@ -33,12 +33,18 @@ public readonly unsafe struct PpuDevice : IBusDevice {
         }
 
         if (!isMapped)
-            return;
+            return false;
 
         if (isWrite) {
             mappedData = bus;
         } else {
             bus = mappedData;
         }
+
+        return true;
+    }
+
+    public delegate*<IBusDevice, ushort, bool, ref byte, bool> CreateDelegate() {
+        return null;
     }
 }

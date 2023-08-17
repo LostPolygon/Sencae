@@ -2,9 +2,9 @@ namespace Sencae;
 
 //[DebuggerDisplay("{DebuggerDisplay,nq}")]
 //[DebuggerTypeProxy(typeof(MachineStateDebugProxy))]
-public struct MachineState {
-    public CpuState Cpu;
-    public PpuState Ppu;
+public class MachineState {
+    public CpuState Cpu = new CpuState();
+    public PpuState Ppu = new PpuState();
 
     public ulong ExecutedInstructionCount;
     public ulong Cycles;
