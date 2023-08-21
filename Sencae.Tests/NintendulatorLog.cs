@@ -4,8 +4,6 @@ public static class NintendulatorLog {
     public static void ResetMachineToNintendulatorInitialState(Machine machine) {
         CpuMemoryBus cpuMemoryBus = machine.CpuMemoryBus;
             
-        machine.State.Cpu.P = (CpuStatusRegisterFlags) 0x24;
-            
         for (ushort i = 0x2000; i <= 0x2007; i++) {
             cpuMemoryBus.Write(i, 0xFF);
         }
@@ -242,7 +240,7 @@ public static class NintendulatorLog {
             $"A:{cpu.A:X2} " +
             $"X:{cpu.X:X2} " +
             $"Y:{cpu.Y:X2} " +
-            $"P:{(int) cpu.P:X2} " +
+            $"P:{(int) cpu.P.ToFlags():X2} " +
             $"SP:{cpu.SP:X2} " +
             $"CYC:{machineState.Cycles} " +
             ""

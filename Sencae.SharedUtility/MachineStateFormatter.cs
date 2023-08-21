@@ -12,7 +12,7 @@ public static class MachineStateFormatter {
             $"A: {cpu.A:X2} " +
             $"X: {cpu.X:X2} " +
             $"Y: {cpu.Y:X2} " +
-            $"P: {(int) cpu.P:X2} " +
+            $"P: {(int) cpu.P.ToFlags():X2} " +
             $"SP: {cpu.SP:X2}"
             ;
     }

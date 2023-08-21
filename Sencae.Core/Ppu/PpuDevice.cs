@@ -43,8 +43,4 @@ public readonly unsafe struct PpuDevice : IBusDevice {
 
         return true;
     }
-
-    public delegate*<IBusDevice, ushort, bool, ref byte, bool> CreateDelegate() {
-        return null;
-    }
 }

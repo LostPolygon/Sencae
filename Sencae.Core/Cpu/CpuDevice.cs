@@ -1,17 +1,19 @@
+using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Sencae;
 
-public readonly struct CpuDevice : IBusDevice {
+public sealed unsafe class CpuDevice : IBusDevice, IDisposable {
     public readonly Machine Machine;
-    private readonly byte[] _memory;
-    private readonly byte[] _ioRegisters;
+    
+    private readonly PinnedArray<byte> _memory;
+    private readonly PinnedArray<byte> _ioRegisters;
 
     public CpuDevice(Machine machine) {
         Machine = machine;
-        _memory = machine.State.Cpu.Memory;
-        _ioRegisters = machine.State.Cpu.IORegisters;
+
+        _memory = new PinnedArray<byte>(machine.State.Cpu.Memory);
+        _ioRegisters = new PinnedArray<byte>(machine.State.Cpu.IORegisters);
     }
 
     [MethodImpl(MethodOptions.Options)]
@@ -32,14 +34,12 @@ public readonly struct CpuDevice : IBusDevice {
 
         switch (address) {
             case >= 0x0000 and <= 0x1FFF: {
-                ref byte arrayDataReference = ref MemoryMarshal.GetArrayDataReference(_memory);
-                ref byte mappedData = ref Unsafe.Add(ref arrayDataReference, address % 0x800);
+                ref byte mappedData = ref _memory.Pointer[address % 0x800];
                 Handle(ref mappedData, isWrite, ref bus);
                 return true;
             }
             case >= 0x4000 and <= 0x401F: {
-                ref byte arrayDataReference = ref MemoryMarshal.GetArrayDataReference(_ioRegisters);
-                ref byte mappedData = ref Unsafe.Add(ref arrayDataReference, address % (0x18 + 0x08));
+                ref byte mappedData = ref _ioRegisters.Pointer[address % (0x18 + 0x08)];
                 Handle(ref mappedData, isWrite, ref bus);
                 return true;
             }
@@ -48,15 +48,15 @@ public readonly struct CpuDevice : IBusDevice {
         return false;
     }
 
-    public unsafe delegate*<IBusDevice, ushort, bool, ref byte, bool> CreateDelegate() {
-        return null;
-    }
-
     public void HardReset(ushort? overrideResetVector = null) {
         ref CpuState cpu = ref Machine.State.Cpu;
         CpuMemoryBus cpuMemoryBus = Machine.CpuMemoryBus;
 
-        cpu.P = CpuStatusRegisterFlags.InterruptDisable | CpuStatusRegisterFlags.BreakFlag | CpuStatusRegisterFlags.Unused;
+        cpu.P = new CpuStatusRegisterUnpackedFlags() {
+            InterruptDisable = true,
+            BreakFlag = false
+        };
+        
         cpu.A = cpu.X = cpu.Y = 0x00;
         cpu.SP = 0xFD;
 
@@ -78,7 +78,7 @@ public readonly struct CpuDevice : IBusDevice {
         ref CpuState cpu = ref Machine.State.Cpu;
         CpuMemoryBus cpuMemoryBus = Machine.CpuMemoryBus;
 
-        cpu.P |= CpuStatusRegisterFlags.InterruptDisable;
+        cpu.P.InterruptDisable = true;
         cpu.SP -= 3;
 
         GenericReset(overrideResetVector);
@@ -100,5 +100,26 @@ public readonly struct CpuDevice : IBusDevice {
         cpu.Internal.Read = true;
 
         cpu.Internal.Halted = false;
+    }
+
+    private void ReleaseUnmanagedResources() {
+        _memory.Dispose();
+        _ioRegisters.Dispose();
+    }
+
+    private void Dispose(bool disposing) {
+        ReleaseUnmanagedResources();
+        if (disposing) {
+
+        }
+    }
+
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    ~CpuDevice() {
+        Dispose(false);
     }
 }

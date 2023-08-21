@@ -14,7 +14,7 @@ public unsafe class Machine : IDisposable {
     public PpuDevice PpuDevice;
 
     public MachineState State;
-    
+
     public Machine(IBusDevice cartridgeDevice) {
         State = new MachineState();
         CartridgeDevice = cartridgeDevice;
@@ -35,28 +35,20 @@ public unsafe class Machine : IDisposable {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
 
-        if (!cpuInternal.Read) {
-            CpuMemoryBus.Write(cpuInternal.AddressBus.Value, cpuInternal.DataBus);
-        } else {
-            cpuInternal.DataBus = CpuMemoryBus.Read(cpuInternal.AddressBus.Value);
-        }
-
-        ExecuteState();
+        CpuMemoryBus.HandleBus(cpuInternal.AddressBus.Value, !cpuInternal.Read, ref cpuInternal.DataBus);
+        ExecuteState(ref cpu, ref cpuInternal);
 
         State.Cycles++;
         State.ProgramCycles++;
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private void ExecuteState() {
-        ref CpuState cpu = ref State.Cpu;
-        ref CpuInternalState cpuInternal = ref cpu.Internal;
-
+    private void ExecuteState(ref CpuState cpu, ref CpuInternalState cpuInternal) {
         while (true) {
             switch (cpuInternal.State) {
                 case CpuInternalState.ExecutionState.FetchNextInstructionOpcode: {
                     cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
-                    DispatchInstructionLogic(cpuInternal.Instruction.Type);
+                    DispatchInstructionLogic(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
 
                     cpu.PC.Value++;
                     cpuInternal.AddressBus = cpu.PC;
@@ -76,7 +68,7 @@ public unsafe class Machine : IDisposable {
                 case CpuInternalState.ExecutionState.ExecutingAddressing: {
                     bool completed =
                         (cpuInternal.Instruction.Flags & InstructionFlags.SpecialAddressing) != 0 ||
-                        DispatchAddressingLogic(cpuInternal.Instruction.AddressingMode);
+                        DispatchAddressingLogic(ref cpu, ref cpuInternal, cpuInternal.Instruction.AddressingMode);
                     if (completed) {
                         if ((cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0) {
                             FinishInstruction(ref cpuInternal);
@@ -91,13 +83,13 @@ public unsafe class Machine : IDisposable {
                 }
                 case CpuInternalState.ExecutionState.ExecutingInstruction: {
                     Debug.Assert(
-                        !(cpuInternal.OperationCycle == InstructionLogic.AfterAddressingFinished && 
+                        !(cpuInternal.OperationCycle == InstructionLogic.AfterAddressingFinished &&
                             (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0)
-                        );
-                    bool completed = DispatchInstructionLogic(cpuInternal.Instruction.Type);
+                    );
+                    bool completed = DispatchInstructionLogic(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
                     if (cpuInternal.State == CpuInternalState.ExecutionState.FetchNextInstructionOpcode) {
                         cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
-                        DispatchInstructionLogic(cpuInternal.Instruction.Type);
+                        DispatchInstructionLogic(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
                     }
 
                     if (completed) {
@@ -108,7 +100,8 @@ public unsafe class Machine : IDisposable {
                 }
                 default:
                     break;
-                    //throw new ArgumentOutOfRangeException();
+
+                //throw new ArgumentOutOfRangeException();
             }
 
             break;
@@ -128,21 +121,15 @@ public unsafe class Machine : IDisposable {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private bool DispatchInstructionLogic(InstructionType instructionType) {
-        ref CpuState cpu = ref State.Cpu;
-        ref CpuInternalState cpuInternal = ref cpu.Internal;
-
+    private bool DispatchInstructionLogic(ref CpuState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
         bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, instructionType);
-
+        
         cpuInternal.OperationCycle++;
         return completed;
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private bool DispatchAddressingLogic(AddressingMode addressingMode) {
-        ref CpuState cpu = ref State.Cpu;
-        ref CpuInternalState cpuInternal = ref cpu.Internal;
-
+    private bool DispatchAddressingLogic(ref CpuState cpu, ref CpuInternalState cpuInternal, AddressingMode addressingMode) {
         bool completed = AddressingModeLogic.Dispatch(ref cpu, ref cpuInternal, addressingMode);
         
         cpuInternal.OperationCycle++;

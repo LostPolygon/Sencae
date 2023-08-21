@@ -117,9 +117,9 @@ public class Instructions {
             """
         ));
 
-        Assert.AreEqual(true, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Carry));
-        Assert.AreEqual(true, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Zero));
-        Assert.AreEqual(false, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.NegativeOrSign));
+        Assert.AreEqual(true, machine.State.Cpu.P.Carry);
+        Assert.AreEqual(true, machine.State.Cpu.P.Zero);
+        Assert.AreEqual(false, machine.State.Cpu.P.NegativeOrSign);
         
         machine = Emulate(CreateCodeCartridge(
             """
@@ -132,9 +132,9 @@ public class Instructions {
             """
         ));
 
-        Assert.AreEqual(true, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Carry));
-        Assert.AreEqual(false, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Zero));
-        Assert.AreEqual(false, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.NegativeOrSign));
+        Assert.AreEqual(true, machine.State.Cpu.P.Carry);
+        Assert.AreEqual(false, machine.State.Cpu.P.Zero);
+        Assert.AreEqual(false, machine.State.Cpu.P.NegativeOrSign);
         
         machine = Emulate(CreateCodeCartridge(
             """
@@ -146,8 +146,8 @@ public class Instructions {
             """
         ));
 
-        Assert.AreEqual(true, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Carry));
-        Assert.AreEqual(true, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Zero));
-        Assert.AreEqual(false, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.NegativeOrSign));
+        Assert.AreEqual(true, machine.State.Cpu.P.Carry);
+        Assert.AreEqual(true, machine.State.Cpu.P.Zero);
+        Assert.AreEqual(false, machine.State.Cpu.P.NegativeOrSign);
     }
 }

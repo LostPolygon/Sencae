@@ -43,6 +43,7 @@ public class NesTestRomTest {
         List<string> referenceLogOutput = NintendulatorLog.ReadLogFromFile("Resources/nestest_cpuonly.log");
         (int? mismatchLine, _, _) = NintendulatorLog.CompareLogs(referenceLogOutput, logOutput);
 
+        Assert.GreaterOrEqual(logOutput.Count, referenceLogOutput.Count);
         Assert.Null(emulationException);
         Assert.Null(mismatchLine);
     }

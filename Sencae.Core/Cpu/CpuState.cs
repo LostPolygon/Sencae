@@ -11,7 +11,8 @@ public class CpuState {
     public byte X;
     public byte Y;
 
-    public CpuStatusRegisterFlags P;
+    //public CpuStatusRegisterFlags P;
+    public CpuStatusRegisterUnpackedFlags P;
 
     // Program Counter
     public UInt16Bytes PC;
@@ -20,15 +21,4 @@ public class CpuState {
     public byte SP;
 
     public CpuInternalState Internal;
-
-    public struct CpuStatusRegisterFlags2 {
-        public bool Carry;
-        public bool Zero;
-        public bool InterruptDisable;
-        public bool DecimalMode;
-        public bool BreakFlag;
-        public bool Unused;
-        public bool Overflow;
-        public bool NegativeOrSign;
-    }
 }

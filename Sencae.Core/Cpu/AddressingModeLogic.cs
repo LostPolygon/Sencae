@@ -10,15 +10,15 @@ public static class AddressingModeLogic {
         return addressingMode switch {
             //AddressingMode.Implied => Implied(ref cpu, ref cpuInternal),
             AddressingMode.Immediate => ImmediateOrRelative(ref cpu, ref cpuInternal),
+            AddressingMode.ZeroPage => ZeroPage(ref cpu, ref cpuInternal),
             AddressingMode.Absolute => Absolute(ref cpu, ref cpuInternal),
             AddressingMode.AbsoluteXIndexed => AbsoluteXIndexed(ref cpu, ref cpuInternal),
             AddressingMode.AbsoluteYIndexed => AbsoluteYIndexed(ref cpu, ref cpuInternal),
-            AddressingMode.ZeroPage => ZeroPage(ref cpu, ref cpuInternal),
+            AddressingMode.ZeroPageIndirectXPreIndexed => ZeroPageIndirectXPreIndexed(ref cpu, ref cpuInternal),
+            AddressingMode.ZeroPageIndirectYPostIndexed => ZeroPageIndirectYPostIndexed(ref cpu, ref cpuInternal),
             AddressingMode.ZeroPageXIndexed => ZeroPageXIndexed(ref cpu, ref cpuInternal),
             AddressingMode.ZeroPageYIndexed => ZeroPageYIndexed(ref cpu, ref cpuInternal),
             AddressingMode.AbsoluteIndirect => AbsoluteIndirect(ref cpu, ref cpuInternal),
-            AddressingMode.ZeroPageIndirectXPreIndexed => ZeroPageIndirectXPreIndexed(ref cpu, ref cpuInternal),
-            AddressingMode.ZeroPageIndirectYPostIndexed => ZeroPageIndirectYPostIndexed(ref cpu, ref cpuInternal),
             AddressingMode.Relative => ImmediateOrRelative(ref cpu, ref cpuInternal),
             _ => true
         };

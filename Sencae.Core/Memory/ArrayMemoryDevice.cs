@@ -5,24 +5,40 @@ using System.Runtime.InteropServices;
 
 namespace Sencae;
 
-public readonly struct ArrayMemoryDevice : IMemoryDevice {
-    public readonly byte[] Memory;
+public sealed unsafe class ArrayMemoryDevice : IMemoryDevice, IDisposable {
     public readonly int AddressOffset;
+
+    public readonly PinnedArray<byte> PinnedArray;
 
     public ArrayMemoryDevice(byte[] memory, int addressOffset) {
         AddressOffset = addressOffset;
-        Memory = memory;
+        PinnedArray = new PinnedArray<byte>(memory);
     }
 
     [MethodImpl(MethodOptions.Options)]
     public ref byte GetU8(ushort address) {
         int index = CalculateIndex(address);
-        Debug.Assert(index is >= 0 and <= UInt16.MaxValue, "index is >= 0 and <= UInt16.MaxValue", index.ToString());
-        ref byte data = ref MemoryMarshal.GetArrayDataReference(Memory);
-        data = ref Unsafe.Add(ref data, index);
-        return ref data;
+        Debug.Assert(
+            index is >= 0 and <= UInt16.MaxValue && index < PinnedArray.Length,
+            "index is >= 0 and <= UInt16.MaxValue", index.ToString()
+        );
+
+        return ref PinnedArray.Pointer[index];
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private int CalculateIndex(ushort address) => (address - AddressOffset) % Memory.Length;
+    private int CalculateIndex(ushort address) => (address - AddressOffset) % PinnedArray.Length;
+
+    private void ReleaseUnmanagedResources() {
+        PinnedArray.Dispose();
+    }
+
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    ~ArrayMemoryDevice() {
+        ReleaseUnmanagedResources();
+    }
 }

@@ -62,6 +62,6 @@ public class BasicTests {
 
         Assert.AreEqual(0xC1, machine.State.Cpu.X);
         Assert.AreEqual(0x84, machine.State.Cpu.A);
-        Assert.AreEqual(false, machine.State.Cpu.P.HasFlag(CpuStatusRegisterFlags.Overflow));
+        Assert.AreEqual(false, machine.State.Cpu.P.Overflow);
     }
 }
