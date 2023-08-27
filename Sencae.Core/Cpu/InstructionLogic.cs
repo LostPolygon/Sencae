@@ -211,8 +211,8 @@ public static class InstructionLogic {
 
     [MethodImpl(MethodOptions.Options)]
     public static bool TAY(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-                cpu.Y = cpu.A;
-                SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.Y);
+        cpu.Y = cpu.A;
+        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.Y);
 
         return false;
     }
@@ -300,7 +300,7 @@ public static class InstructionLogic {
                 cpuInternal.Read = false;
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
 
-                cpuInternal.DataBus = (byte) (cpu.P.ToFlags() | CpuStatusRegisterFlags.BreakFlag);
+                cpuInternal.DataBus = (byte) (cpu.P.ToFlags() | CpuStatusRegisterPackedFlags.BreakFlag);
                 cpu.SP--;
                 return true;
         }
@@ -320,7 +320,7 @@ public static class InstructionLogic {
                 cpuInternal.Temporary.Low = cpuInternal.DataBus;
                 return true;
             case AfterNextOpcodeFetched:
-                cpu.P = CpuStatusRegisterUnpackedFlags.FromFlags((CpuStatusRegisterFlags) cpuInternal.Temporary.Low);
+                cpu.P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) cpuInternal.Temporary.Low);
                 cpu.P.BreakFlag = false;
 
                 break;
@@ -421,7 +421,7 @@ public static class InstructionLogic {
 
     [MethodImpl(MethodOptions.Options)]
     private static bool ADC_SBC_Internal(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal, byte data) {
-        ushort result16 = (ushort) (cpu.A + data + cpu.P.Carry.AsByte());
+        ushort result16 = (ushort) (cpu.A + data + (cpu.P.Carry ? 1 : 0));
         byte result = (byte) result16;
 
         cpu.P.Carry = result16 > Byte.MaxValue;
@@ -489,7 +489,7 @@ public static class InstructionLogic {
 
             byte input = value;
             value = (byte) (value << 1);
-            
+
             SetGenericZeroAndNegativeSignFlags(ref cpu.P, value);
             cpu.P.Carry = (input & 1 << 7) != 0;
         }
@@ -514,7 +514,7 @@ public static class InstructionLogic {
             }
 
             byte input = value;
-            value = (byte) ((value << 1) | cpu.P.Carry.AsByte());
+            value = (byte) ((value << 1) | (cpu.P.Carry ? 1 : 0));
 
             cpu.P.Carry = (input & 1 << 7) != 0;
             cpu.P.NegativeOrSign = (input & 1 << 6) != 0;
@@ -540,7 +540,7 @@ public static class InstructionLogic {
         );
 
         if (mustHandle) {
-            ref CpuStatusRegisterUnpackedFlags status = ref cpu.P;
+            ref CpuStatusRegisterFlags status = ref cpu.P;
             ref byte value = ref cpuInternal.Temporary.Low;
             if (impliedAddressing) {
                 value = ref cpu.A;
@@ -549,7 +549,7 @@ public static class InstructionLogic {
             byte input = value;
             value = (byte) (value >> 1);
             value |= (byte) (status.Carry ? 1 << 7 : 0);
-            
+
             status.NegativeOrSign = status.Carry;
             status.Carry = (input & 1 << 0) != 0;
             status.Zero = value == 0;
@@ -568,7 +568,7 @@ public static class InstructionLogic {
         );
 
         if (!completed && mustHandle) {
-            ref CpuStatusRegisterUnpackedFlags status = ref cpu.P;
+            ref CpuStatusRegisterFlags status = ref cpu.P;
             ref byte value = ref cpuInternal.Temporary.Low;
             if (impliedAddressing) {
                 value = ref cpu.A;
@@ -576,7 +576,7 @@ public static class InstructionLogic {
 
             byte input = value;
             value = (byte) (value >> 1);
-            
+
             status.NegativeOrSign = false;
             status.Zero = value == 0;
             status.Carry = (input & 1 << 0) != 0;
@@ -701,7 +701,7 @@ public static class InstructionLogic {
         byte comparedValue
     ) {
         byte result = (byte) (comparedValue - cpuInternal.DataBus);
-        
+
         cpu.P.Carry = cpuInternal.DataBus <= comparedValue;
         SetGenericZeroAndNegativeSignFlags(ref cpu.P, result);
 
@@ -888,7 +888,7 @@ public static class InstructionLogic {
                 break;
             case 2:
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
-                cpuInternal.DataBus = (byte) (cpu.P.ToFlags() | CpuStatusRegisterFlags.BreakFlag);
+                cpuInternal.DataBus = (byte) (cpu.P.ToFlags() | CpuStatusRegisterPackedFlags.BreakFlag);
                 cpu.SP--;
                 break;
             case 3:
@@ -923,7 +923,7 @@ public static class InstructionLogic {
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
                 break;
             case 2:
-                cpu.P = CpuStatusRegisterUnpackedFlags.FromFlags((CpuStatusRegisterFlags) cpuInternal.DataBus);
+                cpu.P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) cpuInternal.DataBus);
                 cpu.P.BreakFlag = false;
 
                 cpu.SP++;
@@ -1163,7 +1163,7 @@ public static class InstructionLogic {
     #endregion
 
     [MethodImpl(MethodOptions.Options)]
-    private static void SetGenericZeroAndNegativeSignFlags(ref CpuStatusRegisterUnpackedFlags status, byte value) {
+    private static void SetGenericZeroAndNegativeSignFlags(ref CpuStatusRegisterFlags status, byte value) {
         status.Zero = value == 0;
         status.NegativeOrSign = (value & 1 << 7) != 0;
     }

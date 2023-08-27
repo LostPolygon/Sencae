@@ -12,8 +12,8 @@ public class CartridgeTests {
 
         byte[] characterRom = new byte[8 * 1024];
 
-        CartridgeDevice cartridgeDevice = new CartridgeDevice(0, programRom, characterRom);
-        Machine machine = new Machine(cartridgeDevice);
+        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(new CartridgeData(0, programRom, characterRom));
+        Machine machine = new(cartridgeDevice);
         
         Assert.AreEqual(0x69, machine.CpuMemoryBus.Read(0xFFFC));
         Assert.AreEqual(0x42, machine.CpuMemoryBus.Read(0xFFFD));

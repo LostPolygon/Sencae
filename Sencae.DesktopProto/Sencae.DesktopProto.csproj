@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <RootNamespace>Sencae</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <OutputType>Exe</OutputType>
@@ -55,6 +55,7 @@
         <PackageReference Include="ImGui.SDL.Spectrum.NET" Version="1.89.0" />
         <PackageReference Include="ppy.SDL2-CS" Version="1.0.671-alpha" />
         <PackageReference Include="SDL-Sharp-DLL" Version="2.1.1" />
+        <PackageReference Include="Veldrid.OpenGLBindings" Version="4.9.0" />
     </ItemGroup>
 
     <ItemGroup>

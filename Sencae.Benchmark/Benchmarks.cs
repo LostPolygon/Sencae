@@ -39,7 +39,7 @@ public class Benchmarks {
             }
         );
 
-        return Machine.State.ProgramCycles;
+        return Machine.State.CpuProgramCycles;
     }
 
     public ulong EmulateWithStats(ulong maxCycles = 16000) {
@@ -75,12 +75,7 @@ public class Benchmarks {
     public void Setup() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice = new CartridgeDevice(
-            cartridgeData.Mapper,
-            cartridgeData.PrgRom,
-            cartridgeData.ChrRom,
-            new byte[0]
-        );
+        CartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData);
 
         Machine = new Machine(CartridgeDevice);
         //_machineGcHandle = GCHandle.Alloc(Machine, GCHandleType.Pinned);

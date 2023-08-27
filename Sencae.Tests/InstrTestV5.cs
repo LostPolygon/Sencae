@@ -4,7 +4,7 @@ using static Sencae.SharedUtility.DebugEmulationRunner;
 
 namespace Sencae.Tests;
 
-[Parallelizable(ParallelScope.All)]
+//[Parallelizable(ParallelScope.All)]
 public class InstrTestV5 {
     [Test]
     public void Test_01_Basics() {
@@ -143,13 +143,7 @@ public class InstrTestV5 {
     ) {
         byte[] testRom = File.ReadAllBytes($"Resources/instr_test-v5/{testRomName}.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice =
-            new(
-                cartridgeData.Mapper,
-                cartridgeData.PrgRom,
-                cartridgeData.ChrRom,
-                new byte[16 * 1024]
-            );
+        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, new byte[16 * 1024]);
 
         List<string> logOutput = new();
         Machine machine = new Machine(cartridgeDevice);

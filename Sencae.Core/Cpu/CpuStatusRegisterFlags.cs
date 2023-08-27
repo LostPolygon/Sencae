@@ -1,15 +1,42 @@
-using System;
+using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-[Flags]
-public enum CpuStatusRegisterFlags : byte {
-    Carry = 1 << 0,            // 0 - C, Carry (0=No Carry, 1=Carry)
-    Zero = 1 << 1,             // 1 - Z, Zero (0=Nonzero, 1=Zero)
-    InterruptDisable = 1 << 2, // 2 - I, IRQ Disable (0=IRQ Enable, 1=IRQ Disable)
-    DecimalMode = 1 << 3,      // 3 - D, Decimal Mode (0=Normal, 1=BCD Mode for ADC/SBC opcodes)
-    BreakFlag = 1 << 4,        // 4 - B, Break Flag (0=IRQ/NMI, 1=BRK/PHP opcode)
-    Unused = 1 << 5,           // 5 - -, Not used (Always 1)
-    Overflow = 1 << 6,         // 6 - V, Overflow (0=No Overflow, 1=Overflow)
-    NegativeOrSign = 1 << 7,   // 7 - N, Negative/Sign (0=Positive, 1=Negative)
+public record struct CpuStatusRegisterFlags {
+    public bool Carry;
+    public bool Zero;
+    public bool InterruptDisable;
+    public bool DecimalMode;
+    public bool BreakFlag;
+    public bool Overflow;
+    public bool NegativeOrSign;
+
+    [MethodImpl(MethodOptions.Options)]
+    public CpuStatusRegisterPackedFlags ToFlags() {
+        byte result = 0;
+        result |= (byte) (Carry ? CpuStatusRegisterPackedFlags.Carry : 0);
+        result |= (byte) (Zero ? CpuStatusRegisterPackedFlags.Zero : 0);
+        result |= (byte) (InterruptDisable ? CpuStatusRegisterPackedFlags.InterruptDisable : 0);
+        result |= (byte) (DecimalMode ? CpuStatusRegisterPackedFlags.DecimalMode : 0);
+        result |= (byte) (BreakFlag ? CpuStatusRegisterPackedFlags.BreakFlag : 0);
+        result |= (byte) (Overflow ? CpuStatusRegisterPackedFlags.Overflow : 0);
+        result |= (byte) (NegativeOrSign ? CpuStatusRegisterPackedFlags.NegativeOrSign : 0);
+        result |= (byte) CpuStatusRegisterPackedFlags.Unused;
+        return (CpuStatusRegisterPackedFlags) result;
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static CpuStatusRegisterFlags FromFlags(CpuStatusRegisterPackedFlags flags) {
+        CpuStatusRegisterFlags result = new() {
+            Carry = (flags & CpuStatusRegisterPackedFlags.Carry) != 0,
+            Zero = (flags & CpuStatusRegisterPackedFlags.Zero) != 0,
+            InterruptDisable = (flags & CpuStatusRegisterPackedFlags.InterruptDisable) != 0,
+            DecimalMode = (flags & CpuStatusRegisterPackedFlags.DecimalMode) != 0,
+            BreakFlag = (flags & CpuStatusRegisterPackedFlags.BreakFlag) != 0,
+            Overflow = (flags & CpuStatusRegisterPackedFlags.Overflow) != 0,
+            NegativeOrSign = (flags & CpuStatusRegisterPackedFlags.NegativeOrSign) != 0
+        };
+
+        return result;
+    }
 }

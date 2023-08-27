@@ -1,45 +1,96 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using Sencae.Ppu;
 
 namespace Sencae;
 
 public unsafe class Machine : IDisposable {
-    public IBusDevice CartridgeDevice;
-
-    public CpuDevice CpuDevice;
     public CpuMemoryBus CpuMemoryBus;
+    public CpuBusDevice CpuBusDevice;
+    public PpuCpuBusDevice PpuCpuBusDevice;
 
     public PpuDevice PpuDevice;
+    public PpuMemoryBus PpuMemoryBus;
+    public PpuBusDevice PpuBusDevice;
+
+    public CartridgeDevice CartridgeDevice;
 
     public MachineState State;
 
-    public Machine(IBusDevice cartridgeDevice) {
-        State = new MachineState();
+    public Machine(CartridgeDevice cartridgeDevice) {
         CartridgeDevice = cartridgeDevice;
-        CpuDevice = new CpuDevice(this);
+
+        State = new MachineState();
+
         PpuDevice = new PpuDevice(this);
+
         CpuMemoryBus = new CpuMemoryBus(this);
+        PpuMemoryBus = new PpuMemoryBus(this);
+
+        CpuBusDevice = new CpuBusDevice(this);
+        PpuBusDevice = new PpuBusDevice(this);
+        PpuCpuBusDevice = new PpuCpuBusDevice(this);
+
+        PpuMemoryBus = new PpuMemoryBus(this);
     }
 
-    public void Reset(ushort? overrideResetVector = null) {
-        CpuDevice.HardReset(overrideResetVector);
-        PpuDevice.Reset();
+    public void Reset(ushort? overrideResetVector = null, bool hardReset = true) {
+        State.ResetCounters();
 
-        State.Reset();
+        if (hardReset) {
+            CpuBusDevice.HardReset(overrideResetVector);
+        } else {
+            CpuBusDevice.SoftReset(overrideResetVector);
+        }
+
+        PpuDevice.SoftReset();
     }
 
     [MethodImpl(MethodOptions.Options)]
     public void Clock() {
+        if (State.MachineCycles % 3 == 0) {
+            CpuClock();
+        }
+
+        PpuClock();
+
+        State.MachineCycles++;
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public void PpuClock() {
+        if (State.MachineCycles % 28000 == 0) {
+            State.Ppu.PPUSTATUS |= PpuStatusRegisterFlags.VerticalBlankStarted;
+        }
+
+        if (State.MachineCycles % 29000 == 0) {
+            State.Ppu.PPUSTATUS &= ~PpuStatusRegisterFlags.VerticalBlankStarted;
+        }
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public void CpuClock() {
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
 
-        CpuMemoryBus.HandleBus(cpuInternal.AddressBus.Value, !cpuInternal.Read, ref cpuInternal.DataBus);
+        ushort address = cpuInternal.AddressBus.Value;
+        bool isWrite = !cpuInternal.Read;
+        ref byte dataBus = ref cpuInternal.DataBus;
+
+        // Assume that zero page and stack page are never IO mapped
+        bool alwaysCpuMemory = address <= 0x01FF;
+        if (alwaysCpuMemory) {
+            ref byte mappedData = ref CpuBusDevice.Memory.Data[address];
+            BusDeviceHandlers.ReadWrite(ref mappedData, isWrite, ref dataBus);
+        } else {
+            CpuMemoryBus.HandleBus(address, isWrite, ref dataBus);
+        }
+
         ExecuteState(ref cpu, ref cpuInternal);
 
-        State.Cycles++;
-        State.ProgramCycles++;
+        State.CpuCycles++;
+        State.CpuProgramCycles++;
     }
 
     [MethodImpl(MethodOptions.Options)]
@@ -107,6 +158,7 @@ public unsafe class Machine : IDisposable {
             break;
         }
 
+        [MethodImpl(MethodOptions.Options)]
         static void FinishInstruction(ref CpuInternalState cpuInternal) {
             // Flow control instructions already setup PC and AB to needed values,
             // other instructions can just reuse common logic
@@ -123,7 +175,7 @@ public unsafe class Machine : IDisposable {
     [MethodImpl(MethodOptions.Options)]
     private bool DispatchInstructionLogic(ref CpuState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
         bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, instructionType);
-        
+
         cpuInternal.OperationCycle++;
         return completed;
     }
@@ -131,12 +183,20 @@ public unsafe class Machine : IDisposable {
     [MethodImpl(MethodOptions.Options)]
     private bool DispatchAddressingLogic(ref CpuState cpu, ref CpuInternalState cpuInternal, AddressingMode addressingMode) {
         bool completed = AddressingModeLogic.Dispatch(ref cpu, ref cpuInternal, addressingMode);
-        
+
         cpuInternal.OperationCycle++;
         return completed;
     }
 
     private void ReleaseUnmanagedResources() {
+        //CpuMemoryBus.Dispose();
+        CpuBusDevice.Dispose();
+        PpuCpuBusDevice.Dispose();
+
+        //PpuMemoryBus.Dispose();
+        PpuBusDevice.Dispose();
+
+        //CartridgeDevice.Dispose();
     }
 
     public void Dispose() {

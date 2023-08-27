@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <RootNamespace>Sencae.Desktop</RootNamespace>
+        <LangVersion>preview</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+        <ApplicationIcon>icon.ico</ApplicationIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
+        <PackageReference Include="Cyotek.CircularBuffer" Version="1.2.1"/>
+        <PackageReference Include="ImGui.SDL.NET" Version="1.89.1"/>
+        <PackageReference Include="Perfolizer" Version="0.2.1" />
+        <PackageReference Include="ppy.SDL2-CS" Version="1.0.671-alpha"/>
+        <PackageReference Include="SDL-Sharp-DLL" Version="2.1.1"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <Content Include="Resources\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj"/>
+    </ItemGroup>
+
+</Project>

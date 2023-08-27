@@ -26,8 +26,8 @@ public unsafe class EmulatorRunner {
             "Sencae NES Emulator",
             SDL.SDL_WINDOWPOS_CENTERED,
             SDL.SDL_WINDOWPOS_CENTERED,
-            ScreenScale * NesConstants.ScreenWidth,
-            ScreenScale * NesConstants.ScreenHeight,
+            ScreenScale * NesConstants.Ntsc.ScreenWidth,
+            ScreenScale * NesConstants.Ntsc.ScreenHeight,
             SDL.SDL_WindowFlags.SDL_WINDOW_SHOWN
         ));
         IntPtr renderer = AssertSdlSuccess(SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED));
@@ -37,8 +37,8 @@ public unsafe class EmulatorRunner {
         SDL.SDL_Surface* emulatorSurface =
             (SDL.SDL_Surface*) SDL.SDL_CreateRGBSurfaceWithFormat(
                 0,
-                NesConstants.ScreenWidth,
-                NesConstants.ScreenHeight,
+                NesConstants.Ntsc.ScreenWidth,
+                NesConstants.Ntsc.ScreenHeight,
                 8,
                 SDL.SDL_PIXELFORMAT_INDEX8
             );
@@ -83,7 +83,7 @@ public unsafe class EmulatorRunner {
         SDL.SDL_PauseAudioDevice(_sdlAudioDevice, 0);
 
         // Initialize the emulator
-        Machine machine = new(new CartridgeDevice(0, new byte[16 * 1024], new byte[8 * 1024]));
+        Machine machine = new(CartridgeDeviceFactory.Create(new CartridgeData(0, new byte[16 * 1024], new byte[8 * 1024])));
 
         byte[] gameRom = {
             0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85,
@@ -148,7 +148,7 @@ public unsafe class EmulatorRunner {
     private void MainLoop(SDL.SDL_Surface* emulatorSurface, IntPtr renderer, IntPtr window) {
         bool quit = false;
         Stopwatch updateStopwatch = new Stopwatch();
-        double frameDuration = 1.0 / NesConstants.Framerate;
+        double frameDuration = 1.0 / NesConstants.Ntsc.Framerate;
             
         while (!quit) {
             updateStopwatch.Restart();
@@ -187,7 +187,7 @@ public unsafe class EmulatorRunner {
     private ulong frames;
 
     private void Update(SdlEmulator emulator, SDL.SDL_Surface* emulatorSurface, IntPtr renderer) {
-        emulator.Update(NesConstants.CyclesPerFrame);
+        emulator.Update(NesConstants.Ntsc.CyclesPerFrame);
         emulator.Render();
 
         // Set renderer drawing color.
@@ -200,8 +200,8 @@ public unsafe class EmulatorRunner {
         SDL.SDL_Rect tRect;
         tRect.x = 0;
         tRect.y = 0;
-        tRect.w = NesConstants.ScreenWidth * ScreenScale;
-        tRect.h = NesConstants.ScreenHeight * ScreenScale;
+        tRect.w = NesConstants.Ntsc.ScreenWidth * ScreenScale;
+        tRect.h = NesConstants.Ntsc.ScreenHeight * ScreenScale;
 
         // Blit the emulator view
         IntPtr emulatorTexture = SDL.SDL_CreateTextureFromSurface(renderer, (IntPtr) emulatorSurface);

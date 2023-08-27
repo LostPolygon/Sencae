@@ -1,18 +1,21 @@
 namespace Sencae; 
+using Sencae.Ppu;
 
 //[DebuggerDisplay("{DebuggerDisplay,nq}")]
 //[DebuggerTypeProxy(typeof(MachineStateDebugProxy))]
 public class MachineState {
-    public CpuState Cpu = new CpuState();
-    public PpuState Ppu = new PpuState();
+    public CpuState Cpu = new();
+    public PpuState Ppu = new();
 
     public ulong ExecutedInstructionCount;
-    public ulong Cycles;
-    public ulong ProgramCycles;
+    public ulong MachineCycles;
+    public ulong CpuCycles;
+    public ulong CpuProgramCycles;
 
-    public void Reset() {
+    public void ResetCounters() {
         ExecutedInstructionCount = 0;
-        Cycles = 7;
-        ProgramCycles = 0;
+        MachineCycles = 0;
+        CpuCycles = 7;
+        CpuProgramCycles = 0;
     }
 }

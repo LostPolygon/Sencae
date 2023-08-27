@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace Sencae;
 
 public class CpuState {
@@ -11,8 +9,7 @@ public class CpuState {
     public byte X;
     public byte Y;
 
-    //public CpuStatusRegisterFlags P;
-    public CpuStatusRegisterUnpackedFlags P;
+    public CpuStatusRegisterFlags P;
 
     // Program Counter
     public UInt16Bytes PC;

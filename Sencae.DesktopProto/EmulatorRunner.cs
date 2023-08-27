@@ -65,7 +65,7 @@ public unsafe class EmulatorRunner {
             ImGuiConfigFlags.NavEnableGamepad |
             ImGuiConfigFlags.NavEnableKeyboard |
             ImGuiConfigFlags.DpiEnableScaleFonts |
-            ImGuiConfigFlags.DpiEnableScaleViewports | 
+            ImGuiConfigFlags.DpiEnableScaleViewports |
             ImGuiConfigFlags.ViewportsEnable;
 
         //io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors;
@@ -75,12 +75,12 @@ public unsafe class EmulatorRunner {
 
         /*ImGuiStyle* style = ImGui.GetStyle();
 
-        style->WindowPadding = new Vector2(15, 15);
+        style->WindowPadding = new(15, 15);
         style->WindowRounding = 5.0f;
-        style->FramePadding = new Vector2(5, 5);
+        style->FramePadding = new(5, 5);
         style->FrameRounding = 4.0f;
-        style->ItemSpacing = new Vector2(12, 8);
-        style->ItemInnerSpacing = new Vector2(8, 6);
+        style->ItemSpacing = new(12, 8);
+        style->ItemInnerSpacing = new(8, 6);
         style->IndentSpacing = 25.0f;
         style->ScrollbarSize = 15.0f;
         style->ScrollbarRounding = 9.0f;
@@ -148,12 +148,6 @@ public unsafe class EmulatorRunner {
         Sdl2Renderer.ImGui_ImplSDLRenderer2_Init((SDL_Renderer*) renderer);
 
         //ImGui.sdl
-
-        if (SDL_GetWindowWMInfo(window, ref info) == SDL_bool.SDL_TRUE) {
-            ImGuiViewportPtr imGuiViewportPtr = ImGui.GetMainViewport();
-            imGuiViewportPtr.PlatformHandleRaw = info.info.win.window;
-        }
-
         // Setup sound
         SDL_AudioSpec desiredSpec = new SDL_AudioSpec {
             freq = 44100,
@@ -182,9 +176,12 @@ public unsafe class EmulatorRunner {
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     public static void ImGuiDrawListCallback(ImDrawList* list, ImDrawCmd* cmd) {
+        ImDrawListPtr listPtr = new ImDrawListPtr(list);
+        listPtr.AddCircleFilled(new Vector2(100, 100), 600, 0xFFFFFFFF, 10);
         return;
+
         //Console.WriteLine(((ImDrawCmd*) cmd)->ElemCount);
-        
+
         static Vector4 RgbColorToVector(uint color) {
             byte a = (byte) (color >> 24);
             byte r = (byte) (color >> 16);
@@ -205,40 +202,72 @@ public unsafe class EmulatorRunner {
 
         float lerp = (float) Math.Abs(Math.Cos((DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000.0) % 5000.0));
 
-        ImDrawListPtr imDrawListPtr = new ImDrawListPtr(list);
+        ImDrawList* cmd_list = list;
+        ImDrawVert* vtx_buffer = (ImDrawVert*) cmd_list->VtxBuffer.Data;
+
+        for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
+            ImDrawCmd* pcmd = (ImDrawCmd*) cmd_list->CmdBuffer.Address<ImDrawCmd>(cmd_i);
+
+            int num_vertices = (int) (cmd_list->VtxBuffer.Size - pcmd->VtxOffset);
+            ImDrawVert* vertex = vtx_buffer + pcmd->VtxOffset;
+            int stride = sizeof(ImDrawVert);
+            
+            for (int i = 0; i < num_vertices; i++) {
+                ImDrawVert* vertexTemp = vertex + i;
+
+                Vector4 vector = RgbColorToVector(vertexTemp->col);
+                vector *= new Vector4(1, 1, 1, lerp);
+
+                //vector *= Vector4.Zero;
+                vertexTemp->col = VectorToRgbColor(vector);
+                vertexTemp->col = 0;
+            }
+        }
+
+        /*ImDrawListPtr imDrawListPtr = new ImDrawListPtr(list);
+        imDrawListPtr.
         for (int i = 0; i < imDrawListPtr.VtxBuffer.Size; i++) {
             ImDrawVert* vertexTemp = imDrawListPtr.VtxBuffer[i];
 
             Vector4 vector = RgbColorToVector(vertexTemp->col);
 
-            vector *= new Vector4(0, 0,1, 1);
+            vector *= new Vector4(0, 0, 1, 1);
+
             //vector *= Vector4.Zero;
             vertexTemp->col = VectorToRgbColor(vector);
-        }
+        }*/
     }
-    
+
     // https://gist.github.com/kpcftsz/b044b43213564f2fb32e8685a50daf6a
-    private static void RenderDropShadow(void* tex_id, float size, byte opacity) {
-        float inset = 10f;
-        
-        Vector2 p = ImGui.GetWindowPos();
-        Vector2 s = ImGui.GetWindowSize();
-        Vector2 m = new Vector2(p.X + s.X, p.Y + s.Y);
-        float uv0 = 0.0f;      // left/top region
-        float uv1 = 0.333333f; // leftward/upper region
-        float uv2 = 0.666666f; // rightward/lower region
-        float uv3 = 1.0f;      // right/bottom region
-        uint col = (uint) ((opacity << 24) | 0xFFFFFF);
+    private static void RenderDropShadow(IntPtr tex_id, float shadowSize, byte shadowAlpha) {
+        float inset = 5.5f;
+
+        Vector2 leftTop = ImGui.GetWindowPos();
+        Vector2 size = ImGui.GetWindowSize();
+
+        size.X -= inset * 2f;
+        size.Y -= inset * 2f;
+
+        leftTop.X += inset;
+        leftTop.Y += inset;
+
+        Vector2 bottomRight = new(leftTop.X + size.X, leftTop.Y + size.Y);
+        const float uv0 = 0.0f; // left/top region
+        const float uv1 = 0.333333f; // leftward/upper region
+        const float uv2 = 0.666666f; // rightward/lower region
+        const float uv3 = 1.0f; // right/bottom region
+        uint shadowColor = (uint) ((shadowAlpha << 24) | 0xFFFFFF);
+
         ImDrawListPtr dl = ImGui.GetWindowDrawList();
         dl.PushClipRectFullScreen();
-        //dl.AddImage((IntPtr)tex_id, new Vector2(p.X - size, p.Y - size), new Vector2(p.X + inset,        p.Y + inset       ), new Vector2(uv0, uv0), new Vector2(uv1, uv1), col);
-        //dl.AddImage((IntPtr)tex_id, new Vector2(p.X,        p.Y - size), new Vector2(m.X,        p.Y + inset       ), new Vector2(uv1, uv0), new Vector2(uv2, uv1), col);
-        //dl.AddImage((IntPtr)tex_id, new Vector2(m.X,        p.Y - size), new Vector2(m.X + size , p.Y       ), new Vector2(uv2, uv0), new Vector2(uv3, uv1), col);
-        //dl.AddImage((IntPtr)tex_id, new Vector2(p.X - size, p.Y       ), new Vector2(p.X,        m.Y       ), new Vector2(uv0, uv1), new Vector2(uv1, uv2), col);
-        //dl.AddImage((IntPtr)tex_id, new Vector2(m.X,        p.Y       ), new Vector2(m.X + size, m.Y       ), new Vector2(uv2, uv1), new Vector2(uv3, uv2), col);
-        //dl.AddImage((IntPtr)tex_id, new Vector2(p.X - size, m.Y       ), new Vector2(p.X,        m.Y + size), new Vector2(uv0, uv2), new Vector2(uv1, uv3), col);
-        //dl.AddImage((IntPtr)tex_id, new Vector2(p.X,        m.Y       ), new Vector2(m.X,        m.Y + size), new Vector2(uv1, uv2), new Vector2(uv2, uv3), col);
-        //dl.AddImage((IntPtr)tex_id, new Vector2(m.X,        m.Y       ), new Vector2(m.X + size, m.Y + size), new Vector2(uv2, uv2), new Vector2(uv3, uv3), col);
+        dl.AddImage(tex_id, new(leftTop.X - shadowSize, leftTop.Y - shadowSize), new(leftTop.X, leftTop.Y), new(uv0, uv0), new(uv1, uv1), shadowColor);
+        dl.AddImage(tex_id, new(leftTop.X, leftTop.Y - shadowSize), new(bottomRight.X, leftTop.Y), new(uv1, uv0), new(uv2, uv1), shadowColor);
+        dl.AddImage(tex_id, new(bottomRight.X, leftTop.Y - shadowSize), new(bottomRight.X + shadowSize, leftTop.Y), new(uv2, uv0), new(uv3, uv1), shadowColor);
+        dl.AddImage(tex_id, new(leftTop.X - shadowSize, leftTop.Y), new(leftTop.X, bottomRight.Y), new(uv0, uv1), new(uv1, uv2), shadowColor);
+        dl.AddImage(tex_id, new(bottomRight.X, leftTop.Y), new(bottomRight.X + shadowSize, bottomRight.Y), new(uv2, uv1), new(uv3, uv2), shadowColor);
+        dl.AddImage(tex_id, new(leftTop.X - shadowSize, bottomRight.Y), new(leftTop.X, bottomRight.Y + shadowSize), new(uv0, uv2), new(uv1, uv3), shadowColor);
+        dl.AddImage(tex_id, new(leftTop.X, bottomRight.Y), new(bottomRight.X, bottomRight.Y + shadowSize), new(uv1, uv2), new(uv2, uv3), shadowColor);
+        dl.AddImage(tex_id, new(bottomRight.X, bottomRight.Y), new(bottomRight.X + shadowSize, bottomRight.Y + shadowSize), new(uv2, uv2), new(uv3, uv3), shadowColor);
         dl.PopClipRect();
     }
 
@@ -246,8 +275,8 @@ public unsafe class EmulatorRunner {
         SDL.SDL_Surface* emulatorSurface =
             (SDL.SDL_Surface*) SDL.SDL_CreateRGBSurfaceWithFormat(
                 0,
-                NesConstants.ScreenWidth,
-                NesConstants.ScreenHeight,
+                NesConstants.Ntsc.ScreenWidth,
+                NesConstants.Ntsc.ScreenHeight,
                 8,
                 SDL.SDL_PIXELFORMAT_ARGB8888
             );
@@ -256,8 +285,8 @@ public unsafe class EmulatorRunner {
             renderer,
             SDL_PIXELFORMAT_ARGB8888,
             (int) SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
-            NesConstants.ScreenWidth,
-            NesConstants.ScreenHeight
+            NesConstants.Ntsc.ScreenWidth,
+            NesConstants.Ntsc.ScreenHeight
         );
 
         SDL_SetTextureBlendMode((IntPtr) emulatorTexture, SDL_BlendMode.SDL_BLENDMODE_BLEND);
@@ -270,7 +299,7 @@ public unsafe class EmulatorRunner {
 
         bool quit = false;
         Stopwatch updateStopwatch = new Stopwatch();
-        double frameDuration = 1.0 / NesConstants.Framerate;
+        double frameDuration = 1.0 / NesConstants.Ntsc.Framerate;
 
         while (!quit) {
             bool wantsImguiUpdate = true;
@@ -297,7 +326,7 @@ public unsafe class EmulatorRunner {
                 //_emulator.HandleSdlEvent(in evt);
             }
 
-            int screenLength = NesConstants.ScreenWidth * NesConstants.ScreenHeight * 4;
+            int screenLength = NesConstants.Ntsc.ScreenWidth * NesConstants.Ntsc.ScreenHeight * 4;
             byte* pixels = (byte*) emulatorSurface->pixels;
 
             for (int i = 0; i < screenLength; i++) {
@@ -323,8 +352,8 @@ public unsafe class EmulatorRunner {
             SDL.SDL_Rect tRect;
             tRect.x = 50;
             tRect.y = 50;
-            tRect.w = NesConstants.ScreenWidth * ScreenScale;
-            tRect.h = NesConstants.ScreenHeight * ScreenScale;
+            tRect.w = NesConstants.Ntsc.ScreenWidth * ScreenScale;
+            tRect.h = NesConstants.Ntsc.ScreenHeight * ScreenScale;
 
             // Blit the emulator view
 
@@ -343,31 +372,74 @@ public unsafe class EmulatorRunner {
                 ImGui.Begin("SDL2/SDL_Renderer Texture Test");
 
                 if (ImGui.IsWindowFocused()) {
-                    RenderDropShadow((void*) shadowTexture, 70.0f, 100);
+                    RenderDropShadow(shadowTexture, 70.0f, 255);
                 }
 
                 Vector2 windowSize = ImGui.GetWindowSize();
 
-                ImGui.Image(emulatorTexture, new Vector2(windowSize.X));
-
-
-
+                ImGui.Image(emulatorTexture, new(windowSize.X));
+                
+                ImDrawListPtr imDrawListPtr = ImGui.GetWindowDrawList();
+                
 
                 ImGui.End();
 
-                ImDrawListPtr imDrawListPtr = ImGui.GetWindowDrawList();
+                //imDrawListPtr.AddCircleFilled(new Vector2(100, 100), 100, 0xFFFFFFFF, 100);
+                
+                //////////////////
+    
+                static Vector4 RgbColorToVector(uint color) {
+                    byte a = (byte) (color >> 24);
+                    byte r = (byte) (color >> 16);
+                    byte g = (byte) (color >> 8);
+                    byte b = (byte) (color >> 0);
 
-                delegate* unmanaged[Cdecl] <ImDrawList*, ImDrawCmd*, void> ptr1 = &ImGuiDrawListCallback;
-                IntPtr fnPtr1 = (IntPtr) ptr1;
-                imDrawListPtr.AddCallback(fnPtr1, IntPtr.Zero);
+                    return new Vector4(r, g, b, a) * (1f / Byte.MaxValue);
+                }
+
+                static uint VectorToRgbColor(Vector4 color) {
+                    byte a = (byte) (color.W * Byte.MaxValue);
+                    byte b = (byte) (color.X * Byte.MaxValue);
+                    byte g = (byte) (color.Y * Byte.MaxValue);
+                    byte r = (byte) (color.Z * Byte.MaxValue);
+
+                    return (uint) ((a << 24) | (r << 16) | (g << 8) | (b << 0));
+                }
+
+                float lerp = (float) Math.Abs(Math.Cos((DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000.0) % 5000.0));
+
+                ImDrawList* cmd_list = imDrawListPtr.NativePtr;
+                ImDrawVert* vtx_buffer = (ImDrawVert*) cmd_list->VtxBuffer.Data;
+
+                for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
+                    ImDrawCmd* pcmd = (ImDrawCmd*) cmd_list->CmdBuffer.Address<ImDrawCmd>(cmd_i);
+
+                    int num_vertices = (int) (cmd_list->VtxBuffer.Size - pcmd->VtxOffset);
+                    ImDrawVert* vertex = vtx_buffer + pcmd->VtxOffset;
+                    int stride = sizeof(ImDrawVert);
+            
+                    for (int i = 0; i < num_vertices; i++) {
+                        ImDrawVert* vertexTemp = vertex + i;
+
+                        Vector4 vector = RgbColorToVector(vertexTemp->col);
+                        vector *= new Vector4(1, 0, 1, lerp);
+
+                        //vector *= Vector4.Zero;
+                        vertexTemp->col = VectorToRgbColor(vector);
+                        //vertexTemp->col = 0;
+                    }
+                }
+
+                
+
+                //delegate* unmanaged[Cdecl] <ImDrawList*, ImDrawCmd*, void> ptr1 = &ImGuiDrawListCallback;
+                //IntPtr fnPtr1 = (IntPtr) ptr1;
+                //imDrawListPtr.AddCallback(fnPtr1, IntPtr.Zero);
 
                 //SDL.SDL_GetRenderDriverInfo(0, out SDL_RendererInfo rendererInfo);
                 //Console.WriteLine(SDL.SDL_GetCurrentVideoDriver());
-            
-
-
             }
-            
+
             ImGui.Render();
             SDL_SetRenderDrawColor(renderer, (byte) (clear_color.X * 255), (byte) (clear_color.Y * 255), (byte) (clear_color.Z * 255), (byte) (clear_color.W * 255));
             SDL_RenderClear(renderer);
@@ -375,9 +447,8 @@ public unsafe class EmulatorRunner {
             Sdl2Renderer.ImGui_ImplSDLRenderer2_RenderDrawData(ImGui.GetDrawData());
 
             SDL_RenderPresent(renderer);
-            
-            if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
-            {
+
+            if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0) {
                 ImGui.UpdatePlatformWindows();
                 ImGui.RenderPlatformWindowsDefault();
             }
@@ -398,10 +469,7 @@ public unsafe class EmulatorRunner {
 
     private ulong frames;
 
-    private void Update(SdlEmulator emulator, SDL_Surface* emulatorSurface, IntPtr renderer) {
-        emulator.Update(NesConstants.CyclesPerFrame);
-        emulator.Render();
-
+    private void Update(SDL_Surface* emulatorSurface, IntPtr renderer) {
         // Set renderer drawing color.
         AssertSdlSuccess(SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255));
 
@@ -412,8 +480,8 @@ public unsafe class EmulatorRunner {
         SDL_Rect tRect;
         tRect.x = 0;
         tRect.y = 0;
-        tRect.w = NesConstants.ScreenWidth * ScreenScale;
-        tRect.h = NesConstants.ScreenHeight * ScreenScale;
+        tRect.w = NesConstants.Ntsc.ScreenWidth * ScreenScale;
+        tRect.h = NesConstants.Ntsc.ScreenHeight * ScreenScale;
 
         // Blit the emulator view
         IntPtr emulatorTexture = SDL_CreateTextureFromSurface(renderer, (IntPtr) emulatorSurface);
@@ -510,7 +578,7 @@ public unsafe class EmulatorRunner {
         if (_showImGuiDemoWindow) {
             // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway.
             // Here we just want to make the demo initial state a bit more friendly!
-            ImGui.SetNextWindowPos(new Vector2(650, 20), ImGuiCond.FirstUseEver);
+            ImGui.SetNextWindowPos(new(650, 20), ImGuiCond.FirstUseEver);
             ImGui.ShowDemoWindow(ref _showImGuiDemoWindow);
         }
 

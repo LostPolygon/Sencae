@@ -8,12 +8,7 @@ public class NesTestRomTest {
     public void NesTest() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice = new(
-            cartridgeData.Mapper,
-            cartridgeData.PrgRom,
-            cartridgeData.ChrRom,
-            new byte[8 * 1024]
-        );
+        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
 
         List<string> logOutput = new();
 

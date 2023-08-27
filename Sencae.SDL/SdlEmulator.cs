@@ -61,7 +61,7 @@ public unsafe class SdlEmulator {
             AssertSdlSuccess(SDL.SDL_LockSurface((IntPtr) _surface));
         }
 
-        int screenLength = NesConstants.ScreenWidth * NesConstants.ScreenHeight;
+        int screenLength = NesConstants.Ntsc.ScreenWidth * NesConstants.Ntsc.ScreenHeight;
         byte* pixels = (byte*) _surface->pixels;
 
         for (int i = 0; i < screenLength; i++) {
@@ -81,14 +81,14 @@ public unsafe class SdlEmulator {
             //    break;
 
             Console.WriteLine(FormatCpuState(_machine.State));
-            _machine.Clock();
+            _machine.CpuClock();
         }
     }
 
     private static string FormatCpuState(MachineState machine) {
         CpuState cpu = machine.Cpu;
         return
-            $"==== Cycle: {machine.ProgramCycles}, " +
+            $"==== Cycle: {machine.CpuProgramCycles}, " +
             $"AB: {cpu.Internal.AddressBus.Value:X4}, " +
             $"DB: {cpu.Internal.DataBus:X2}, " +
             $"PC: {cpu.PC.Value:X4}, " +

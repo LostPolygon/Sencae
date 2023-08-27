@@ -22,7 +22,8 @@ public static class DebugEmulationRunner {
         byte[] characterRom = new byte[8 * 1024];
         byte[] programRam = new byte[programRamSize];
 
-        CartridgeDevice cartridgeDevice = new(0, programRom, characterRom, programRam);
+        CartridgeData cartridgeData = new(0, programRom, characterRom);
+        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, programRam);
         return cartridgeDevice;
     }
 
@@ -44,7 +45,7 @@ public static class DebugEmulationRunner {
 
         outputState(formatState(machine));
         for (ulong i = 0; i < options.MaxCycles; i++) {
-            machine.Clock();
+            machine.CpuClock();
             outputState(formatState(machine));
 
             ref CpuInternalState cpuInternal = ref machine.State.Cpu.Internal;

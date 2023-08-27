@@ -48,7 +48,7 @@ public static class AddressingModeLogic {
                 cpuInternal.Temporary.Low = cpuInternal.DataBus;
                 cpu.PC.Value++;
                 cpuInternal.AddressBus = cpu.PC;
-                break;
+                break; 
             case 2:
                 cpuInternal.AddressBus.Low = cpuInternal.Temporary.Low;
                 cpuInternal.AddressBus.High = cpuInternal.DataBus;

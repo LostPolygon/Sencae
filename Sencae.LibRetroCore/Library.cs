@@ -20,7 +20,7 @@ public static unsafe class Library {
     private static retro_input_poll_t InputPollCallback;
     private static retro_input_state_t InputStateCallback;
 
-    private static uint[] VideoBuffer = new uint[NesConstants.ScreenWidth * NesConstants.ScreenHeight];
+    private static uint[] VideoBuffer = new uint[NesConstants.Ntsc.ScreenWidth * NesConstants.Ntsc.ScreenHeight];
     private static Machine _machine;
 
     [UnmanagedCallersOnly(EntryPoint = "retro_api_version", CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -43,19 +43,19 @@ public static unsafe class Library {
         sbyte* buttonRight = (sbyte*) Marshal.StringToHGlobalAnsi("Right!");
         sbyte* buttonUp = (sbyte*) Marshal.StringToHGlobalAnsi("Up!");
         sbyte* buttonDown = (sbyte*) Marshal.StringToHGlobalAnsi("Down!");
-        
+
         retro_input_descriptor[] inputDescriptors = {
-            new() { id = 0, index = 0,device =RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_LEFT, description = buttonLeft},
-            new() { id = 0, index = 0,device =RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_RIGHT, description = buttonRight},
-            new() { id = 0, index = 0,device =RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_UP, description = buttonUp},
-            new() { id = 0, index = 0,device =RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_DOWN, description = buttonDown},
+            new() { id = 0, index = 0, device = RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_LEFT, description = buttonLeft },
+            new() { id = 0, index = 0, device = RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_RIGHT, description = buttonRight },
+            new() { id = 0, index = 0, device = RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_UP, description = buttonUp },
+            new() { id = 0, index = 0, device = RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_DOWN, description = buttonDown },
             default
         };
-        
+
         EnvironmentCallback(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, &inputDescriptors);
 
         // Initialize the emulator
-        Machine machine = new(new CartridgeDevice(0, new byte[16 * 1024], new byte[8 * 1024]));
+        Machine machine = new(CartridgeDeviceFactory.Create(new CartridgeData(0, new byte[16 * 1024], new byte[8 * 1024])));
 
         byte[] gameRom = {
             0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85,
@@ -107,13 +107,13 @@ public static unsafe class Library {
     public static void GetSystemAVInfo([DNNE.C99Type("void*")] retro_system_av_info* info) {
         LogEntrypoint();
 
-        info->timing.fps = NesConstants.Framerate;
+        info->timing.fps = NesConstants.Ntsc.Framerate;
         info->timing.sample_rate = 44100; // 44.1kHz
-        info->geometry.base_width = NesConstants.ScreenWidth;
-        info->geometry.base_height = NesConstants.ScreenHeight;
-        info->geometry.max_width = NesConstants.ScreenWidth;
-        info->geometry.max_height = NesConstants.ScreenHeight;
-        info->geometry.aspect_ratio = NesConstants.ScreenWidth / (float) NesConstants.ScreenHeight;
+        info->geometry.base_width = (uint) NesConstants.Ntsc.ScreenWidth;
+        info->geometry.base_height = (uint) NesConstants.Ntsc.ScreenHeight;
+        info->geometry.max_width = (uint) NesConstants.Ntsc.ScreenWidth;
+        info->geometry.max_height = (uint) NesConstants.Ntsc.ScreenHeight;
+        info->geometry.aspect_ratio = NesConstants.Ntsc.ScreenWidth / (float) NesConstants.Ntsc.ScreenHeight;
 
         retro_pixel_format pixelFormat = retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888;
         EnvironmentCallback(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &pixelFormat);
@@ -177,29 +177,28 @@ public static unsafe class Library {
         //LogEntrypoint();
 
         InputPollCallback();
-        
+
         if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT) != 0) {
             _machine.CpuMemoryBus.Write(0xFF, 0x61);
         }
-        
+
         if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT) != 0) {
             _machine.CpuMemoryBus.Write(0xFF, 0x64);
         }
-        
+
         if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP) != 0) {
-             _machine.CpuMemoryBus.Write(0xFF, 0x77);
+            _machine.CpuMemoryBus.Write(0xFF, 0x77);
         }
-        
+
         if (InputStateCallback(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN) != 0) {
             _machine.CpuMemoryBus.Write(0xFF, 0x73);
         }
-        
+
         for (int i = 0; i < 100; i++) {
             //Console.WriteLine(_machine.State.Cycles);
             _machine.CpuMemoryBus.Write(0xFE, (byte) Random.Shared.Next());
-            _machine.Clock();
+            _machine.CpuClock();
         }
-
 
         Color[] paletteColors = new Color[256];
         for (int i = 0; i < 256; i++) {
@@ -217,7 +216,7 @@ public static unsafe class Library {
             paletteColors[i] = color;
         }
 
-        int screenLength = NesConstants.ScreenWidth * NesConstants.ScreenHeight;
+        int screenLength = NesConstants.Ntsc.ScreenWidth * NesConstants.Ntsc.ScreenHeight;
         for (int i = 0; i < screenLength; i++) {
             VideoBuffer[i] = (uint) paletteColors[_machine.CpuMemoryBus.Read((ushort) (0x0200 + i))].ToArgb();
 
@@ -227,9 +226,9 @@ public static unsafe class Library {
         fixed (uint* videoBuffer = VideoBuffer) {
             VideoRefreshCallback(
                 videoBuffer,
-                NesConstants.ScreenWidth,
-                NesConstants.ScreenHeight,
-                sizeof(uint) * NesConstants.ScreenWidth
+                (uint) NesConstants.Ntsc.ScreenWidth,
+                (uint) NesConstants.Ntsc.ScreenHeight,
+                sizeof(uint) * (uint) NesConstants.Ntsc.ScreenWidth
             );
         }
     }

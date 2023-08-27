@@ -2,7 +2,7 @@
 
 namespace Sencae;
 
-public sealed unsafe class CpuMemoryBus : IBusDevice {
+public sealed class CpuMemoryBus : IBusDevice {
     public readonly Machine Machine;
     public byte LastBusData;
 
@@ -12,13 +12,13 @@ public sealed unsafe class CpuMemoryBus : IBusDevice {
 
     [MethodImpl(MethodOptions.Options)]
     public bool HandleBus(ushort address, bool isWrite, ref byte bus) {
-        if (Machine.CpuDevice.HandleBus(address, isWrite, ref bus))
+        if (Machine.CpuBusDevice.HandleBus(address, isWrite, ref bus))
             return true;
 
-        if (Machine.PpuDevice.HandleBus(address, isWrite, ref bus))
+        if (Machine.PpuCpuBusDevice.HandleBus(address, isWrite, ref bus))
             return true;
 
-        if (Machine.CartridgeDevice.HandleBus(address, isWrite, ref bus))
+        if (Machine.CartridgeDevice.CartridgeToCpuBusDevice.HandleBus(address, isWrite, ref bus))
             return true;
 
         DeviceUtility.OpenBus(address);

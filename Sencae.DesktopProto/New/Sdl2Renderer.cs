@@ -194,12 +194,12 @@ public static unsafe class Sdl2Renderer {
                         lerp = 1;
                     }
                     
-                    int num_vertices = (int) (cmd_list->VtxBuffer.Size - pcmd.VtxOffset);
+                    int num_vertices = (int) (cmd_list->VtxBuffer.Size - pcmd->VtxOffset);
                     for (int i = 0; i < num_vertices; i++) {
                         ImDrawVert* vertexTemp = vertex + i;
 
                         Vector4 vector = RgbColorToVector(vertexTemp->col);
-                        vector *= new Vector4(1, 1, 1, lerp);
+                        vector *= new Vector4(1, 0, 0, lerp);
                         //vector *= Vector4.Zero;
                         vertexTemp->col = VectorToRgbColor(vector);
                     }*/

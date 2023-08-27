@@ -75,10 +75,10 @@ public static class NintendulatorLog {
     }
 
     private static string FormatCpuStateNesTest(Machine machine, MachineState machineState) {
-        machine = new Machine(machine.CartridgeDevice) {
+        /*machine = new Machine(machine.CartridgeDevice) {
             State = machineState,
             CpuMemoryBus = machine.CpuMemoryBus
-        };
+        };*/
 
         CpuState cpu = machineState.Cpu;
         InstructionDescriptor instruction = cpu.Internal.Instruction;
@@ -242,7 +242,7 @@ public static class NintendulatorLog {
             $"Y:{cpu.Y:X2} " +
             $"P:{(int) cpu.P.ToFlags():X2} " +
             $"SP:{cpu.SP:X2} " +
-            $"CYC:{machineState.Cycles} " +
+            $"CYC:{machineState.CpuCycles} " +
             ""
             ;
     }
