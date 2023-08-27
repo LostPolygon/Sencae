@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sencae.Tests", "Sencae.Test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{2AC75054-9520-4BCA-A585-BD9DA167F6BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixty502DotNet.Shared", "Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj", "{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sixty502DotNet.Shared", "..\Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj", "{BA75B368-ABE6-4AFD-8CE6-3CDD6CACE206}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sencae.SharedUtility", "Sencae.SharedUtility\Sencae.SharedUtility.csproj", "{69EC984D-416F-4060-9B88-48D0DACB4FBD}"
 EndProject
