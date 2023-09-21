@@ -55,7 +55,7 @@ public static unsafe class Library {
         EnvironmentCallback(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, &inputDescriptors);
 
         // Initialize the emulator
-        Machine machine = new(CartridgeDeviceFactory.Create(new CartridgeData(0, new byte[16 * 1024], new byte[8 * 1024])));
+        Machine machine = new(CartridgeDeviceFactory.Create(new CartridgeData(0, new byte[16 * 1024], new byte[8 * 1024], true)));
 
         byte[] gameRom = {
             0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85,
@@ -85,7 +85,11 @@ public static unsafe class Library {
         }
 
         _machine = machine;
-        _machine.Reset(0x0600);
+        _machine.Reset(
+            new CpuResetOptions {
+                OverrideResetVector = 0x0600
+            }
+        );
     }
 
     [UnmanagedCallersOnly(EntryPoint = "retro_deinit", CallConvs = new[] { typeof(CallConvCdecl) })]

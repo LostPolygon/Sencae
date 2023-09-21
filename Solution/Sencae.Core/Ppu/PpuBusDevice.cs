@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae.Ppu;
 
-public unsafe class PpuBusDevice : IBusDevice, IDisposable {
+public class PpuBusDevice : IBusDevice, IDisposable {
     public readonly Machine Machine;
 
     private readonly DirectArray<byte> _chrRomMemory;
@@ -23,30 +23,33 @@ public unsafe class PpuBusDevice : IBusDevice, IDisposable {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    public bool HandleBus(ushort address, bool isWrite, ref byte bus) {
+    public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
         switch (address) {
-            case >= 0x0000 and <= 0x1FFF: { // Pattern tables
-                ref byte mappedData = ref _chrRomMemory.Data[address % 0x2000];
-                BusDeviceHandlers.ReadOnly(ref mappedData, isWrite, ref bus);
-                return true;
-            }
-            case >= 0x2000 and <= 0x3EFF: { // Nametables
-                //ref byte mappedData = ref _memory.Data[address % 0x1000];
-                ref byte mappedData = ref _memory.Data[address % 0x800];
-                BusDeviceHandlers.ReadWrite(ref mappedData, isWrite, ref bus);
-                return true;
-            }
-            case >= 0x3F00 and <= 0x3FFF: { // Palette RAM
-                ref byte mappedData = ref _palleteMemory.Data[address % 0x1F];
-                BusDeviceHandlers.ReadWrite(ref mappedData, isWrite, ref bus);
-                return true;
-            }
+            case >= 0x0000 and <= 0x1FFF: // Pattern tables
+                return
+                    Machine.CartridgeDevice.CartridgeData.IsChrRomWriteable ?
+                        BusDeviceHandlers.ReadWrite(_chrRomMemory, address % 0x2000, accessMode, ref bus) :
+                        BusDeviceHandlers.ReadOnly(_chrRomMemory, address % 0x2000, accessMode, ref bus);
+            case >= 0x2000 and <= 0x3EFF: // Nametables
+                return BusDeviceHandlers.ReadWrite(_memory, address % 0x800, accessMode, ref bus);
+            case >= 0x3F00 and <= 0x3FFF: // Palette RAM
+                // $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C
+                address = address switch {
+                    0x3F10 => 0x3F00,
+                    0x3F14 => 0x3F04,
+                    0x3F18 => 0x3F08,
+                    0x3F1C => 0x3F0C,
+                    _ => address
+                };
+                
+                return BusDeviceHandlers.ReadWrite(_palleteMemory, address % 0x20, accessMode, ref bus);
+            default:
+                return false;
         }
-
-        return false;
     }
 
     private void ReleaseUnmanagedResources() {
+        _chrRomMemory.Dispose();
         _memory.Dispose();
         _oamMemory.Dispose();
         _palleteMemory.Dispose();
@@ -66,22 +69,25 @@ public unsafe class PpuBusDevice : IBusDevice, IDisposable {
     ~PpuBusDevice() {
         Dispose(false);
     }
-    
+
     [MethodImpl(MethodOptions.Options)]
     public void Write(ushort address, byte data) {
-        HandleBus(address, true, ref data);
+        HandleBus(address, MemoryAccessMode.Write, ref data);
     }
 
     [MethodImpl(MethodOptions.Options)]
     public byte Read(ushort address) {
         byte data = 0;
-        HandleBus(address, false, ref data);
+        HandleBus(address, MemoryAccessMode.Read, ref data);
 
         return data;
     }
-
+    
     [MethodImpl(MethodOptions.Options)]
-    public ushort GetU16(ushort address) {
-        return (ushort) (Read((ushort) (address + 1)) << 8 | Read(address));
+    public byte ReadObserve(ushort address) {
+        byte data = 0;
+        HandleBus(address, MemoryAccessMode.ReadObserve, ref data);
+
+        return data;
     }
 }

@@ -104,7 +104,7 @@ public sealed partial class Interpreter : SyntaxParserBaseVisitor<int>
                             continue;
                         }
                     }
-                    throw err;
+                    throw;
                 }
                 Services.State.Errors.Add(err);
             }

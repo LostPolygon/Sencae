@@ -2,7 +2,16 @@ using System;
 
 namespace Sencae;
 
-public readonly struct InstructionDescriptor : IEquatable<InstructionDescriptor> {
+public record InstructionDescriptor(
+    string Mnemonic,
+    InstructionType Type,
+    AddressingMode AddressingMode,
+    InstructionFlags Flags,
+    byte Opcode,
+    byte OpcodeSize
+);
+
+/*public readonly struct InstructionDescriptor : IEquatable<InstructionDescriptor> {
     public readonly string Mnemonic;
     public readonly InstructionType Type;
     public readonly AddressingMode AddressingMode;
@@ -34,10 +43,10 @@ public readonly struct InstructionDescriptor : IEquatable<InstructionDescriptor>
         Opcode == other.Opcode &&
         OpcodeSize == other.OpcodeSize;
 
-    public override bool Equals(object? obj) => 
+    public override bool Equals(object? obj) =>
         obj is InstructionDescriptor other && Equals(other);
 
-    public override int GetHashCode() => 
+    public override int GetHashCode() =>
         HashCode.Combine(Mnemonic, (int) Type, (int) AddressingMode, (int) Flags, Opcode, OpcodeSize);
 
     public override string ToString() =>
@@ -51,4 +60,4 @@ public readonly struct InstructionDescriptor : IEquatable<InstructionDescriptor>
     public static bool operator ==(InstructionDescriptor left, InstructionDescriptor right) => left.Equals(right);
 
     public static bool operator !=(InstructionDescriptor left, InstructionDescriptor right) => !left.Equals(right);
-}
+}*/

@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using Sencae.SharedUtility;
 using static Sencae.SharedUtility.DebugEmulationRunner;
 
 namespace Sencae.Tests;
@@ -25,7 +26,7 @@ public class NesTestRomTest {
                     },
                     OutputState = s => {
                     },
-                    AfterResetAction = NintendulatorLog.ResetMachineToNintendulatorInitialState
+                    AfterResetAction = NintendulatorLogCompare.ResetMachineToNintendulatorInitialState
                 });
         } catch (Exception e) {
             if (e is AssertionException)
@@ -35,8 +36,8 @@ public class NesTestRomTest {
             Console.WriteLine("Exception: " + e);
         }
 
-        List<string> referenceLogOutput = NintendulatorLog.ReadLogFromFile("Resources/nestest_cpuonly.log");
-        (int? mismatchLine, _, _) = NintendulatorLog.CompareLogs(referenceLogOutput, logOutput);
+        List<string> referenceLogOutput = NintendulatorLogCompare.ReadLogFromFile("Resources/nestest_cpuonly.log");
+        (int? mismatchLine, _, _) = NintendulatorLogCompare.CompareLogs(referenceLogOutput, logOutput);
 
         Assert.GreaterOrEqual(logOutput.Count, referenceLogOutput.Count);
         Assert.Null(emulationException);

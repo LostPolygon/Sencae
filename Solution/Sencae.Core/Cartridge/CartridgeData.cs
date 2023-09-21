@@ -3,5 +3,6 @@
 public record CartridgeData(
     int Mapper,
     byte[] PrgRom,
-    byte[] ChrRom
+    byte[] ChrRom,
+    bool IsChrRomWriteable
 );

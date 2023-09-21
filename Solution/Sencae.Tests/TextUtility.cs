@@ -4,7 +4,7 @@ namespace Sencae.Tests;
 
 public static class TextUtility {
     // Reads a C-style 0-terminated string from Stream
-    public static string ReadCString(Stream stream) {
+    public static string? ReadCString(Stream stream) {
         List<byte> stringData = new(16);
         do {
             int currentByte = stream.ReadByte();

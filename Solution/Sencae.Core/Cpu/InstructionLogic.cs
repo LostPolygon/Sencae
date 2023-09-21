@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 // ReSharper disable InconsistentNaming
@@ -104,6 +105,7 @@ public static class InstructionLogic {
             // Interrupts
 
             I.BRK => BRK(operationCycle, ref cpu, ref cpuInternal), // break / software interrupt
+            I.Internal_BRK_NMI => BRK_WithAddress(operationCycle, ref cpu, ref cpuInternal, CpuConstants.NmiVector),
             I.RTI => RTI(operationCycle, ref cpu, ref cpuInternal), // return from interrupt 
 
             // Other
@@ -866,6 +868,16 @@ public static class InstructionLogic {
 
     [MethodImpl(MethodOptions.Options)]
     public static bool BRK(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        return BRK_WithAddress(
+            operationCycle,
+            ref cpu,
+            ref cpuInternal,
+            CpuConstants.IrqVector
+        );
+    }
+
+    [MethodImpl(MethodOptions.Options)]
+    public static bool BRK_WithAddress(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal, ushort vector) {
         switch (operationCycle) {
             case AfterAddressingFinished:
                 cpu.PC.Value++;
@@ -893,11 +905,11 @@ public static class InstructionLogic {
                 break;
             case 3:
                 cpuInternal.Read = true;
-                cpuInternal.AddressBus.Value = 0xFFFE;
+                cpuInternal.AddressBus.Value = vector;
                 break;
             case 4:
                 cpu.PC.Low = cpuInternal.DataBus;
-                cpuInternal.AddressBus.Value = 0xFFFF;
+                cpuInternal.AddressBus.Value = (ushort) (vector + 1);
                 break;
             case 5:
                 cpu.PC.High = cpuInternal.DataBus;
@@ -1086,27 +1098,32 @@ public static class InstructionLogic {
         return false;
     }
 
-    // the result to be written is used as MSB of the
-    // storage address if we cross a page boundary
     //[MethodImpl(MethodOptions.Options)]
     public static bool SHX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        switch (operationCycle) {
-            case 0:
-                cpuInternal.Read = false;
-                cpuInternal.DataBus = (byte) (cpu.X & (cpu.PC.High + 1));
-                return true;
-        }
-
-        return false;
+        return SHX_SHY_Internal(operationCycle, ref cpu, ref cpuInternal, cpu.X);
     }
 
     //[MethodImpl(MethodOptions.Options)]
     public static bool SHY(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        return SHX_SHY_Internal(operationCycle, ref cpu, ref cpuInternal, cpu.Y);
+    }
+
+    private static bool SHX_SHY_Internal(
+        int operationCycle,
+        ref CpuState cpu,
+        ref CpuInternalState cpuInternal,
+        byte indexRegister
+    ) {
         switch (operationCycle) {
+            case AfterAddressingFinished:
+                if (cpuInternal.PageBoundaryCrossedCarry != 0) {
+                    cpuInternal.AddressBus.High &= indexRegister;
+                }
+
+                return false;
             case 0:
                 cpuInternal.Read = false;
-                cpuInternal.DataBus = (byte) (cpu.Y & (cpu.PC.High + 1));
-                cpuInternal.AddressBus.Low = cpuInternal.DataBus;
+                cpuInternal.DataBus = (byte) (indexRegister & (cpuInternal.AddressBus.High + 1));
                 return true;
         }
 
@@ -1157,7 +1174,10 @@ public static class InstructionLogic {
 
     //[MethodImpl(MethodOptions.Options)]
     public static bool XXX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
-        throw new NotImplementedException($"!!! Unhandled opcode ({cpuInternal.Instruction})");
+        Debug.WriteLine($"!!! Unhandled opcode ({cpuInternal.Instruction})");
+        //throw new NotImplementedException($"!!! Unhandled opcode ({cpuInternal.Instruction})");
+
+        return true;
     }
 
     #endregion

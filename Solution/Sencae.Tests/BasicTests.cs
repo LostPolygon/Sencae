@@ -21,7 +21,7 @@ public class BasicTests {
         BusMemoryStream stream = new BusMemoryStream(machine.CpuMemoryBus);
         stream.Seek(0x6004, SeekOrigin.Begin);
 
-        string message = TextUtility.ReadCString(stream);
+        string message = TextUtility.ReadCString(stream)!;
     }
 
     [Test]

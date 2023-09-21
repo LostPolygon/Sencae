@@ -1,5 +1,8 @@
+using FastEnumToString;
+
 namespace Sencae;
 
+[ToString(ToStringDefault.First)]
 public enum InstructionType : byte {
     // Transfer Instructions
 
@@ -85,6 +88,7 @@ public enum InstructionType : byte {
     // Interrupts
 
     BRK, // break / software interrupt
+    Internal_BRK_NMI,
     RTI, // return from interrupt 
 
     // Other

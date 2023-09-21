@@ -22,7 +22,7 @@ public static class DebugEmulationRunner {
         byte[] characterRom = new byte[8 * 1024];
         byte[] programRam = new byte[programRamSize];
 
-        CartridgeData cartridgeData = new(0, programRom, characterRom);
+        CartridgeData cartridgeData = new(0, programRom, characterRom, true);
         CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, programRam);
         return cartridgeDevice;
     }
@@ -37,33 +37,52 @@ public static class DebugEmulationRunner {
     public static void Emulate(Machine machine, RunnerOptions? options = null) {
         options ??= new RunnerOptions();
 
-        machine.Reset(options.OverrideResetVector);
+        if (options.ResetBeforeRun) {
+            machine.Reset(
+                new CpuResetOptions {
+                    OverrideResetVector = options.OverrideResetVector,
+                    CpuMemoryResetState = CpuMemoryResetState.AllZero
+                }
+            );
+        }
+
         options.AfterResetAction?.Invoke(machine);
 
-        Func<Machine, string> formatState = options.FormatState ?? (m => MachineStateFormatter.FormatCpuState(m.State));
-        Action<string> outputState = options.OutputState ?? Console.WriteLine;
+        Func<Machine, string> formatState = default!;
+        Action<string> outputState = default!;
+        if (!options.SkipOutputState) {
+            formatState = options.FormatState ?? (m => MachineStateFormatter.FormatCpuState(m.State));
+            outputState = options.OutputState ?? Console.WriteLine;
+            outputState(formatState(machine));
+        }
 
-        outputState(formatState(machine));
         for (ulong i = 0; i < options.MaxCycles; i++) {
             machine.CpuClock();
-            outputState(formatState(machine));
 
-            ref CpuInternalState cpuInternal = ref machine.State.Cpu.Internal;
-            bool shouldBreak =
-                (cpuInternal.Instruction.Type == InstructionType.BRK &&
-                    cpuInternal.State == CpuInternalState.ExecutionState.ExecutingInstruction) ||
-                cpuInternal.Halted;
-            if (options.StopOnBRKOrHalt && shouldBreak) {
-                break;
+            if (!options.SkipOutputState) {
+                outputState(formatState(machine));
+            }
+
+            if (options.StopOnBRKOrHalt) {
+                ref CpuInternalState cpuInternal = ref machine.State.Cpu.Internal;
+                bool shouldBreak =
+                    (cpuInternal.Instruction.Type == InstructionType.BRK &&
+                        cpuInternal.State == CpuInternalState.ExecutionState.ExecutingInstruction) ||
+                    cpuInternal.Halted;
+
+                if (shouldBreak)
+                    break;
             }
         }
     }
 
     public record RunnerOptions {
+        public bool ResetBeforeRun { get; init; } = true;
         public bool StopOnBRKOrHalt { get; init; } = true;
         public ulong MaxCycles { get; set; } = 10000;
         public ushort? OverrideResetVector { get; init; }
         public Action<Machine>? AfterResetAction { get; init; }
+        public bool SkipOutputState { get; init; }
         public Func<Machine, string>? FormatState { get; init; }
         public Action<string>? OutputState { get; init; }
     };

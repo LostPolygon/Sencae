@@ -4,7 +4,7 @@ namespace Sencae.Desktop;
 
 public class ProfilerWindow : AppWindow {
     public ProfilerWindow(AppWindowContext context) : base(
-        "Profiler",
+        nameof(ProfilerWindow),
         "Internal Profiler",
         context
     ) {
@@ -12,7 +12,7 @@ public class ProfilerWindow : AppWindow {
 
     protected override void DrawContent(float deltaTime) {
         if (ImGui.Button("Reset")) {
-            AppProfiler.Profiler.Reset();
+            Profiler.Instance.Reset();
             throw new ExitGuiException();
         }
 
@@ -23,8 +23,14 @@ public class ProfilerWindow : AppWindow {
             ImGui.TableSetupColumn("FPS", ImGuiTableColumnFlags.WidthFixed, 130);
             ImGui.TableHeadersRow();
 
-            var sortedEntries = AppProfiler.Profiler.Entries.OrderBy(e => e.Key, StringComparer.OrdinalIgnoreCase);
+            DateTime utcNow = DateTime.UtcNow;
+            
+            var sortedEntries = Profiler.Instance.Entries.OrderBy(e => e.Key, StringComparer.OrdinalIgnoreCase);
             foreach (var pair in sortedEntries) {
+                bool isStale = utcNow - pair.Value.UpdatedAt > TimeSpan.FromSeconds(0.3);
+                
+                ImGui.BeginDisabled(isStale);
+                
                 ImGui.TableNextRow();
 
                 ImGui.TableSetColumnIndex(0);
@@ -39,6 +45,8 @@ public class ProfilerWindow : AppWindow {
                     ImGui.Text($"{(1.0 / pair.Value.AverageRaw):0.00} FPS");
                 }
                 ImGui.PopFont();
+                
+                ImGui.EndDisabled();
             }
         }
         ImGui.EndTable();

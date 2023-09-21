@@ -10,10 +10,6 @@ public unsafe class PpuState {
     public PpuStatusRegisterFlags PPUSTATUS;
 
     public byte OAMADDR;
-    public byte OAMDATA;
-    public byte PPUSCROLL;
-    public byte PPUADDR;
-    public byte PPUDATA;
     
     public PpuInternalState Internal;
     
@@ -30,6 +26,7 @@ public unsafe class PpuState {
     
     public struct PpuInternalState {
         public UInt16Bytes Address;
+        public byte AddressHighTemp;
         public bool PpuAddressRegisterLatch; // false: no writes yet, true: 1 write was done
         
         public bool PpuScrollRegisterLatch; // false: no writes yet, true: 1 write was done
@@ -37,9 +34,13 @@ public unsafe class PpuState {
         public byte FineScrollX;
         public byte FineScrollY;
         
-        //public byte DataBus;
+        public byte DataBus;
     
         public byte DataBusLatch;
         //public bool BusLatchToggle;
+
+        public bool NmiPending;
+        public ulong CpuCyclesAtNmi;
+
     }
 }

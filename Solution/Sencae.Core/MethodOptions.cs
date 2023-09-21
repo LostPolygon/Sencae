@@ -1,8 +1,9 @@
 using System.Runtime.CompilerServices;
 
-namespace Sencae; 
+namespace Sencae;
 
 public static class MethodOptions {
-    //public const MethodImplOptions Options = MethodImplOptions.AggressiveInlining ;
-    public const MethodImplOptions Options = MethodImplOptions.NoInlining;
+    public const MethodImplOptions Options = MethodImplOptions.AggressiveInlining;
+
+    //public const MethodImplOptions Options = MethodImplOptions.NoInlining;
 }

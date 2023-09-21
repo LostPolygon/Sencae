@@ -26,7 +26,6 @@
     <ItemGroup>
       <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj" />
       <ProjectReference Include="..\Sencae.SharedUtility\Sencae.SharedUtility.csproj" />
-      <ProjectReference Include="..\Submodules\6502.Net\Sixty502DotNet.Shared\Sixty502DotNet.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>

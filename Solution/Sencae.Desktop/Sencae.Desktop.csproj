@@ -10,26 +10,83 @@
         <LangVersion>preview</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
-        <ApplicationIcon>icon.ico</ApplicationIcon>
+        <ApplicationIcon>ResourcesEmbedded/icon.ico</ApplicationIcon>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseSelfContained' ">
+        <Optimize>True</Optimize>
+
+        <PublishSingleFile>True</PublishSingleFile>
+        <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+        <SelfContained>true</SelfContained>
+        <PublishReadyToRun>True</PublishReadyToRun>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseNativeAot' ">
+        <Optimize>True</Optimize>
+
+        <PublishAot>True</PublishAot>
+        <PublishTrimmed>true</PublishTrimmed>
+        <SelfContained>true</SelfContained>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+        <TrimMode>link</TrimMode>
+
+        <IlcGenerateMstatFile>true</IlcGenerateMstatFile>
+        <IlcGenerateDgmlFile>true</IlcGenerateDgmlFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseNativeAot' ">
+        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+        <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+        <DebuggerSupport>True</DebuggerSupport>
+        <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+        <EventSourceSupport>false</EventSourceSupport>
+        <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+        <UseNativeHttpHandler>true</UseNativeHttpHandler>
+        <UseSystemResourceKeys>true</UseSystemResourceKeys>
+        <StripSymbols>false</StripSymbols>
+
+        <IlcScanReflection>false</IlcScanReflection>
+        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+        <IlcTrimMetadata>true</IlcTrimMetadata>
+        <IlcInvariantGlobalization>false</IlcInvariantGlobalization>
+        <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
+        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+
+        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.9.1"/>
         <PackageReference Include="Cyotek.CircularBuffer" Version="1.2.1"/>
         <PackageReference Include="ImGui.SDL.NET" Version="1.89.1"/>
-        <PackageReference Include="Perfolizer" Version="0.2.1" />
+        <PackageReference Include="NativeFileDialogSharp" Version="0.6.0-alpha"/>
         <PackageReference Include="ppy.SDL2-CS" Version="1.0.671-alpha"/>
         <PackageReference Include="SDL-Sharp-DLL" Version="2.1.1"/>
+        <PackageReference Include="ThisAssembly" Version="1.4.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
-    
+
     <ItemGroup>
         <Content Include="Resources\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         </Content>
     </ItemGroup>
-    
+
     <ItemGroup>
         <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj"/>
+        <ProjectReference Include="..\Sencae.Desktop.Common\Sencae.Desktop.Common.csproj"/>
+        <ProjectReference Include="..\Sencae.SharedUtility\Sencae.SharedUtility.csproj" />
     </ItemGroup>
+
 
 </Project>

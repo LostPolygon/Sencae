@@ -4,5 +4,5 @@ namespace Sencae;
 
 public interface IBusDevice {
     [MethodImpl(MethodOptions.Options)]
-    bool HandleBus(ushort address, bool isWrite, ref byte bus);
+    bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus);
 }

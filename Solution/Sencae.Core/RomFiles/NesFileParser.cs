@@ -6,8 +6,6 @@ namespace Sencae;
 // https://www.nesdev.org/wiki/NES_2.0
 public static unsafe class NesFileParser {
     public static CartridgeData Parse(byte[] data) {
-        //BinaryReader reader = new(new MemoryStream(data));
-
         int position = 0;
         Span<byte> byteSpan = data.AsSpan();
         Nes20Header header = MemoryMarshal.Cast<byte, Nes20Header>(byteSpan)[0];
@@ -27,6 +25,6 @@ public static unsafe class NesFileParser {
         position += prgRomSize;
         Span<byte> chrRom = byteSpan[position..(position + chrRomSize)];
 
-        return new CartridgeData(mapper, prgRom.ToArray(), chrRom.ToArray());
+        return new CartridgeData(mapper, prgRom.ToArray(), chrRom.ToArray(), false);
     }
 }

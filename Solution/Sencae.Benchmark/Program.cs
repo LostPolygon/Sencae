@@ -6,23 +6,21 @@ using BenchmarkDotNet.Running;
 namespace Sencae.Benchmark;
 
 internal static class Program {
-    public static byte[] TestRom;
-
     public static ulong TotalCycles;
 
     static void Main(string[] args) {
         if (args.Contains("-runner")) {
-            BenchmarkRunner.Run<Benchmarks>();
+            BenchmarkRunner.Run<CpuBenchmark>();
         } else {
             using Process p = Process.GetCurrentProcess();
             p.PriorityClass = ProcessPriorityClass.High;
 
-            Benchmarks benchmarks = new();
-            benchmarks.Setup();
+            CpuBenchmark cpuBenchmark = new();
+            cpuBenchmark.Setup();
 
             Console.WriteLine("Warming up...");
             for (int i = 0; i < 600; i++) {
-                benchmarks.Emulate();
+                cpuBenchmark.Emulate();
             }
 
             Console.WriteLine("Starting benchmark...");
@@ -30,13 +28,11 @@ internal static class Program {
             const int iterations = 25000;
             Stopwatch sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++) {
-                ulong cycles = benchmarks.Emulate();
+                ulong cycles = cpuBenchmark.Emulate();
                 TotalCycles += cycles;
             }
 
             sw.Stop();
-
-            benchmarks.EmulateWithStats();
 
             Console.WriteLine(
                 $"{iterations} iterations took {sw.Elapsed}, " +

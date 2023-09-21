@@ -4,29 +4,50 @@ using ImGuiNET;
 namespace Sencae.Desktop;
 
 public class CpuDebuggerWindow : AppWindow {
-    public Emulator Emulator { get; set; }
+    public Emulator Emulator { get; }
 
-    public CpuDebuggerWindow(AppWindowContext context) : base(
-        "CpuDebugger",
+    private Vector2 TestVector2;
+
+    public CpuDebuggerWindow(AppWindowContext context, Emulator emulator) : base(
+        nameof(CpuDebuggerWindow),
         "CPU Debugger",
         context
     ) {
+        Emulator = emulator;
     }
 
     protected override void DrawContent(float deltaTime) {
         ImGui.SetWindowSize(new Vector2(150, 300), ImGuiCond.FirstUseEver);
 
-        if (Emulator == null!)
+
+
+        //ImGui.PushFont(Context.SharedResources.FontFontAwesomeIconsSolid);
+        ImGui.TextColored(new Vector4(1, 0, 0, 1), IconsFontAwesome5.FolderOpen);
+
+        //ImGui.InputFloat2("Awesome vector:", ref TestVector2, "%f", ImGuiInputTextFlags.CharsScientific);
+        //if (ImGuiProto2.InputFloat2("Awesome vector123456789112233445566:", ref TestVector2, "%f", ImGuiInputTextFlags.CharsScientific)) {
+        if (ImGuiProto2.InputFloat2("omg!1", ref TestVector2, "%f", ImGuiInputTextFlags.CharsScientific)) {
+            Console.WriteLine($"Changed: {TestVector2}");
+        }
+        
+        
+        
+        if (!Emulator.IsLoaded)
             return;
-    
+        //ImGui.PopFont();
+
         bool isRunning = Emulator.IsRunning;
         ImGui.Checkbox("Running ", ref isRunning);
         Emulator.IsRunning = isRunning;
- 
+
         ImGui.Separator();
 
         if (ImGui.Button("Reset")) {
-            Emulator.Machine.Reset();
+            Emulator.Reset();
+        }
+
+        if (ImGui.Button("Soft Reset")) {
+            Emulator.Reset(hardReset: false);
         }
 
         if (ImGui.Button("Step Cycle")) {
@@ -37,11 +58,16 @@ public class CpuDebuggerWindow : AppWindow {
             Emulator.SingleInstructionStep();
         }
 
+        double timeScale = Emulator.TimeScale;
+        if (ImGuiEx.SliderScalar("Time Scale", ref timeScale, 0.0001f, 250f, null!, ImGuiSliderFlags.Logarithmic)) {
+            Emulator.TimeScale = timeScale;
+        }
+
         ImGui.Separator();
-        
+
         ref CpuState cpu = ref Emulator.Machine.State.Cpu;
 
-        int DrawRegister(string label, string value, uint maxLength) {
+        static int DrawRegister(string label, int value, string format, int maxValue) {
             ImGui.TableNextRow();
 
             ImGui.TableSetColumnIndex(0);
@@ -49,45 +75,43 @@ public class CpuDebuggerWindow : AppWindow {
 
             ImGui.TableSetColumnIndex(1);
 
-            int newValueInt = Convert.ToInt32(value, 16);
-            string newValue = value;
-            if (ImGui.InputText("##" + label, ref newValue, maxLength, ImGuiInputTextFlags.CharsHexadecimal)) {
-                newValueInt = Convert.ToInt32(newValue, 16);
+            if (ImGuiEx.InputScalar("##" + label, ref value, null, null, format, ImGuiInputTextFlags.CharsHexadecimal | ImGuiInputTextFlags.EnterReturnsTrue)) {
+                value = Math.Clamp(value, 0, maxValue);
             }
 
-            return newValueInt;
+            return value;
         }
 
         ImGui.BeginTable("Stats", 2);
         {
             ImGui.TableNextRow();
-            
+
             ImGui.TableSetColumnIndex(0);
             ImGui.Text("CPU Cycles: ");
-            
+
             ImGui.TableSetColumnIndex(1);
             ImGui.Text(Emulator.Machine.State.CpuProgramCycles.ToString());
-            
+
             ImGui.TableNextRow();
-            
+
             ImGui.TableSetColumnIndex(0);
             ImGui.Text("Machine Cycles: ");
-            
+
             ImGui.TableSetColumnIndex(1);
             ImGui.Text(Emulator.Machine.State.MachineCycles.ToString());
         }
         ImGui.EndTable();
-        
+
         ImGui.Separator();
-        
+
         ImGui.BeginTable("Registers", 2);
         {
-            cpu.A = (byte) DrawRegister("A: ", $"{cpu.A:X2}", 2);
-            cpu.X = (byte) DrawRegister("X: ", $"{cpu.X:X2}", 2);
-            cpu.Y = (byte) DrawRegister("Y: ", $"{cpu.Y:X2}", 2);
+            cpu.A = (byte) DrawRegister("A: ", cpu.A, "%02X", Byte.MaxValue);
+            cpu.X = (byte) DrawRegister("X: ", cpu.X, "%02X", Byte.MaxValue);
+            cpu.Y = (byte) DrawRegister("Y: ", cpu.Y, "%02X", Byte.MaxValue);
 
-            cpu.SP = (byte) DrawRegister("SP: ", $"{cpu.SP:X2}", 2);
-            cpu.PC.Value = (ushort) DrawRegister("PC: ", $"{cpu.PC.Value:X4}", 4);
+            cpu.SP = (byte) DrawRegister("SP: ", cpu.SP, "%02X", Byte.MaxValue);
+            cpu.PC.Value = (ushort) DrawRegister("PC: ", cpu.PC.Value, "%04X", UInt16.MaxValue);
         }
         ImGui.EndTable();
 

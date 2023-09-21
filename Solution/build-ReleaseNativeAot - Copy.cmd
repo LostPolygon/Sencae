@@ -1,0 +1,1 @@
+dotnet publish Sencae.Desktop\Sencae.Desktop.csproj -c ReleaseNativeAot -r osx-x64

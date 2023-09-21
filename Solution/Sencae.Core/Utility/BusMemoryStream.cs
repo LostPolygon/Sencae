@@ -22,7 +22,7 @@ public class BusMemoryStream : Stream {
                 break;
 
             byte data = 0;
-            BusDevice.HandleBus((ushort) _position, false, ref data);
+            BusDevice.HandleBus((ushort) _position, MemoryAccessMode.Read, ref data);
             buffer[offset + i] = data;
             Position++;
             resultCount++;
@@ -37,7 +37,7 @@ public class BusMemoryStream : Stream {
                 break;
 
             byte data = buffer[offset + i];
-            BusDevice.HandleBus((ushort) _position, true, ref data);
+            BusDevice.HandleBus((ushort) _position, MemoryAccessMode.Write, ref data);
             Position++;
         }
     }

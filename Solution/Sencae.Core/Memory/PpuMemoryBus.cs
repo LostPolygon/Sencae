@@ -11,26 +11,26 @@ public sealed class PpuMemoryBus : IBusDevice {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    public bool HandleBus(ushort address, bool isWrite, ref byte bus) {
-        if (Machine.PpuCpuBusDevice.HandleBus(address, isWrite, ref bus))
+    public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
+        if (Machine.PpuCpuBusDevice.HandleBus(address, accessMode, ref bus))
             return true;
 
-        if (Machine.CartridgeDevice.CartridgeToPpuBusDevice.HandleBus(address, isWrite, ref bus))
+        if (Machine.CartridgeDevice.CartridgeToPpuBusDevice.HandleBus(address, accessMode, ref bus))
             return true;
 
-        DeviceUtility.OpenBus(address);
-        return true;
+        BusDeviceHandlers.OpenBus(address);
+        return false;
     }
 
     [MethodImpl(MethodOptions.Options)]
     public void Write(ushort address, byte data) {
-        HandleBus(address, true, ref data);
+        HandleBus(address, MemoryAccessMode.Write, ref data);
     }
 
     [MethodImpl(MethodOptions.Options)]
     public byte Read(ushort address) {
         byte data = 0;
-        HandleBus(address, false, ref data);
+        HandleBus(address, MemoryAccessMode.Read, ref data);
 
         return data;
     }

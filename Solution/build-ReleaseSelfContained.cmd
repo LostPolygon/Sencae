@@ -1,0 +1,1 @@
+dotnet publish Sencae.Desktop\Sencae.Desktop.csproj -c ReleaseSelfContained -r win-x64 /p:DebugType=None /p:DebugSymbols=false

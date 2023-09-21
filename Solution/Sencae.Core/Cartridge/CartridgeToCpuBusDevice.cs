@@ -3,37 +3,33 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public readonly struct CartridgeToCpuBusDevice : IBusDevice {
+public readonly struct CartridgeToCpuBusDevice : IBusDevice, IDisposable {
     public readonly byte[] PrgRom;
     public readonly byte[]? PrgRam;
 
-    public readonly ArrayMemoryDevice PrgRomMemoryDevice;
-    public readonly ArrayMemoryDevice? PrgRamMemoryDevice;
+    private readonly DirectArray<byte> _prgRomMemory;
+    private readonly DirectArray<byte>? _prgRamMemory;
 
     public CartridgeToCpuBusDevice(byte[] prgRom, byte[]? prgRam = null) {
         PrgRom = prgRom;
         PrgRam = prgRam;
 
-        PrgRomMemoryDevice = new ArrayMemoryDevice(PrgRom, 0x8000);
+        _prgRomMemory = new DirectArray<byte>(PrgRom, 0x8000);
 
         if (PrgRam != null) {
-            PrgRamMemoryDevice = new ArrayMemoryDevice(PrgRam, 0x6000);
+            _prgRamMemory = new DirectArray<byte>(PrgRam, 0x6000);
         }
     }
 
     [MethodImpl(MethodOptions.Options)]
-    public bool HandleBus(ushort address, bool isWrite, ref byte bus) {
+    public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
         switch (address) {
             case >= 0x8000 and <= 0xFFFF: {
-                ref byte mappedData = ref PrgRomMemoryDevice.GetU8(address);
-                BusDeviceHandlers.ReadOnly(ref mappedData, isWrite, ref bus);
-
-                return true;
+                return BusDeviceHandlers.ReadOnly(_prgRomMemory, _prgRomMemory.CalculateIndex(address), accessMode, ref bus);
             }
             case >= 0x6000 and < 0x8000: {
-                if (PrgRam != null) {
-                    ref byte mappedData = ref PrgRamMemoryDevice.GetU8(address);
-                    BusDeviceHandlers.ReadWrite(ref mappedData, isWrite, ref bus);
+                if (_prgRamMemory != null) {
+                    BusDeviceHandlers.ReadWrite(_prgRamMemory.Value, _prgRamMemory.Value.CalculateIndex(address), accessMode, ref bus);
                     return true;
                 }
 
@@ -42,5 +38,10 @@ public readonly struct CartridgeToCpuBusDevice : IBusDevice {
         }
 
         return false;
+    }
+
+    public void Dispose() {
+        _prgRomMemory.Dispose();
+        _prgRamMemory?.Dispose();
     }
 }

@@ -12,6 +12,8 @@ public static class PpuConstants {
     public const int PatternTableBitsPerPixel = 2;
     public const int PatternTablePixelCount = PatternTableSize * 8 / PatternTableBitsPerPixel;
 
+    public const int Nametable0StartAddress = 0x2000;
+    
     public static readonly Range PatternTable1 = new(0x0000, 0x1000);
     public static readonly Range PatternTable2 = new(0x1000, 0x2000);
 

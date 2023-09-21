@@ -11,6 +11,10 @@
 
     <PropertyGroup>
         <PublishAot>true</PublishAot>
+        <PublishReadyToRun>false</PublishReadyToRun>
+        <SelfContained>true</SelfContained>
+        <PublishAot>true</PublishAot>
+        
         <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
         <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
         <DebuggerSupport>false</DebuggerSupport>
@@ -21,11 +25,8 @@
         <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
         <UseNativeHttpHandler>true</UseNativeHttpHandler>
         <UseSystemResourceKeys>true</UseSystemResourceKeys>
-        <SelfContained>true</SelfContained>
-        <PublishAot>true</PublishAot>
         <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
         <StripSymbols>true</StripSymbols>
-        <PublishReadyToRun>false</PublishReadyToRun>
         <IlcScanReflection>false</IlcScanReflection>
         <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
         <IlcTrimMetadata>true</IlcTrimMetadata>
@@ -51,7 +52,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.9.1"/>
-        <PackageReference Include="Cyotek.CircularBuffer" Version="1.2.1"/>
+        <PackageReference Include="Cyotek.CircularBuffer" Version="1.2.2-beta1" />
         <PackageReference Include="ImGui.SDL.Spectrum.NET" Version="1.89.0" />
         <PackageReference Include="ppy.SDL2-CS" Version="1.0.671-alpha" />
         <PackageReference Include="SDL-Sharp-DLL" Version="2.1.1" />

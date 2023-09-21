@@ -18,6 +18,11 @@ public unsafe class Machine : IDisposable {
 
     public MachineState State;
 
+    public event Action? PpuClocked; 
+    public event Action? CpuClocked;
+
+    private bool _disposed;
+
     public Machine(CartridgeDevice cartridgeDevice) {
         CartridgeDevice = cartridgeDevice;
 
@@ -35,13 +40,16 @@ public unsafe class Machine : IDisposable {
         PpuMemoryBus = new PpuMemoryBus(this);
     }
 
-    public void Reset(ushort? overrideResetVector = null, bool hardReset = true) {
+    public void Reset(CpuResetOptions? options = null, bool hardReset = true) {
+        AssertNotDisposed();
+
         State.ResetCounters();
 
+        options ??= CpuResetOptions.Default;
         if (hardReset) {
-            CpuBusDevice.HardReset(overrideResetVector);
+            CpuBusDevice.HardReset(options.Value);
         } else {
-            CpuBusDevice.SoftReset(overrideResetVector);
+            CpuBusDevice.SoftReset(options.Value);
         }
 
         PpuDevice.SoftReset();
@@ -49,6 +57,8 @@ public unsafe class Machine : IDisposable {
 
     [MethodImpl(MethodOptions.Options)]
     public void Clock() {
+        AssertNotDisposed();
+
         if (State.MachineCycles % 3 == 0) {
             CpuClock();
         }
@@ -60,37 +70,62 @@ public unsafe class Machine : IDisposable {
 
     [MethodImpl(MethodOptions.Options)]
     public void PpuClock() {
-        if (State.MachineCycles % 28000 == 0) {
+        AssertNotDisposed();
+
+        if (State.CpuCycles % 27394 == 0) {
             State.Ppu.PPUSTATUS |= PpuStatusRegisterFlags.VerticalBlankStarted;
         }
 
-        if (State.MachineCycles % 29000 == 0) {
+        if (State.Ppu.Internal.CpuCyclesAtNmi != 0 && 
+            State.CpuCycles - State.Ppu.Internal.CpuCyclesAtNmi == 2270) {
             State.Ppu.PPUSTATUS &= ~PpuStatusRegisterFlags.VerticalBlankStarted;
         }
+
+        bool nmi =
+            (State.Ppu.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) != 0 &&
+            (State.Ppu.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0;
+        
+        if (nmi && nmi != State.Ppu.Internal.NmiPending) {
+            State.Cpu.Internal.NmiPending = true;
+            State.Ppu.Internal.CpuCyclesAtNmi = State.CpuCycles;
+        }
+
+        State.Ppu.Internal.NmiPending = nmi;
+        
+        PpuClocked?.Invoke();
     }
 
     [MethodImpl(MethodOptions.Options)]
     public void CpuClock() {
+        AssertNotDisposed();
+
         ref CpuState cpu = ref State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
 
         ushort address = cpuInternal.AddressBus.Value;
-        bool isWrite = !cpuInternal.Read;
+        MemoryAccessMode accessMode =
+            cpuInternal.Read ?
+                MemoryAccessMode.Read :
+                MemoryAccessMode.Write;
         ref byte dataBus = ref cpuInternal.DataBus;
 
         // Assume that zero page and stack page are never IO mapped
-        bool alwaysCpuMemory = address <= 0x01FF;
+        /*bool alwaysCpuMemory = address <= 0x01FF;
         if (alwaysCpuMemory) {
             ref byte mappedData = ref CpuBusDevice.Memory.Data[address];
-            BusDeviceHandlers.ReadWrite(ref mappedData, isWrite, ref dataBus);
+            BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref dataBus);
         } else {
-            CpuMemoryBus.HandleBus(address, isWrite, ref dataBus);
-        }
+            CpuMemoryBus.HandleBus(address, accessMode, ref dataBus);
+        }*/
+        
+        CpuMemoryBus.HandleBus(address, accessMode, ref dataBus);
 
         ExecuteState(ref cpu, ref cpuInternal);
 
         State.CpuCycles++;
         State.CpuProgramCycles++;
+        
+        CpuClocked?.Invoke();
     }
 
     [MethodImpl(MethodOptions.Options)]
@@ -174,6 +209,22 @@ public unsafe class Machine : IDisposable {
 
     [MethodImpl(MethodOptions.Options)]
     private bool DispatchInstructionLogic(ref CpuState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
+        if (cpuInternal.NmiPending) {
+            cpuInternal.Instruction = new(
+                "BRK", 
+                InstructionType.Internal_BRK_NMI,
+                AddressingMode.Implied, 
+                InstructionFlags.HasMemoryReadWriteLogic, 
+                0x00,
+                1
+            );
+            cpuInternal.State = CpuInternalState.ExecutionState.ExecutingAddressing;
+            cpuInternal.OperationCycle = 0;
+            instructionType = cpuInternal.Instruction.Type;
+
+            cpuInternal.NmiPending = false;
+        }
+        
         bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, instructionType);
 
         cpuInternal.OperationCycle++;
@@ -188,6 +239,11 @@ public unsafe class Machine : IDisposable {
         return completed;
     }
 
+    [Conditional("DEBUG")]
+    private void AssertNotDisposed() {
+        Debug.Assert(!_disposed, "!_disposed");
+    }
+
     private void ReleaseUnmanagedResources() {
         //CpuMemoryBus.Dispose();
         CpuBusDevice.Dispose();
@@ -196,10 +252,12 @@ public unsafe class Machine : IDisposable {
         //PpuMemoryBus.Dispose();
         PpuBusDevice.Dispose();
 
-        //CartridgeDevice.Dispose();
+        CartridgeDevice.Dispose();
     }
 
     public void Dispose() {
+        _disposed = true;
+
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }
