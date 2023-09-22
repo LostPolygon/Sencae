@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using FastEnumToString;
 
 namespace Sencae.SharedUtility;
@@ -228,10 +227,6 @@ public static class NintendulatorLog {
         CpuState cpu = machineState.Cpu;
         InstructionDescriptor instruction = cpu.Internal.Instruction;
 
-        byte dataP1 = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + 1));
-        UInt16Bytes dataU16 = default;
-        dataU16.Low = dataP1;
-
         MachineLogEntry.CpuState cpuState = new(
             cpu.Internal.AddressBus.Value,
             cpu.A,
@@ -248,38 +243,39 @@ public static class NintendulatorLog {
             0
         );
 
+        byte Read(int address) {
+            return machine.CpuMemoryBus.Read((ushort) address);
+        }
+        
+        byte dataP1 = Read(machineState.Cpu.PC.Value + 1);
+        UInt16Bytes dataU16 = default;
+        dataU16.Low = dataP1;
+
         switch (instruction.AddressingMode) {
             case AddressingMode.Implied:
                 break;
             case AddressingMode.Immediate:
                 break;
             case AddressingMode.Absolute: {
-                dataU16.High = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + 2));
-                byte targetData = machine.CpuMemoryBus.Read(dataU16.Value);
-                cpuState = cpuState with { TargetData = targetData };
+                dataU16.High = Read(machineState.Cpu.PC.Value + 2);
+                byte targetData = Read(dataU16.Value);
+                cpuState = cpuState with {
+                    TargetData = targetData
+                };
 
                 break;
             }
             case AddressingMode.AbsoluteXIndexed:
             case AddressingMode.AbsoluteYIndexed: {
-                string indexName;
-                byte index;
-                switch (instruction.AddressingMode) {
-                    case AddressingMode.AbsoluteXIndexed:
-                        index = cpu.X;
-                        indexName = "X";
-                        break;
-                    case AddressingMode.AbsoluteYIndexed:
-                        index = cpu.Y;
-                        indexName = "Y";
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                byte index = instruction.AddressingMode switch {
+                    AddressingMode.AbsoluteXIndexed => cpu.X,
+                    AddressingMode.AbsoluteYIndexed => cpu.Y,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
 
-                dataU16.High = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + 2));
+                dataU16.High = Read(machineState.Cpu.PC.Value + 2);
                 ushort effectiveAddress = (ushort) (dataU16.Value + index);
-                byte targetData = machine.CpuMemoryBus.Read(effectiveAddress);
+                byte targetData = Read(effectiveAddress);
 
                 cpuState = cpuState with {
                     TargetData = targetData,
@@ -289,7 +285,7 @@ public static class NintendulatorLog {
                 break;
             }
             case AddressingMode.ZeroPage: {
-                byte targetData = machine.CpuMemoryBus.Read(dataP1);
+                byte targetData = Read(dataP1);
                 cpuState = cpuState with {
                     TargetData = targetData
                 };
@@ -298,23 +294,14 @@ public static class NintendulatorLog {
             }
             case AddressingMode.ZeroPageXIndexed:
             case AddressingMode.ZeroPageYIndexed: {
-                string indexName;
-                byte index;
-                switch (instruction.AddressingMode) {
-                    case AddressingMode.ZeroPageXIndexed:
-                        index = cpu.X;
-                        indexName = "X";
-                        break;
-                    case AddressingMode.ZeroPageYIndexed:
-                        index = cpu.Y;
-                        indexName = "Y";
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                byte index = instruction.AddressingMode switch {
+                    AddressingMode.ZeroPageXIndexed => cpu.X,
+                    AddressingMode.ZeroPageYIndexed => cpu.Y,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
 
                 ushort effectiveAddress = (byte) (dataP1 + index);
-                byte targetData = machine.CpuMemoryBus.Read(effectiveAddress);
+                byte targetData = Read(effectiveAddress);
                 cpuState = cpuState with {
                     TargetData = targetData,
                     EffectiveAddress = effectiveAddress
@@ -323,13 +310,13 @@ public static class NintendulatorLog {
                 break;
             }
             case AddressingMode.AbsoluteIndirect: {
-                dataU16.High = machine.CpuMemoryBus.Read((ushort) (machineState.Cpu.PC.Value + 2));
+                dataU16.High = Read(machineState.Cpu.PC.Value + 2);
                 UInt16Bytes effectiveAddressAddress = dataU16;
                 bool pageBoundaryBug = effectiveAddressAddress.Low == 0xFF;
 
                 UInt16Bytes effectiveAddress = default;
-                effectiveAddress.Low = machine.CpuMemoryBus.Read(effectiveAddressAddress.Value);
-                effectiveAddress.High = machine.CpuMemoryBus.Read(
+                effectiveAddress.Low = Read(effectiveAddressAddress.Value);
+                effectiveAddress.High = Read(
                     (ushort) (pageBoundaryBug ?
                         effectiveAddressAddress.Value & 0xFF00 :
                         effectiveAddressAddress.Value + 1)
@@ -343,13 +330,13 @@ public static class NintendulatorLog {
                 break;
             }
             case AddressingMode.ZeroPageIndirectXPreIndexed: {
-                ushort effectiveAddressAddress = (byte) (dataP1 + cpu.X);
+                byte effectiveAddressAddress = (byte) (dataP1 + cpu.X);
                 UInt16Bytes effectiveAddress = new() {
-                    Low = machine.CpuMemoryBus.Read((byte) effectiveAddressAddress),
-                    High = machine.CpuMemoryBus.Read((byte) (effectiveAddressAddress + 1)),
+                    Low = Read(effectiveAddressAddress),
+                    High = Read((byte) (effectiveAddressAddress + 1)),
                 };
 
-                byte targetData = machine.CpuMemoryBus.Read(effectiveAddress.Value);
+                byte targetData = Read(effectiveAddress.Value);
                 cpuState = cpuState with {
                     EffectiveAddressAddress = effectiveAddressAddress,
                     EffectiveAddress = effectiveAddress.Value,
@@ -359,13 +346,13 @@ public static class NintendulatorLog {
                 break;
             }
             case AddressingMode.ZeroPageIndirectYPostIndexed: {
-                ushort effectiveAddressAddress = dataP1;
+                byte effectiveAddressAddress = dataP1;
                 UInt16Bytes effectiveAddress = new() {
-                    Low = machine.CpuMemoryBus.Read((byte) effectiveAddressAddress),
-                    High = machine.CpuMemoryBus.Read((byte) (effectiveAddressAddress + 1)),
+                    Low = Read(effectiveAddressAddress),
+                    High = Read((byte) (effectiveAddressAddress + 1)),
                 };
                 ushort effectiveAddressIndexed = (ushort) (effectiveAddress.Value + cpu.Y);
-                byte targetData = machine.CpuMemoryBus.Read(effectiveAddressIndexed);
+                byte targetData = Read(effectiveAddressIndexed);
 
                 cpuState = cpuState with {
                     EffectiveAddress = effectiveAddress.Value,
@@ -393,24 +380,4 @@ public static class NintendulatorLog {
 
         return new MachineLogEntry(cpuState);
     }
-}
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly record struct MachineLogEntry(MachineLogEntry.CpuState Cpu) {
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly record struct CpuState(
-        ushort AddressBus,
-        byte A,
-        byte X,
-        byte Y,
-        CpuStatusRegisterPackedFlags P,
-        byte SP,
-        InstructionDescriptor Instruction,
-        UInt16Bytes OpcodeData,
-        ulong CpuCycles,
-        byte TargetData,
-        ushort EffectiveAddress,
-        ushort EffectiveAddressAddress,
-        ushort EffectiveAddressIndexed
-    );
 }

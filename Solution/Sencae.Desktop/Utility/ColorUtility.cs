@@ -7,8 +7,8 @@ public static class ColorUtility {
         float textLuminance = CalculateLuminance(text);
         float backgroundLuminance = CalculateLuminance(background);
 
-        float L1 = textLuminance > backgroundLuminance ? textLuminance : backgroundLuminance;
-        float L2 = textLuminance > backgroundLuminance ? backgroundLuminance : textLuminance;
+        float L1 = MathF.Max(textLuminance, backgroundLuminance);
+        float L2 = MathF.Min(textLuminance, backgroundLuminance);
 
         return (L1 + 0.05f) / (L2 + 0.05f);
     }
@@ -26,9 +26,9 @@ public static class ColorUtility {
         }
 
         float L =
-            0.2126f * ComponentLuminance(color.R) +
-            0.7152f * ComponentLuminance(color.G) +
-            0.0722f * ComponentLuminance(color.B);
+            0.2126f * ComponentLuminanceByte(color.R) +
+            0.7152f * ComponentLuminanceByte(color.G) +
+            0.0722f * ComponentLuminanceByte(color.B);
 
         return L;
     }

@@ -12,16 +12,16 @@ public static unsafe class Library {
     private static readonly sbyte* LibraryVersion = (sbyte*) Marshal.StringToHGlobalAnsi("0.1.0");
     private static readonly sbyte* ValidExtensions = (sbyte*) Marshal.StringToHGlobalAnsi("nes");
 
-    private static retro_environment_t EnvironmentCallback;
-    private static retro_log_printf_t? LogCallback;
-    private static retro_audio_sample_batch_t AudioSampleBatchCallback;
-    private static retro_video_refresh_t VideoRefreshCallback;
-    private static retro_audio_sample_t AudioSampleCallback;
-    private static retro_input_poll_t InputPollCallback;
-    private static retro_input_state_t InputStateCallback;
+    private static retro_environment_t EnvironmentCallback = null!;
+    private static retro_log_printf_t LogCallback = null!;
+    private static retro_audio_sample_batch_t AudioSampleBatchCallback = null!;
+    private static retro_video_refresh_t VideoRefreshCallback = null!;
+    private static retro_audio_sample_t AudioSampleCallback = null!;
+    private static retro_input_poll_t InputPollCallback = null!;
+    private static retro_input_state_t InputStateCallback = null!;
 
+    private static Machine? _machine;
     private static uint[] VideoBuffer = new uint[NesConstants.Ntsc.ScreenWidth * NesConstants.Ntsc.ScreenHeight];
-    private static Machine _machine;
 
     [UnmanagedCallersOnly(EntryPoint = "retro_api_version", CallConvs = new[] { typeof(CallConvCdecl) })]
     public static nuint ApiVersion() {
@@ -44,7 +44,7 @@ public static unsafe class Library {
         sbyte* buttonUp = (sbyte*) Marshal.StringToHGlobalAnsi("Up!");
         sbyte* buttonDown = (sbyte*) Marshal.StringToHGlobalAnsi("Down!");
 
-        retro_input_descriptor[] inputDescriptors = {
+        retro_input_descriptor* inputDescriptors = stackalloc retro_input_descriptor[] {
             new() { id = 0, index = 0, device = RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_LEFT, description = buttonLeft },
             new() { id = 0, index = 0, device = RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_RIGHT, description = buttonRight },
             new() { id = 0, index = 0, device = RETRO_DEVICE_JOYPAD, port = RETRO_DEVICE_ID_JOYPAD_UP, description = buttonUp },
@@ -179,6 +179,8 @@ public static unsafe class Library {
     [UnmanagedCallersOnly(EntryPoint = "retro_run", CallConvs = new[] { typeof(CallConvCdecl) })]
     public static void Run() {
         //LogEntrypoint();
+        if (_machine == null)
+            return;
 
         InputPollCallback();
 

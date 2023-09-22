@@ -13,6 +13,7 @@ public unsafe class MachineLogWindow : AppWindow {
     private readonly List<MachineLogEntry> _logOutput = new();
     private bool _autoScroll;
     private bool _logging;
+    private bool _autoScrollTrigger;
 
     public MachineLogWindow(AppWindowContext context, Emulator emulator) : base(
         nameof(MachineLogWindow),
@@ -104,8 +105,9 @@ public unsafe class MachineLogWindow : AppWindow {
             }
         }
         
-        if (_autoScroll && ImGui.GetScrollY() < ImGui.GetScrollMaxY()) {
+        if (_autoScroll && _autoScrollTrigger && ImGui.GetScrollY() < ImGui.GetScrollMaxY()) {
             ImGui.SetScrollHereY(1.0f);
+            _autoScrollTrigger = false;
         }
 
         clipper.End();
@@ -128,6 +130,7 @@ public unsafe class MachineLogWindow : AppWindow {
 
         MachineLogEntry logEntry = NintendulatorLog.CreateMachineLogEntry(Emulator.Machine);
         _logOutput.Add(logEntry);
+        _autoScrollTrigger = true;
     }
 
     private void ClearLog() {

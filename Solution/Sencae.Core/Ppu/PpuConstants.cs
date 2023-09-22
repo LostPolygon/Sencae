@@ -4,8 +4,12 @@ namespace Sencae.Ppu;
 
 public static class PpuConstants {
     public const int TileSize = 8;
+    public const int BytesPerTile = 16;
+    public const int BitsPerTilePixel = 2;
+    public const int BytesPerDecodedTile = TileSize * TileSize;
     public const int PatternTableWidthTiles = 16;
     public const int PatternTableHeightTiles = 16;
+    public const int PatternTableTotalTiles = PatternTableWidthTiles * PatternTableHeightTiles;
     public const int PatternTableWidth = PatternTableWidthTiles * TileSize;
     public const int PatternTableHeight = PatternTableHeightTiles * TileSize;
     public const int PatternTableSize = 0x1000;

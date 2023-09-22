@@ -46,8 +46,8 @@ public class CpuBenchmark {
     public const ulong CycleCount = 26548; // nestest.log ends here
     public const int InternalIterations = 1000;
 
-    public CartridgeDevice CartridgeDevice { get; private set; }
-    public Machine Machine { get; private set; }
+    public CartridgeDevice CartridgeDevice { get; private set; } = null!;
+    public Machine Machine { get; private set; } = null!;
 
     public ulong Emulate(int iterations = InternalIterations, ulong maxCycles = CycleCount) {
         DebugEmulationRunner.RunnerOptions runnerOptions = new() {
