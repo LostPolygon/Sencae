@@ -68,7 +68,10 @@ public unsafe class MachineLogWindow : AppWindow {
 
         if (ImGui.Button("Save To File")) {
             string fileName = $"MachineLog_{DateTime.UtcNow.ToFileTimeUtc()}.txt";
-            string text = String.Join(Environment.NewLine, _logOutput);
+            string text = String.Join(
+                Environment.NewLine,
+                _logOutput.Select(NintendulatorLog.FormatMachineLogEntry)
+            );
             File.WriteAllText(fileName, text);
         }
 
@@ -104,7 +107,7 @@ public unsafe class MachineLogWindow : AppWindow {
                 ImGuiNative.igTextUnformatted(logTextUtf8Ptr, logTextUtf8Ptr + logTextUtf8BytesWritten);
             }
         }
-        
+
         if (_autoScroll && _autoScrollTrigger && ImGui.GetScrollY() < ImGui.GetScrollMaxY()) {
             ImGui.SetScrollHereY(1.0f);
             _autoScrollTrigger = false;

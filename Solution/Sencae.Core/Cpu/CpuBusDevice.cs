@@ -30,7 +30,7 @@ public sealed unsafe class CpuBusDevice : IBusDevice, IDisposable {
             case >= 0x4000 and <= 0x401F: {
                 ref byte mappedData = ref _ioRegisters.Data[address % (0x18 + 0x08)];
                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
-                if (address is 0x4016 or 0x4017 && accessMode != MemoryAccessMode.Write) {
+                if (address is 0x4016 or 0x4017 && accessMode == MemoryAccessMode.Read) {
                     bus = 0;
                 }
                 return true;
@@ -45,15 +45,6 @@ public sealed unsafe class CpuBusDevice : IBusDevice, IDisposable {
         cpu = new CpuState();
 
         CpuMemoryBus cpuMemoryBus = Machine.CpuMemoryBus;
-
-        cpu.P = new CpuStatusRegisterFlags {
-            InterruptDisable = true,
-            BreakFlag = true
-        };
-
-        cpu.A = cpu.X = cpu.Y = 0x00;
-        cpu.SP = 0xFD;
-
         switch (options.CpuMemoryResetState) {
             case CpuMemoryResetState.Random:
                 for (ushort i = 0x0000; i < 0x2000; i++) {
@@ -75,6 +66,14 @@ public sealed unsafe class CpuBusDevice : IBusDevice, IDisposable {
             default:
                 throw new ArgumentOutOfRangeException();
         }
+        
+        cpu.P = new CpuStatusRegisterFlags {
+            InterruptDisable = true,
+            BreakFlag = true
+        };
+
+        cpu.A = cpu.X = cpu.Y = 0x00;
+        cpu.SP = 0xFD;
         
         cpuMemoryBus.Write(0x4017, 0); // frame irq enabled
         cpuMemoryBus.Write(0x4015, 0); // all APU channels disabled
@@ -107,14 +106,14 @@ public sealed unsafe class CpuBusDevice : IBusDevice, IDisposable {
         cpuMemoryBus.Write(0x4015, 0); // all APU channels disabled
 
         ushort resetVector = options.OverrideResetVector ?? cpuMemoryBus.ReadU16(CpuConstants.ResetVector);
-        cpu.Internal.State = CpuInternalState.ExecutionState.InterpretOpcode;
-        cpu.Internal.DataBus = cpuMemoryBus.Read(resetVector);
-        cpu.Internal.Instruction = Instructions.DescriptorByOpcode[0x00];
-
         cpu.PC.Value = (ushort) (resetVector + 0);
+        
+        cpu.Internal.State = CpuInternalState.ExecutionState.InterpretOpcode;
+        cpu.Internal.DataBus = cpuMemoryBus.ReadObserve(resetVector);
+        cpu.Internal.Instruction = Instructions.DescriptorByOpcode[0x00];
+        
         cpu.Internal.AddressBus.Value = (ushort) (resetVector + 0);
         cpu.Internal.Read = true;
-
         cpu.Internal.Halted = false;
     }
 

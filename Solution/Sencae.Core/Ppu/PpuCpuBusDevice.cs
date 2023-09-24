@@ -21,20 +21,24 @@ public unsafe class PpuCpuBusDevice : IBusDevice, IDisposable {
 
     [MethodImpl(MethodOptions.Options)]
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
-        ref byte ppuBus = ref _state.Internal.DataBus;
+        switch (accessMode) {
+            case MemoryAccessMode.Read:
+            case MemoryAccessMode.Write:
+                ref byte ppuBus = ref _state.Internal.DataBus;
 
-        if (accessMode == MemoryAccessMode.Write) {
-            ppuBus = bus;
+                if (accessMode == MemoryAccessMode.Write) {
+                    ppuBus = bus;
+                }
+
+                bool result = HandleBusInternal(address, accessMode, ref ppuBus, out bool _);
+
+                bus = ppuBus;
+                return result;
+            case MemoryAccessMode.ReadObserve:
+                return HandleBusInternal(address, accessMode, ref bus, out bool _);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(accessMode), accessMode, null);
         }
-
-        bool result = HandleBusInternal(address, accessMode, ref ppuBus, out bool mustUpdateBus);
-
-        bus = ppuBus;
-
-        if (mustUpdateBus) {
-        }
-
-        return result;
     }
 
     private bool HandleBusInternal(ushort address, MemoryAccessMode accessMode, ref byte bus, out bool mustUpdateBus) {
@@ -94,7 +98,7 @@ public unsafe class PpuCpuBusDevice : IBusDevice, IDisposable {
                     case PPUSTATUS_Index: {
                         ref byte mappedData = ref Unsafe.As<PpuStatusRegisterFlags, byte>(ref _state.PPUSTATUS);
                         byte oldBus = bus;
-                        if (accessMode == MemoryAccessMode.Read) {
+                        if (accessMode != MemoryAccessMode.Write) {
                             BusDeviceHandlers.ReadOnlyRaw(ref mappedData, accessMode, ref bus);
                         }
 

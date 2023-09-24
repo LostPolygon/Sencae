@@ -8,32 +8,14 @@ using Sencae.Ppu;
 namespace Sencae.Desktop;
 
 public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
+    private readonly DynamicSdlTexture _patternTable0Texture;
     private readonly DynamicSdlTexture _patternTable1Texture;
-    private readonly DynamicSdlTexture _patternTable2Texture;
+    private readonly DynamicSdlTexture _nametable0Texture;
 
     private bool _drawAttributeGrid;
     private PpuPreviewState _previewState = new PpuPreviewState();
 
     public Emulator Emulator { get; }
-
-    public class PpuPreviewState {
-        public PpuPatternTableDecoded PatternTable0;
-        public PpuPatternTableDecoded PatternTable1;
-        
-        public PpuObjectPalette[] BackgroundPalettes = new PpuObjectPalette[4];
-        public PpuObjectPalette[] SpritePalettes = new PpuObjectPalette[4];
-
-        public PpuNametable Nametable0;
-        public PpuNametable Nametable1;
-
-        public struct PpuTileDecoded {
-            public fixed byte PaletteIndices[64];
-        }
-        
-        public class PpuPatternTableDecoded {
-            public PpuTileDecoded[] Tiles = new PpuTileDecoded[PpuConstants.PatternTableTotalTiles];
-        }
-    }
 
     public PpuTileViewerWindow(
         AppWindowContext context,
@@ -45,23 +27,30 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
     ) {
         Emulator = emulator;
 
+        _patternTable0Texture = new DynamicSdlTexture(
+            Context.Renderer,
+            PpuConstants.PatternTableWidth,
+            PpuConstants.PatternTableHeight,
+            SDL_PIXELFORMAT_ARGB8888
+        );
         _patternTable1Texture = new DynamicSdlTexture(
             Context.Renderer,
             PpuConstants.PatternTableWidth,
             PpuConstants.PatternTableHeight,
             SDL_PIXELFORMAT_ARGB8888
         );
-        _patternTable2Texture = new DynamicSdlTexture(
+        _nametable0Texture = new DynamicSdlTexture(
             Context.Renderer,
-            PpuConstants.PatternTableWidth,
-            PpuConstants.PatternTableHeight,
+            PpuConstants.NametableWidthPixels,
+            PpuConstants.NametableHeightPixels,
             SDL_PIXELFORMAT_ARGB8888
         );
     }
 
     public void Dispose() {
+        _patternTable0Texture.Dispose();
         _patternTable1Texture.Dispose();
-        _patternTable2Texture.Dispose();
+        _nametable0Texture.Dispose();
     }
 
     protected override void DrawContent(float deltaTime) {
@@ -71,53 +60,60 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
             return;
 
         {
-            using var _ = Profiler.Begin(nameof(PpuTileViewerWindow) + "_Preview", TimeUnit.Millisecond);
+            using (Profiler.Begin(nameof(PpuTileViewerWindow) + "_UpdateState", TimeUnit.Millisecond)) {
+                new PpuPreviewStateUpdater(Emulator.Machine.PpuBusDevice, _previewState).Update();
+            }
 
-            using DynamicSdlTexture.LockedSurface pattern1TableSurface = _patternTable1Texture.Lock();
-            FillPatternTableTextureFromVram(PpuConstants.PatternTable1.Start.Value, pattern1TableSurface.Surface);
+            using (Profiler.Begin(nameof(PpuTileViewerWindow) + "_UpdateTextures", TimeUnit.Millisecond)) {
+                Span<uint> patternTablePalette = stackalloc uint[4];
+                GetGreyscalePalette(255, patternTablePalette);
 
-            using DynamicSdlTexture.LockedSurface pattern2TableSurface = _patternTable2Texture.Lock();
-            FillPatternTableTextureFromVram(PpuConstants.PatternTable2.Start.Value, pattern2TableSurface.Surface);
+                using DynamicSdlTexture.LockedSurface pattern0TableSurface = _patternTable0Texture.Lock();
+                UpdatePatternTableTexture(_previewState.PatternTable0, patternTablePalette, pattern0TableSurface.Surface);
+
+                using DynamicSdlTexture.LockedSurface pattern1TableSurface = _patternTable1Texture.Lock();
+                UpdatePatternTableTexture(_previewState.PatternTable1, patternTablePalette, pattern1TableSurface.Surface);
+
+                using DynamicSdlTexture.LockedSurface nametable0Surface = _nametable0Texture.Lock();
+                UpdateNametableTexture(_previewState, _previewState.Nametable0, _previewState.Nametable0Attributes, nametable0Surface.Surface);
+            }
         }
 
-        DrawPatternTable(_patternTable1Texture, "Pattern Table 1");
-        ImGui.SameLine();
-        DrawPatternTable(_patternTable2Texture, "Pattern Table 2");
+        using (Profiler.Begin(nameof(PpuTileViewerWindow) + "_Draw", TimeUnit.Millisecond)) {
+            DrawPatternTable(_patternTable0Texture, "Pattern Table 1");
+            ImGui.SameLine();
+            DrawPatternTable(_patternTable1Texture, "Pattern Table 2");
 
-        ImGui.Separator();
+            ImGui.Separator();
 
-        ImGui.Checkbox("Draw Attribute Grid", ref _drawAttributeGrid);
-        
-        DrawNametable(0);
-        ImGui.SameLine();
-        DrawNametable(1);
+            ImGui.Checkbox("Draw Attribute Grid", ref _drawAttributeGrid);
 
-        ImGui.Separator();
+            DrawNametable(_nametable0Texture, _previewState.Nametable0, _previewState.Nametable0Attributes, 0);
 
-        const float paletteSpacing = 130;
+            //ImGui.SameLine();
+            //DrawNametable(_previewState, _previewState.Nametable1, 1);
 
-        DrawPalette(0x3F01, "BG Palette 0");
-        ImGui.SameLine(paletteSpacing * 1);
-        DrawPalette(0x3F05, "BG Palette 1");
-        ImGui.SameLine(paletteSpacing * 2);
-        DrawPalette(0x3F09, "BG Palette 2");
-        ImGui.SameLine(paletteSpacing * 3);
-        DrawPalette(0x3F0D, "BG Palette 3");
+            ImGui.Separator();
 
-        ImGui.Separator();
+            const float paletteSpacing = 130;
 
-        DrawPalette(0x3F11, "SPR Palette 0");
-        ImGui.SameLine(paletteSpacing * 1);
-        DrawPalette(0x3F15, "SPR Palette 1");
-        ImGui.SameLine(paletteSpacing * 2);
-        DrawPalette(0x3F19, "SPR Palette 2");
-        ImGui.SameLine(paletteSpacing * 3);
-        DrawPalette(0x3F1D, "SPR Palette 3");
-
-        ImGui.Separator();
+            // @formatter:off
+            DrawPalette(_previewState.BackgroundPalettes[0], "BG Palette 0"); ImGui.SameLine(paletteSpacing * 1);
+            DrawPalette(_previewState.BackgroundPalettes[1], "BG Palette 1"); ImGui.SameLine(paletteSpacing * 2);
+            DrawPalette(_previewState.BackgroundPalettes[2], "BG Palette 2"); ImGui.SameLine(paletteSpacing * 3);
+            DrawPalette(_previewState.BackgroundPalettes[3], "BG Palette 3");
+            ImGui.Separator();
+    
+            DrawPalette(_previewState.SpritePalettes[0], "SPR Palette 0"); ImGui.SameLine(paletteSpacing * 1);
+            DrawPalette(_previewState.SpritePalettes[1], "SPR Palette 1"); ImGui.SameLine(paletteSpacing * 2);
+            DrawPalette(_previewState.SpritePalettes[2], "SPR Palette 2"); ImGui.SameLine(paletteSpacing * 3);
+            DrawPalette(_previewState.SpritePalettes[3], "SPR Palette 3");
+            ImGui.Separator();
+            // @formatter:on
+        }
     }
 
-    private void DrawPalette(ushort baseAddress, string title) {
+    private void DrawPalette(PpuObjectPalette palette, string title) {
         Vector2 colorTileSize = new(24, 16);
         float colorIndexHexFontSize = MathF.Min(colorTileSize.X, colorTileSize.Y) * 0.75f;
 
@@ -137,8 +133,6 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
 
         ImGui.SetCursorPos(cursorPos);
 
-        PpuBusDevice ppuBusDevice = Emulator.Machine.PpuBusDevice;
-
         static byte TransformTileIndex(byte index) =>
             index switch {
                 3 => 0,
@@ -147,7 +141,7 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
                 2 => 3,
                 _ => throw new ArgumentOutOfRangeException(nameof(index), index, null)
             };
-        
+
         static byte InverseTransformTileIndex(byte index) =>
             index switch {
                 0 => 3,
@@ -161,9 +155,9 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
         ImGui.PushFont(font);
         for (int i = 0; i < 4; i++) {
             Vector2 tileMin = imageMin + Vector2.UnitX * colorTileSize * TransformTileIndex((byte) i);
-            byte colorIndex = (byte) (ppuBusDevice.ReadObserve((ushort) (baseAddress + i)) % 64);
+            byte colorIndex = palette.ColorIndices[i];
 
-            Color color = Color.FromArgb((int) Context.SharedResources.PpuPalette.Colors[colorIndex]);
+            Color color = Color.FromArgb((int) ColorUtility.ArgbToAbgr(Context.SharedResources.PpuPalette.Colors[colorIndex]));
 
             drawList.AddRectFilled(
                 tileMin,
@@ -188,7 +182,7 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
                 (uint) textColor.ToArgb(),
                 colorIndexHex
             );
-            
+
             /*drawList.AddRectFilled(
                 textPos,
                 textPos + textSize,
@@ -198,9 +192,12 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
 
         ImGui.PopFont();
 
+        object paletteCopyBoxed = palette;
+
         TileTooltip(imageMin, colorTileSize, 0xFFFF0000, (x, _) => {
             x = InverseTransformTileIndex((byte) x);
-            byte colorIndex = ppuBusDevice.ReadObserve((ushort) (baseAddress + x));
+            PpuObjectPalette paletteCopy = (PpuObjectPalette) paletteCopyBoxed;
+            byte colorIndex = paletteCopy.ColorIndices[x];
             string colorIndexHex = colorIndex.ToString("X2");
             ImGui.Text(colorIndexHex);
         });
@@ -208,118 +205,63 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
         ImGui.EndGroup();
     }
 
-    private void DrawNametable(int nametableIndex) {
+    private void DrawNametable(
+        DynamicSdlTexture nametableTexture,
+        in PpuNametable nametable,
+        in PpuPreviewState.PpuNametableAttributesDecoded attributes,
+        int nametableIndex
+    ) {
+        const float previewScale = 1.5f;
+        const float previewTileSize = PpuConstants.TileSize * previewScale;
+        Vector2 previewSize = new Vector2(nametableTexture.Width, nametableTexture.Height) * previewScale;
+
+        ImGui.BeginGroup();
         ImGui.Text($"Nametable {nametableIndex}");
 
-        const float tileSize = 12;
-
-        PpuBusDevice ppuBusDevice = Emulator.Machine.PpuBusDevice;
-
-        Vector2 nametablePreviewSize = new Vector2(32 * tileSize, 30.5f * tileSize);
-        Vector2 cursorPos = ImGui.GetCursorPos();
-        ImGui.Dummy(nametablePreviewSize);
-
-        Vector2 nametableRectMin = ImGui.GetItemRectMin();
         ImDrawListPtr drawList = ImGui.GetWindowDrawList();
+        Vector2 cursorPos = ImGui.GetCursorPos();
+        ImGui.Dummy(Vector2.One * previewSize);
+        Vector2 imageMin = ImGui.GetItemRectMin();
+        Vector2 imageMax = ImGui.GetItemRectMax();
 
-        int baseAddress = 0x2000 + sizeof(PpuNametable) * nametableIndex;
-        Span<byte> nametableDataRaw = stackalloc byte[PpuNametable.Size];
-        for (ushort i = 0; i < PpuNametable.Size; i++) {
-            nametableDataRaw[i] = ppuBusDevice.ReadObserve((ushort) (baseAddress + i));
-        }
-
-        ref PpuNametable nametableData = ref MemoryMarshal.AsRef<PpuNametable>(nametableDataRaw);
-        for (int y = 0; y < 30; y++) {
-            for (int x = 0; x < 32; x++) {
-                Vector2 cellMin = nametableRectMin + new Vector2(x, y) * tileSize;
-                Vector2 cellMax = cellMin + Vector2.One * tileSize;
-
-                if (!ImGui.IsRectVisible(cellMin, cellMax))
-                    continue;
-
-                byte patternTableTileIndex = nametableData.Rows[y][x];
-
-                int tileRow = patternTableTileIndex / 16;
-                int tileColumn = patternTableTileIndex % 16;
-
-                const float uvInset = 0.001f;
-                Vector2 uv0 = new Vector2(tileColumn, tileRow) * (1f / 16f) + Vector2.One * uvInset;
-                Vector2 uv1 = uv0 + Vector2.One * (1f / 16f - uvInset);
-
-                IntPtr patternTableTexture =
-                    (Emulator.Machine.State.Ppu.PPUCTRL & PpuControlRegisterFlags.BackgroundPatternTableAddress) == 0 ?
-                        _patternTable1Texture.Texture :
-                        _patternTable2Texture.Texture;
-                drawList.AddImage(
-                    patternTableTexture,
-                    cellMin,
-                    cellMax,
-                    uv0,
-                    uv1
-                );
-
-                //drawList.AddRectFilled(cellMin, cellMax, 0xFF_00_00_00 | value | ((uint) value << 8) | ((uint) value << 16));
-            }
-        }
-
-        if (_drawAttributeGrid) {
-            DrawAttributesGrid(nametableData, tileSize, nametableRectMin);
-        }
+        // background
+        drawList.AddRectFilled(imageMin, imageMax, 0xFFFF0000);
 
         ImGui.SetCursorPos(cursorPos);
-        if (ImGui.BeginChild($"##Nametable_{nametableIndex}", nametablePreviewSize, true)) {
-            ImGui.EndChild();
+        ImGui.Image(nametableTexture.Texture, previewSize);
+
+        if (_drawAttributeGrid) {
+            DrawAttributesGrid(nametable, attributes, previewTileSize, imageMin);
         }
+
+        TileTooltip(imageMin, Vector2.One * previewTileSize, 0xFFFF0000, null);
+
+        ImGui.EndGroup();
     }
 
     private void DrawAttributesGrid(
-        in PpuNametable nametableData,
+        in PpuNametable nametable,
+        in PpuPreviewState.PpuNametableAttributesDecoded attributes,
         float tileSize,
         Vector2 nametableRectMin
     ) {
         ImDrawListPtr drawList = ImGui.GetWindowDrawList();
-        
-        float attributeTileSize = tileSize * 4;
-        float attributeSubTileSize = tileSize * 2;
 
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                int attributeIndex = y * 8 + x;
-                (byte bottomRight, byte bottomLeft, byte topRight, byte topLeft) =
-                    nametableData.AttributeTable.Decode(nametableData.AttributeTable[attributeIndex]);
+        Span<uint> palette = stackalloc uint[4];
+        GetGreyscalePalette(100, palette);
 
-                void DrawAttributeTile2x2(byte value, Vector2 tileMin) {
-                    Span<int> bitPaletteArgb = stackalloc int[4] {
-                        Color.FromArgb(100, 0, 0, 0).ToArgb(),
-                        Color.FromArgb(100, 85, 85, 85).ToArgb(),
-                        Color.FromArgb(100, 170, 170, 170).ToArgb(),
-                        Color.FromArgb(100, 255, 255, 255).ToArgb(),
-                    };
+        for (int tileRow = 0; tileRow < PpuConstants.NametableHeightTiles + 1; tileRow++) {
+            for (int tileColumn = 0; tileColumn < PpuConstants.NametableWidthTiles; tileColumn++) {
+                Vector2 tileMin = nametableRectMin + new Vector2(tileColumn, tileRow) * tileSize;
 
-                    drawList.AddRectFilled(
-                        tileMin,
-                        tileMin + Vector2.One * attributeSubTileSize,
-                        (uint) bitPaletteArgb[value]
-                    );
-                    drawList.AddText(
-                        Context.SharedResources.FontMonospacedNormal.NativePtr,
-                        12,
-                        tileMin + new Vector2(0.5f, 0.25f) * attributeSubTileSize,
-                        0xFF0000FF,
-                        value.ToString()
-                    );
-                }
+                int tileIndex = tileRow * PpuConstants.NametableWidthTiles + tileColumn;
+                byte value = attributes.PaletteIndices[tileIndex];
 
-                Vector2 topLeftTileMin = nametableRectMin + new Vector2(x, y) * attributeTileSize;
-                DrawAttributeTile2x2(topLeft, topLeftTileMin);
-                DrawAttributeTile2x2(topRight, topLeftTileMin + Vector2.UnitX * attributeSubTileSize);
-
-                if (y != 7) {
-                    DrawAttributeTile2x2(bottomLeft, topLeftTileMin + Vector2.UnitY * attributeSubTileSize);
-                    DrawAttributeTile2x2(bottomRight, topLeftTileMin + Vector2.One * attributeSubTileSize);
-                }
-
-                //drawList.AddRectFilled(cellMin, cellMax, 0xFF_00_00_00 | value | ((uint) value << 8) | ((uint) value << 16));
+                drawList.AddRectFilled(
+                    tileMin,
+                    tileMin + Vector2.One * tileSize,
+                    palette[value]
+                );
             }
         }
     }
@@ -379,53 +321,65 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
         ImGui.EndTooltip();
     }
 
-    private void FillTileData(int vramOffset, int tileIndex, Span<byte> tile64Bytes) {
-        PpuBusDevice ppuBusDevice = Emulator.Machine.PpuBusDevice;
+    private static void GetGreyscalePalette(byte alpha, Span<uint> patternTablePalette) {
+        stackalloc uint[4] {
+            (uint) Color.FromArgb(alpha, 0, 0, 0).ToArgb(),
+            (uint) Color.FromArgb(alpha, 85, 85, 85).ToArgb(),
+            (uint) Color.FromArgb(alpha, 170, 170, 170).ToArgb(),
+            (uint) Color.FromArgb(alpha, 255, 255, 255).ToArgb(),
+        }.CopyTo(patternTablePalette);
+    }
 
-        const int tilePixelCount = PpuConstants.TileSize * PpuConstants.TileSize;
+    private void UpdateNametableTexture(
+        PpuPreviewState previewState,
+        PpuNametable nametable,
+        PpuPreviewState.PpuNametableAttributesDecoded attributes,
+        SDL_Surface* surface
+    ) {
+        PpuPreviewState.PpuPatternTableDecoded patternTable =
+            (Emulator.Machine.State.Ppu.PPUCTRL & PpuControlRegisterFlags.BackgroundPatternTableAddress) == 0 ?
+                previewState.PatternTable0 :
+                previewState.PatternTable1;
 
-        for (int tilePixelIndex = 0; tilePixelIndex < PpuConstants.BytesPerDecodedTile; tilePixelIndex++) {
-            int tileRow = tileIndex / PpuConstants.BytesPerTile;
-            int tileColumn = tileIndex % PpuConstants.BytesPerTile;
+        /*Span<uint> paletteColors = stackalloc uint[4];
+        GetGreyscalePalette(255, paletteColors);*/
 
-            //int tilePixelIndex = pixelIndex - tileIndex * tilePixelCount;
+        int* surfacePixels = (int*) surface->pixels;
+        for (int tileRow = 0; tileRow < PpuConstants.NametableHeightTiles; tileRow++) {
+            for (int tileColumn = 0; tileColumn < PpuConstants.NametableWidthTiles; tileColumn++) {
+                byte tilePaletteIndex = attributes.PaletteIndices[tileRow * PpuConstants.NametableWidthTiles + tileColumn];
 
-            int tilePixelRow = tilePixelIndex / PpuConstants.TileSize;
-            int tilePixelColumn = tilePixelIndex % PpuConstants.TileSize;
-            
-            int surfacePixelRow = tileRow * PpuConstants.TileSize + tilePixelRow;
-            int surfacePixelColumn = tileColumn * PpuConstants.TileSize + tilePixelColumn;
+                for (int tilePixelIndex = 0; tilePixelIndex < PpuConstants.BytesPerDecodedTile; tilePixelIndex++) {
+                    int tilePixelRow = tilePixelIndex / PpuConstants.TileSize;
+                    int tilePixelColumn = tilePixelIndex % PpuConstants.TileSize;
 
-            int bit = 7 - tilePixelIndex % 8;
-            ushort address = (ushort) (vramOffset + tileIndex * PpuConstants.BytesPerTile + tilePixelRow);
+                    int surfacePixelRow = tileRow * PpuConstants.TileSize + tilePixelRow;
+                    int surfacePixelColumn = tileColumn * PpuConstants.TileSize + tilePixelColumn;
 
-            byte pixelPaletteValue = (byte) (
-                ((ppuBusDevice.ReadObserve(address) >> bit) & 1) |
-                (((ppuBusDevice.ReadObserve((ushort) (address + 8)) >> bit) & 1) << 1)
-            );
+                    int surfacePixelIndex = surfacePixelRow * PpuConstants.NametableWidthPixels + surfacePixelColumn;
 
-            tile64Bytes[tilePixelIndex] = pixelPaletteValue;
+                    byte patternTableTileIndex = nametable.Rows[tileRow][tileColumn];
+
+                    byte pixelPaletteColorIndex = patternTable.Tiles[patternTableTileIndex].PaletteColorIndices[tilePixelIndex];
+                    PpuObjectPalette palette = _previewState.BackgroundPalettes[tilePaletteIndex];
+                    pixelPaletteColorIndex = (byte) (3 - pixelPaletteColorIndex);
+                    surfacePixels[surfacePixelIndex] = (int) Context.SharedResources.PpuPalette.Colors[palette.ColorIndices[pixelPaletteColorIndex]];
+                }
+            }
         }
     }
 
-    private void FillPatternTableTextureFromVram(int vramOffset, SDL_Surface* surface) {
-        Span<int> bitPaletteArgb = stackalloc int[4] {
-            Color.FromArgb(255, 0, 0, 0).ToArgb(),
-            Color.FromArgb(255, 85, 85, 85).ToArgb(),
-            Color.FromArgb(255, 170, 170, 170).ToArgb(),
-            Color.FromArgb(255, 255, 255, 255).ToArgb(),
-        };
-
-        PpuBusDevice ppuBusDevice = Emulator.Machine.PpuBusDevice;
+    private void UpdatePatternTableTexture(
+        PpuPreviewState.PpuPatternTableDecoded patternTable,
+        Span<uint> palette,
+        SDL_Surface* surface
+    ) {
         const int totalTiles = PpuConstants.PatternTableWidthTiles * PpuConstants.PatternTableHeightTiles;
 
-        Span<byte> tileData = stackalloc byte[PpuConstants.BytesPerDecodedTile];
-        
+        int* surfacePixels = (int*) surface->pixels;
         for (int tileIndex = 0; tileIndex < totalTiles; tileIndex++) {
             int tileRow = tileIndex / PpuConstants.BytesPerTile;
             int tileColumn = tileIndex % PpuConstants.BytesPerTile;
-            
-            FillTileData(vramOffset, tileIndex, tileData);
 
             for (int tilePixelIndex = 0; tilePixelIndex < PpuConstants.BytesPerDecodedTile; tilePixelIndex++) {
                 int tilePixelRow = tilePixelIndex / PpuConstants.TileSize;
@@ -434,9 +388,10 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
                 int surfacePixelRow = tileRow * PpuConstants.TileSize + tilePixelRow;
                 int surfacePixelColumn = tileColumn * PpuConstants.TileSize + tilePixelColumn;
 
-                int* surfacePixels = (int*) surface->pixels;
                 int surfacePixelIndex = surfacePixelRow * PpuConstants.PatternTableWidth + surfacePixelColumn;
-                surfacePixels[surfacePixelIndex] = bitPaletteArgb[tileData[tilePixelIndex]];
+
+                byte pixelColorIndex = patternTable.Tiles[tileIndex].PaletteColorIndices[tilePixelIndex];
+                surfacePixels[surfacePixelIndex] = (int) palette[pixelColorIndex];
             }
         }
     }

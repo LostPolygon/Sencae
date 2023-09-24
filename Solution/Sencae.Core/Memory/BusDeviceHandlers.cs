@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public static class BusDeviceHandlers {
+public static unsafe class BusDeviceHandlers {
     public static void OpenBus(int address) {
         Debug.Fail($"Attempt to access open bus at 0x{address:X4}");
     }

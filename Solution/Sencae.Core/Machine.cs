@@ -72,6 +72,7 @@ public unsafe class Machine : IDisposable {
     public void PpuClock() {
         AssertNotDisposed();
 
+        //
         if (State.CpuCycles % 27394 == 0) {
             State.Ppu.PPUSTATUS |= PpuStatusRegisterFlags.VerticalBlankStarted;
         }
@@ -80,7 +81,17 @@ public unsafe class Machine : IDisposable {
             State.CpuCycles - State.Ppu.Internal.CpuCyclesAtNmi == 2270) {
             State.Ppu.PPUSTATUS &= ~PpuStatusRegisterFlags.VerticalBlankStarted;
         }
+        
+        //
+        if (State.CpuCycles % 28394 == 0) {
+            State.Ppu.PPUSTATUS |= PpuStatusRegisterFlags.Sprite0Hit;
+        }
 
+        if (State.CpuCycles % 30000 == 0) {
+            State.Ppu.PPUSTATUS &= ~PpuStatusRegisterFlags.Sprite0Hit;
+        }
+
+        //
         bool nmi =
             (State.Ppu.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) != 0 &&
             (State.Ppu.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0;

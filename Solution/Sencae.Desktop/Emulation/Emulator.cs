@@ -63,7 +63,7 @@ public class Emulator : IDisposable {
 
     public void Reset(bool hardReset = true) {
         Machine.Reset(new CpuResetOptions {
-            CpuMemoryResetState = CpuMemoryResetState.AllZero
+            CpuMemoryResetState = CpuMemoryResetState.AllZero,
         }, hardReset);
     }
 
@@ -75,6 +75,12 @@ public class Emulator : IDisposable {
         do {
             Machine.CpuClock();
         } while (Machine.State.Cpu.Internal.State != CpuInternalState.ExecutionState.InterpretOpcode);
+    }
+    
+    public void RunToInterrupt() {
+        do {
+            Machine.CpuClock();
+        } while (Machine.State.Cpu.Internal.Instruction.Type is InstructionType.BRK or InstructionType.Internal_BRK_NMI);
     }
 
     public void Dispose() {

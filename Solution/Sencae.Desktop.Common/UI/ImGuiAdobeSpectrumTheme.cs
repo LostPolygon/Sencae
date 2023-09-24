@@ -7,8 +7,10 @@ namespace Sencae.Desktop;
 // https://github.com/adobe/imgui/blob/master/imgui_spectrum.cpp
 public static unsafe class ImGuiAdobeSpectrumTheme {
     public static void StyleColorsSpectrumLight() {
+        ImGui.StyleColorsLight();
+        
         ImGuiStyle* style = ImGui.GetStyle();
-        SetStyleMethod(style);
+        SetCommonStyles(style);
 
         Vector4* colors = &style->Colors_0;
         colors[(int) Text] = RgbColor(LightColors.GRAY800); // text on hovered controls is gray900
@@ -54,11 +56,15 @@ public static unsafe class ImGuiAdobeSpectrumTheme {
         colors[(int) NavWindowingHighlight] = new Vector4(1.00f, 1.00f, 1.00f, 0.70f);
         colors[(int) NavWindowingDimBg] = new Vector4(0.80f, 0.80f, 0.80f, 0.20f);
         colors[(int) ModalWindowDimBg] = new Vector4(0.20f, 0.20f, 0.20f, 0.35f);
+        
+        ConvertColorFormat(style);
     }
 
     public static void StyleColorsSpectrumDark() {
+        ImGui.StyleColorsDark();
+        
         ImGuiStyle* style = ImGui.GetStyle();
-        SetStyleMethod(style);
+        SetCommonStyles(style);
 
         Vector4* colors = &style->Colors_0;
         colors[(int) Text] = RgbColor(DarkColors.GRAY800); // text on hovered controls is gray900
@@ -104,14 +110,27 @@ public static unsafe class ImGuiAdobeSpectrumTheme {
         colors[(int) NavWindowingHighlight] = new Vector4(1.00f, 1.00f, 1.00f, 0.70f);
         colors[(int) NavWindowingDimBg] = new Vector4(0.80f, 0.80f, 0.80f, 0.20f);
         colors[(int) ModalWindowDimBg] = new Vector4(0.20f, 0.20f, 0.20f, 0.35f);
+        
+        ConvertColorFormat(style);
     }
     
-    private static void SetStyleMethod(ImGuiStyle* style) {
+    private static void SetCommonStyles(ImGuiStyle* style) {
         style->GrabRounding = 4f;
         style->WindowRounding = 6f;
         
         style->FrameBorderSize = 1.5f;
         style->FrameRounding = 4f;
+    }
+    
+    private static void ConvertColorFormat(ImGuiStyle* style) {
+        return;
+        Vector4* colors = &style->Colors_0;
+        for (int i = 0; i < (int) ImGuiCol.COUNT; i++) {
+            colors[i] = colors[i] with {
+                X = colors[i].Z,
+                Z = colors[i].X,
+            };
+        }
     }
 
     public static class StaticColors {
@@ -281,6 +300,8 @@ public static unsafe class ImGuiAdobeSpectrumTheme {
     }
 
     private static Vector4 RgbColor(uint color) {
+        //color = ColorUtility.ArgbToAbgr(color);
+        
         byte a = (byte) (color >> 24);
         byte r = (byte) (color >> 16);
         byte g = (byte) (color >> 8);

@@ -16,9 +16,9 @@ public unsafe class PpuDevice {
         // https://www.nesdev.org/wiki/PPU_power_up_state
         _state.PPUCTRL = 0;
         _state.PPUMASK = 0;
+        _state.PPUSTATUS = 0;
         _state.OAMADDR = 0;
-        _state.PPUCTRL = 0;
-
+        
         _state.Internal.Address.Value = 0;
         _state.Internal.PpuAddressRegisterLatch = false;
         _state.Internal.PpuScrollRegisterLatch = false;
@@ -27,12 +27,12 @@ public unsafe class PpuDevice {
 
         _state.Internal.DataBus = 0;
         _state.Internal.DataBusLatch = 0;
+        
+        _state.Internal.NmiPending = false;
+        _state.Internal.CpuCyclesAtNmi = 0;
 
         _state.Memory.AsSpan().Clear();
         _state.OamMemory.AsSpan().Clear();
         _state.PalleteMemory.AsSpan().Clear();
-
-        _state.Internal.NmiPending = false;
-        _state.Internal.CpuCyclesAtNmi = 0;
     }
 }

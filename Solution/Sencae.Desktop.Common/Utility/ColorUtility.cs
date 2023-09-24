@@ -32,4 +32,14 @@ public static class ColorUtility {
 
         return L;
     }
+
+    public static uint ArgbToAbgr(uint color) {
+        const uint RMask = 0x00FF0000;
+        const uint BMask = 0x000000FF;
+        const uint AGMask = ~RMask & ~BMask;
+        
+        uint r = (color & RMask) >> 16;
+        uint b = color & BMask;
+        return (color & AGMask) | (b << 16) | r;
+    }
 }

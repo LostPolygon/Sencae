@@ -6,7 +6,7 @@ public static class PpuConstants {
     public const int TileSize = 8;
     public const int BytesPerTile = 16;
     public const int BitsPerTilePixel = 2;
-    public const int BytesPerDecodedTile = TileSize * TileSize;
+    public const int BytesPerDecodedTile = TileSize * TileSize * sizeof(byte);
     public const int PatternTableWidthTiles = 16;
     public const int PatternTableHeightTiles = 16;
     public const int PatternTableTotalTiles = PatternTableWidthTiles * PatternTableHeightTiles;
@@ -17,9 +17,15 @@ public static class PpuConstants {
     public const int PatternTablePixelCount = PatternTableSize * 8 / PatternTableBitsPerPixel;
 
     public const int Nametable0StartAddress = 0x2000;
+
+    public const int NametableWidthTiles = 32;
+    public const int NametableHeightTiles = 30; // +0.5
     
-    public static readonly Range PatternTable1 = new(0x0000, 0x1000);
-    public static readonly Range PatternTable2 = new(0x1000, 0x2000);
+    public const int NametableWidthPixels = NametableWidthTiles * TileSize;
+    public const int NametableHeightPixels = 30 * TileSize + TileSize / 2;
+    
+    public static readonly Range PatternTable0 = new(0x0000, 0x1000);
+    public static readonly Range PatternTable1 = new(0x1000, 0x2000);
 
     public static class RegisterAddresses {
         private const ushort FirstRegisterAddress = PPUCTRL;

@@ -4,6 +4,7 @@ namespace Sencae.Ppu;
 
 public struct PpuNametable {
     public const int Size = 1024;
+    public const int AttributeTableSize = 64;
 
     public PpuNametableRows Rows;
     public PpuAttributeTable AttributeTable;
@@ -15,7 +16,7 @@ public struct PpuNametable {
         private PpuNametableRow _element0;
     }
 
-    [InlineArray(64)]
+    [InlineArray(AttributeTableSize)]
     public struct PpuAttributeTable {
         private PpuAttributeTableEntryFlags _element0;
 

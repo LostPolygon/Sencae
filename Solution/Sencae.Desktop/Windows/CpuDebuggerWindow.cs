@@ -57,6 +57,10 @@ public class CpuDebuggerWindow : AppWindow {
         if (ImGui.Button("Step Instruction")) {
             Emulator.SingleInstructionStep();
         }
+        
+        if (ImGui.Button("Run To Interrupt")) {
+            Emulator.RunToInterrupt();
+        }
 
         double timeScale = Emulator.TimeScale;
         if (ImGuiEx.SliderScalar("Time Scale", ref timeScale, 0.0001f, 250f, null!, ImGuiSliderFlags.Logarithmic)) {
@@ -109,9 +113,13 @@ public class CpuDebuggerWindow : AppWindow {
             cpu.A = (byte) DrawRegister("A: ", cpu.A, "%02X", Byte.MaxValue);
             cpu.X = (byte) DrawRegister("X: ", cpu.X, "%02X", Byte.MaxValue);
             cpu.Y = (byte) DrawRegister("Y: ", cpu.Y, "%02X", Byte.MaxValue);
-
             cpu.SP = (byte) DrawRegister("SP: ", cpu.SP, "%02X", Byte.MaxValue);
             cpu.PC.Value = (ushort) DrawRegister("PC: ", cpu.PC.Value, "%04X", UInt16.MaxValue);
+            
+            cpu.Internal.AddressBus.Value = (ushort) DrawRegister("AB: ", cpu.Internal.AddressBus.Value, "%04X", UInt16.MaxValue);
+            cpu.Internal.DataBus = (byte) DrawRegister("DB: ", cpu.Internal.DataBus, "%02X", UInt16.MaxValue);
+            
+            ImGui.TextUnformatted(cpu.Internal.Instruction.Mnemonic);
         }
         ImGui.EndTable();
 

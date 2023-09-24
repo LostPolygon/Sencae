@@ -37,6 +37,14 @@ public sealed class CpuMemoryBus : IBusDevice {
 
         return data;
     }
+    
+    [MethodImpl(MethodOptions.Options)]
+    public byte ReadObserve(ushort address) {
+        byte data = 0;
+        HandleBus(address, MemoryAccessMode.ReadObserve, ref data);
+
+        return data;
+    }
 
     [MethodImpl(MethodOptions.Options)]
     public ushort ReadU16(ushort address) {

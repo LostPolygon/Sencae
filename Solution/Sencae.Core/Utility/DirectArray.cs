@@ -1,4 +1,4 @@
-#if !DEBUG && false
+#if !DEBUG
 #define USE_DATA_POINTER
 #endif
 

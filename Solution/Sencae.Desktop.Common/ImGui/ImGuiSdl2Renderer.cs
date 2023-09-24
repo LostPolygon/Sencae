@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using ImGuiNET;
 using static SDL2.SDL.SDL_bool;
 using static Sencae.Desktop.Sdl.SdlAssertions;
@@ -58,7 +59,7 @@ public static unsafe class ImGuiSdl2Renderer {
         Marshal.FreeHGlobal((IntPtr) bd);
     }
 
-    static void ImGui_ImplSDLRenderer2_SetupRenderState() {
+    public static void ImGui_ImplSDLRenderer2_SetupRenderState() {
         ImGui_ImplSDLRenderer2_Data* bd = ImGui_ImplSDLRenderer2_GetBackendData_Internal();
 
         // Clear out any viewports and cliprect set by the user
@@ -132,7 +133,7 @@ public static unsafe class ImGuiSdl2Renderer {
 
                     clipMin = Vector2.Max(clipMin, Vector2.Zero);
                     clipMax = Vector2.Min(clipMax, framebufferSizeVec2);
-                    
+
                     if (clipMax.X <= clipMin.X || clipMax.Y <= clipMin.Y)
                         continue;
 
@@ -146,38 +147,7 @@ public static unsafe class ImGuiSdl2Renderer {
                     ImDrawVert* vertex = vtxBuffer + cmd->VtxOffset;
                     int stride = sizeof(ImDrawVert);
 
-                    /*static Vector4 RgbColorToVector(uint color) {
-                        byte a = (byte) (color >> 24);
-                        byte r = (byte) (color >> 16);
-                        byte g = (byte) (color >> 8);
-                        byte b = (byte) (color >> 0);
-
-                        return new Vector4(r, g, b, a) * (1f / Byte.MaxValue);
-                    }
-
-                    static uint VectorToRgbColor(Vector4 color) {
-                        byte a = (byte) (color.W * Byte.MaxValue);
-                        byte r = (byte) (color.X * Byte.MaxValue);
-                        byte g = (byte) (color.Y * Byte.MaxValue);
-                        byte b = (byte) (color.Z * Byte.MaxValue);
-
-                        return (uint) ((a << 24) | (r << 16) | (g << 8) | (b << 0));
-                    }
-
-                    float lerp = (float) Math.Abs(Math.Cos((DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000.0) % 5000.0));
-                    if (cmd_i != 3) {
-                        lerp = 1;
-                    }
-
-                    int num_vertices = (int) (cmd_list->VtxBuffer.Size - pcmd.VtxOffset);
-                    for (int i = 0; i < num_vertices; i++) {
-                        ImDrawVert* vertexTemp = vertex + i;
-
-                        Vector4 vector = RgbColorToVector(vertexTemp->col);
-                        vector *= new Vector4(1, 1, 1, lerp);
-                        //vector *= Vector4.Zero;
-                        vertexTemp->col = VectorToRgbColor(vector);
-                    }*/
+                    int numVertices = (int) (cmdList->VtxBuffer.Size - cmd->VtxOffset);
 
                     // Bind texture, Draw
                     AssertSdlSuccessZero(NativeMethods.SDL_RenderGeometryRaw(
@@ -189,7 +159,7 @@ public static unsafe class ImGuiSdl2Renderer {
                         stride,
                         (float*) &vertex->uv,
                         stride,
-                        (int) (cmdList->VtxBuffer.Size - cmd->VtxOffset),
+                        numVertices,
                         (IntPtr) (idxBuffer + cmd->IdxOffset),
                         (int) cmd->ElemCount,
                         sizeof(ImDrawIdx)

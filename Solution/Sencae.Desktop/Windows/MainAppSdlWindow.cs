@@ -19,6 +19,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
     protected ProfilerWindow ProfilerWindow { get; set; }
     protected CpuMemoryEditor CpuMemoryEditor { get; set; }
     protected MachineLogWindow MachineLogWindow { get; set; }
+    protected DearImGuiDemoWindow DearImGuiDemoWindow { get; set; }
 
     private string? _loadingRomPath;
     private NotificationArea _notificationArea;
@@ -47,9 +48,9 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         for (int i = 0; i < PpuPalette.ColorCount; i++) {
             Color color = Color.FromArgb(
                 255,
-                paletteBytes[i * 3 + 2],
+                paletteBytes[i * 3 + 0],
                 paletteBytes[i * 3 + 1],
-                paletteBytes[i * 3 + 0]
+                paletteBytes[i * 3 + 2]
             );
 
             ppuPalette.Colors[i] = (uint) color.ToArgb();
@@ -72,6 +73,8 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         ProfilerWindow = new ProfilerWindow(appWindowContext);
         CpuMemoryEditor = new CpuMemoryEditor(appWindowContext, Emulator);
         MachineLogWindow = new MachineLogWindow(appWindowContext, Emulator);
+        
+        DearImGuiDemoWindow = new DearImGuiDemoWindow(appWindowContext);
     }
 
     public override void MainLoopEvent(MainLoopEvent mainLoopEvent) {
@@ -151,7 +154,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         DrawMainMenu();
         DrawDockSpace();
 
-        ImGui.ShowDemoWindow();
+        
 
         float deltaTime = (float) DeltaTime;
 
@@ -175,6 +178,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
 
         CpuMemoryEditor.Draw(deltaTime);
         MachineLogWindow.Draw(deltaTime);
+        DearImGuiDemoWindow.Draw(deltaTime);
 
         _notificationArea.Update(deltaTime);
         _notificationArea.Draw();
@@ -217,6 +221,8 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
                 DrawWindowItem("CHR Viewer", PpuTileViewerWindow);
                 DrawWindowItem("Profiler", ProfilerWindow);
                 DrawWindowItem("Machine Log", MachineLogWindow);
+                ImGui.Separator();
+                DrawWindowItem("Dear ImGui Demo", DearImGuiDemoWindow);
 
                 ImGui.EndMenu();
             }

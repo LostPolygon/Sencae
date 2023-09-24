@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae.Ppu;
 
-public class PpuBusDevice : IBusDevice, IDisposable {
+public unsafe class PpuBusDevice : IBusDevice, IDisposable {
     public readonly Machine Machine;
 
     private readonly DirectArray<byte> _chrRomMemory;
@@ -33,16 +33,26 @@ public class PpuBusDevice : IBusDevice, IDisposable {
             case >= 0x2000 and <= 0x3EFF: // Nametables
                 return BusDeviceHandlers.ReadWrite(_memory, address % 0x800, accessMode, ref bus);
             case >= 0x3F00 and <= 0x3FFF: // Palette RAM
+                address = (ushort) (address % 0x20);
+
                 // $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C
                 address = address switch {
-                    0x3F10 => 0x3F00,
-                    0x3F14 => 0x3F04,
-                    0x3F18 => 0x3F08,
-                    0x3F1C => 0x3F0C,
+                    0x10 => 0x00,
+                    0x14 => 0x04,
+                    0x18 => 0x08,
+                    0x1C => 0x0C,
                     _ => address
                 };
-                
-                return BusDeviceHandlers.ReadWrite(_palleteMemory, address % 0x20, accessMode, ref bus);
+
+                const int colorIndexBits = 1 << 6;
+                ref byte mappedData = ref _palleteMemory.Data[address];
+                if (accessMode == MemoryAccessMode.Write) {
+                    mappedData = (byte) (bus % colorIndexBits);
+                } else {
+                    bus = (byte) (mappedData % colorIndexBits);
+                }
+
+                return true;
             default:
                 return false;
         }
@@ -82,7 +92,7 @@ public class PpuBusDevice : IBusDevice, IDisposable {
 
         return data;
     }
-    
+
     [MethodImpl(MethodOptions.Options)]
     public byte ReadObserve(ushort address) {
         byte data = 0;

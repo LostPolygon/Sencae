@@ -21,7 +21,7 @@ public static class NintendulatorLog {
             return null;
 
         machineState.Cpu.Internal.Instruction =
-            Instructions.DescriptorByOpcode[machine.CpuMemoryBus.Read(machineState.Cpu.PC.Value)];
+            Instructions.DescriptorByOpcode[machine.CpuMemoryBus.ReadObserve(machineState.Cpu.PC.Value)];
 
         MachineLogEntry logEntry = CreateMachineLogEntry(machine);
         return FormatMachineLogEntry(logEntry);
@@ -244,7 +244,7 @@ public static class NintendulatorLog {
         );
 
         byte Read(int address) {
-            return machine.CpuMemoryBus.Read((ushort) address);
+            return machine.CpuMemoryBus.ReadObserve((ushort) address);
         }
         
         byte dataP1 = Read(machineState.Cpu.PC.Value + 1);
