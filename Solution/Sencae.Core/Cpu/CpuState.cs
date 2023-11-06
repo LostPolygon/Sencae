@@ -10,6 +10,7 @@ public class CpuState {
     public byte Y;
 
     public CpuStatusRegisterFlags P;
+    public byte? GenericZeroAndNegativeSignFlagsLazy;
 
     // Program Counter
     public UInt16Bytes PC;

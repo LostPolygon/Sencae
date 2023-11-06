@@ -146,7 +146,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool LDA(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.A = cpuInternal.DataBus;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
 
         return false;
     }
@@ -154,7 +154,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool LDX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.X = cpuInternal.DataBus;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.X);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.X);
 
         return false;
     }
@@ -162,7 +162,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool LDY(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.Y = cpuInternal.DataBus;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.Y);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.Y);
 
         return false;
     }
@@ -206,7 +206,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool TAX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.X = cpu.A;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.X);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.X);
 
         return false;
     }
@@ -214,7 +214,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool TAY(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.Y = cpu.A;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.Y);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.Y);
 
         return false;
     }
@@ -222,7 +222,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool TSX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.X = cpu.SP;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.X);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.X);
 
         return false;
     }
@@ -230,7 +230,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool TXA(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.A = cpu.X;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
 
         return false;
     }
@@ -245,7 +245,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool TYA(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.A = cpu.Y;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
 
         return false;
     }
@@ -288,7 +288,7 @@ public static class InstructionLogic {
             case AfterNextOpcodeFetched:
                 cpu.A = cpuInternal.Temporary.Low;
 
-                SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+                SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
                 break;
         }
 
@@ -302,6 +302,7 @@ public static class InstructionLogic {
                 cpuInternal.Read = false;
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
 
+                UpdateGenericZeroAndNegativeSignFlags(ref cpu);
                 cpuInternal.DataBus = (byte) (cpu.P.ToFlags() | CpuStatusRegisterPackedFlags.BreakFlag);
                 cpu.SP--;
                 return true;
@@ -322,6 +323,7 @@ public static class InstructionLogic {
                 cpuInternal.Temporary.Low = cpuInternal.DataBus;
                 return true;
             case AfterNextOpcodeFetched:
+                cpu.GenericZeroAndNegativeSignFlagsLazy = null;
                 cpu.P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) cpuInternal.Temporary.Low);
                 cpu.P.BreakFlag = false;
 
@@ -346,7 +348,7 @@ public static class InstructionLogic {
                 cpuInternal.DataBus = cpuInternal.Temporary.Low;
                 return true;
             case AfterNextOpcodeFetched:
-                SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpuInternal.Temporary.Low);
+                SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpuInternal.Temporary.Low);
                 break;
         }
 
@@ -364,7 +366,7 @@ public static class InstructionLogic {
                 cpuInternal.DataBus = cpuInternal.Temporary.Low;
                 return true;
             case AfterNextOpcodeFetched:
-                SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpuInternal.Temporary.Low);
+                SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpuInternal.Temporary.Low);
                 break;
         }
 
@@ -394,7 +396,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     private static bool INX_INY_Internal(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal, ref byte value) {
         value++;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, value);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, value);
 
         return false;
     }
@@ -402,7 +404,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     private static bool DEX_DEY_Internal(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal, ref byte value) {
         value--;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, value);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, value);
 
         return false;
     }
@@ -427,7 +429,7 @@ public static class InstructionLogic {
         byte result = (byte) result16;
 
         cpu.P.Carry = result16 > Byte.MaxValue;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, result);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, result);
 
         cpu.P.Overflow = ((cpu.A ^ result) & (data ^ result) & 1 << 7) != 0;
         cpu.A = result;
@@ -442,7 +444,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool AND(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.A &= cpuInternal.DataBus;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
 
         return false;
     }
@@ -450,7 +452,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool EOR(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.A ^= cpuInternal.DataBus;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
 
         return false;
     }
@@ -458,7 +460,7 @@ public static class InstructionLogic {
     [MethodImpl(MethodOptions.Options)]
     public static bool ORA(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.A |= cpuInternal.DataBus;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
 
         return false;
     }
@@ -492,7 +494,7 @@ public static class InstructionLogic {
             byte input = value;
             value = (byte) (value << 1);
 
-            SetGenericZeroAndNegativeSignFlags(ref cpu.P, value);
+            SetLazyGenericZeroAndNegativeSignFlags(ref cpu, value);
             cpu.P.Carry = (input & 1 << 7) != 0;
         }
 
@@ -521,6 +523,8 @@ public static class InstructionLogic {
             cpu.P.Carry = (input & 1 << 7) != 0;
             cpu.P.NegativeOrSign = (input & 1 << 6) != 0;
             cpu.P.Zero = value == 0;
+            
+            cpu.GenericZeroAndNegativeSignFlagsLazy = null;
         }
 
         return completed;
@@ -555,6 +559,8 @@ public static class InstructionLogic {
             status.NegativeOrSign = status.Carry;
             status.Carry = (input & 1 << 0) != 0;
             status.Zero = value == 0;
+            
+            cpu.GenericZeroAndNegativeSignFlagsLazy = null;
         }
 
         return completed;
@@ -582,6 +588,8 @@ public static class InstructionLogic {
             status.NegativeOrSign = false;
             status.Zero = value == 0;
             status.Carry = (input & 1 << 0) != 0;
+            
+            cpu.GenericZeroAndNegativeSignFlagsLazy = null;
         }
 
         return completed;
@@ -705,7 +713,7 @@ public static class InstructionLogic {
         byte result = (byte) (comparedValue - cpuInternal.DataBus);
 
         cpu.P.Carry = cpuInternal.DataBus <= comparedValue;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, result);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, result);
 
         return result;
     }
@@ -723,20 +731,28 @@ public static class InstructionLogic {
         BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Carry);
 
     [MethodImpl(MethodOptions.Options)]
-    public static bool BEQ(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Zero);
+    public static bool BEQ(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        UpdateGenericZeroAndNegativeSignFlags(ref cpu);
+        return BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Zero);
+    }
 
     [MethodImpl(MethodOptions.Options)]
-    public static bool BNE(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Zero);
+    public static bool BNE(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        UpdateGenericZeroAndNegativeSignFlags(ref cpu);
+        return BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Zero);
+    }
 
     [MethodImpl(MethodOptions.Options)]
-    public static bool BMI(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.NegativeOrSign);
+    public static bool BMI(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        UpdateGenericZeroAndNegativeSignFlags(ref cpu);
+        return BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.NegativeOrSign);
+    }
 
     [MethodImpl(MethodOptions.Options)]
-    public static bool BPL(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.NegativeOrSign);
+    public static bool BPL(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
+        UpdateGenericZeroAndNegativeSignFlags(ref cpu);
+        return BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.NegativeOrSign);
+    }
 
     [MethodImpl(MethodOptions.Options)]
     public static bool BVS(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) =>
@@ -900,6 +916,7 @@ public static class InstructionLogic {
                 break;
             case 2:
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
+                UpdateGenericZeroAndNegativeSignFlags(ref cpu);
                 cpuInternal.DataBus = (byte) (cpu.P.ToFlags() | CpuStatusRegisterPackedFlags.BreakFlag);
                 cpu.SP--;
                 break;
@@ -937,6 +954,7 @@ public static class InstructionLogic {
             case 2:
                 cpu.P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) cpuInternal.DataBus);
                 cpu.P.BreakFlag = false;
+                cpu.GenericZeroAndNegativeSignFlagsLazy = null;
 
                 cpu.SP++;
                 cpuInternal.AddressBus.Value = CalculateStackAddress(cpu.SP);
@@ -964,6 +982,7 @@ public static class InstructionLogic {
         cpu.P.NegativeOrSign = (cpuInternal.DataBus & 1 << 7) != 0;
         cpu.P.Overflow = (cpuInternal.DataBus & 1 << 6) != 0;
         cpu.P.Zero = result == 0;
+        cpu.GenericZeroAndNegativeSignFlagsLazy = null;
 
         return false;
     }
@@ -981,7 +1000,7 @@ public static class InstructionLogic {
     public static bool LAX(int operationCycle, ref CpuState cpu, ref CpuInternalState cpuInternal) {
         cpu.A = cpuInternal.DataBus;
         cpu.X = cpuInternal.DataBus;
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
 
         return false;
     }
@@ -1091,7 +1110,7 @@ public static class InstructionLogic {
         AND(operationCycle, ref cpu, ref cpuInternal);
         ROR_Internal(operationCycle, ref cpu, ref cpuInternal, true);
 
-        SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
+        SetLazyGenericZeroAndNegativeSignFlags(ref cpu, cpu.A);
         cpu.P.Carry = (cpu.A & 1 << 6) != 0;
         cpu.P.Overflow = (((cpu.A & 1 << 5) >> 5) ^ ((cpu.A & 1 << 6) >> 6)) != 0;
 
@@ -1181,11 +1200,21 @@ public static class InstructionLogic {
     }
 
     #endregion
+    
+    [MethodImpl(MethodOptions.Options)]
+    private static void SetLazyGenericZeroAndNegativeSignFlags(ref CpuState cpu, byte value) {
+        cpu.GenericZeroAndNegativeSignFlagsLazy = value;
+    }
 
     [MethodImpl(MethodOptions.Options)]
-    private static void SetGenericZeroAndNegativeSignFlags(ref CpuStatusRegisterFlags status, byte value) {
-        status.Zero = value == 0;
-        status.NegativeOrSign = (value & 1 << 7) != 0;
+    private static void UpdateGenericZeroAndNegativeSignFlags(ref CpuState cpu) {
+        if (cpu.GenericZeroAndNegativeSignFlagsLazy != null) {
+            byte value = cpu.GenericZeroAndNegativeSignFlagsLazy.Value;
+            cpu.P.Zero = value == 0;
+            cpu.P.NegativeOrSign = (value & 1 << 7) != 0;
+            
+            cpu.GenericZeroAndNegativeSignFlagsLazy = null;
+        }
     }
 
     [MethodImpl(MethodOptions.Options)]
