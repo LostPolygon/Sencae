@@ -18,7 +18,7 @@ public unsafe class Machine : IDisposable {
 
     public MachineState State;
 
-    public event Action? PpuClocked; 
+    public event Action? PpuClocked;
     public event Action? CpuClocked;
 
     private bool _disposed;
@@ -72,37 +72,69 @@ public unsafe class Machine : IDisposable {
     public void PpuClock() {
         AssertNotDisposed();
 
-        //
-        if (State.CpuCycles % 27394 == 0) {
+        ref int scanline = ref State.Ppu.Internal.Scanline;
+        ref int scanlineCycle = ref State.Ppu.Internal.CyclesInScanline;
+
+        if (scanline == 262 && scanlineCycle == 1) {
+            State.Ppu.PPUSTATUS &= ~PpuStatusRegisterFlags.VerticalBlankStarted;
+            State.Ppu.Internal.Reset = false;
+        }
+
+        if (scanline >= 0 && scanline <= 239) {
+            if (scanline == 0 && scanlineCycle == 0 && State.Ppu.Internal.Frames % 2 != 0) {
+                // "Odd Frame" cycle skip
+                scanlineCycle = 1;
+            }
+        }
+
+        if (scanline == 241 && scanlineCycle == 1) {
+            // Effectively end of frame, so set vertical blank flag
             State.Ppu.PPUSTATUS |= PpuStatusRegisterFlags.VerticalBlankStarted;
         }
 
-        if (State.Ppu.Internal.CpuCyclesAtNmi != 0 && 
+        // If the control register tells us to emit a NMI when
+        // entering vertical blanking period, do it! The CPU
+        // will be informed that rendering is complete so it can
+        // perform operations with the PPU knowing it wont
+        // produce visible artefacts
+        State.Cpu.Internal.NmiPending =
+            State.CpuCycles >= 7 &&
+            (State.Ppu.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0 &&
+            (State.Ppu.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) != 0;
+
+        scanlineCycle++;
+        if (scanlineCycle == 341) {
+            scanlineCycle = 0;
+            scanline++;
+            if (scanline > 262) {
+                scanline = 0;
+                State.Ppu.Internal.Frames++;
+
+                //frame_complete = true;
+            }
+        }
+
+        //
+        /*if (State.CpuCycles % 27394 == 0) {
+            State.Ppu.PPUSTATUS |= PpuStatusRegisterFlags.VerticalBlankStarted;
+        }
+
+        if (State.Ppu.Internal.CpuCyclesAtNmi != 0 &&
             State.CpuCycles - State.Ppu.Internal.CpuCyclesAtNmi == 2270) {
             State.Ppu.PPUSTATUS &= ~PpuStatusRegisterFlags.VerticalBlankStarted;
-        }
-        
+        }*/
+
         //
-        if (State.CpuCycles % 28394 == 0) {
+        /*if (State.CpuCycles % 28394 == 0) {
             State.Ppu.PPUSTATUS |= PpuStatusRegisterFlags.Sprite0Hit;
         }
 
         if (State.CpuCycles % 30000 == 0) {
             State.Ppu.PPUSTATUS &= ~PpuStatusRegisterFlags.Sprite0Hit;
-        }
+        }*/
 
         //
-        bool nmi =
-            (State.Ppu.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) != 0 &&
-            (State.Ppu.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0;
-        
-        if (nmi && nmi != State.Ppu.Internal.NmiPending) {
-            State.Cpu.Internal.NmiPending = true;
-            State.Ppu.Internal.CpuCyclesAtNmi = State.CpuCycles;
-        }
 
-        State.Ppu.Internal.NmiPending = nmi;
-        
         PpuClocked?.Invoke();
     }
 
@@ -110,42 +142,48 @@ public unsafe class Machine : IDisposable {
     public void CpuClock() {
         AssertNotDisposed();
 
-        ref CpuState cpu = ref State.Cpu;
+        CpuState cpu = State.Cpu;
         ref CpuInternalState cpuInternal = ref cpu.Internal;
 
-        ushort address = cpuInternal.AddressBus.Value;
-        MemoryAccessMode accessMode =
-            cpuInternal.Read ?
-                MemoryAccessMode.Read :
-                MemoryAccessMode.Write;
-        ref byte dataBus = ref cpuInternal.DataBus;
+        if (State.CpuCycles >= 7) {
+            ushort address = cpuInternal.AddressBus.Value;
+            MemoryAccessMode accessMode =
+                cpuInternal.Read ?
+                    MemoryAccessMode.Read :
+                    MemoryAccessMode.Write;
+            ref byte dataBus = ref cpuInternal.DataBus;
 
-        // Assume that zero page and stack page are never IO mapped
-        /*bool alwaysCpuMemory = address <= 0x01FF;
-        if (alwaysCpuMemory) {
-            ref byte mappedData = ref CpuBusDevice.Memory.Data[address];
-            BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref dataBus);
-        } else {
+            // Assume that zero page and stack page are never IO mapped
+            /*bool alwaysCpuMemory = address <= 0x01FF;
+            if (alwaysCpuMemory) {
+                ref byte mappedData = ref CpuBusDevice.Memory.Data[address];
+                BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref dataBus);
+            } else {
+                CpuMemoryBus.HandleBus(address, accessMode, ref dataBus);
+            }*/
+
+            /*if (cpu.Internal.AddressBus.Value == 0x2001 &&
+                cpuInternal.Instruction.Type == InstructionType.JMP) {
+                Debugger.Break();
+            }*/
+
             CpuMemoryBus.HandleBus(address, accessMode, ref dataBus);
-        }*/
-        
-        CpuMemoryBus.HandleBus(address, accessMode, ref dataBus);
 
-        ExecuteState(ref cpu, ref cpuInternal);
+            ExecuteState(cpu, ref cpuInternal);
+        }
 
         State.CpuCycles++;
-        State.CpuProgramCycles++;
-        
+
         CpuClocked?.Invoke();
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private void ExecuteState(ref CpuState cpu, ref CpuInternalState cpuInternal) {
+    private void ExecuteState(CpuState cpu, ref CpuInternalState cpuInternal) {
         while (true) {
             switch (cpuInternal.State) {
                 case CpuInternalState.ExecutionState.FetchNextInstructionOpcode: {
                     cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
-                    DispatchInstructionLogic(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                    DispatchInstructionLogic(cpu, ref cpuInternal, cpuInternal.Instruction.Type);
 
                     cpu.PC.Value++;
                     cpuInternal.AddressBus = cpu.PC;
@@ -165,7 +203,7 @@ public unsafe class Machine : IDisposable {
                 case CpuInternalState.ExecutionState.ExecutingAddressing: {
                     bool completed =
                         (cpuInternal.Instruction.Flags & InstructionFlags.SpecialAddressing) != 0 ||
-                        DispatchAddressingLogic(ref cpu, ref cpuInternal, cpuInternal.Instruction.AddressingMode);
+                        DispatchAddressingLogic(cpu, ref cpuInternal, cpuInternal.Instruction.AddressingMode);
                     if (completed) {
                         if ((cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0) {
                             FinishInstruction(ref cpuInternal);
@@ -183,10 +221,10 @@ public unsafe class Machine : IDisposable {
                         !(cpuInternal.OperationCycle == InstructionLogic.AfterAddressingFinished &&
                             (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0)
                     );
-                    bool completed = DispatchInstructionLogic(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                    bool completed = DispatchInstructionLogic(cpu, ref cpuInternal, cpuInternal.Instruction.Type);
                     if (cpuInternal.State == CpuInternalState.ExecutionState.FetchNextInstructionOpcode) {
                         cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
-                        DispatchInstructionLogic(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                        DispatchInstructionLogic(cpu, ref cpuInternal, cpuInternal.Instruction.Type);
                     }
 
                     if (completed) {
@@ -219,32 +257,30 @@ public unsafe class Machine : IDisposable {
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private bool DispatchInstructionLogic(ref CpuState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
+    private bool DispatchInstructionLogic(CpuState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
         if (cpuInternal.NmiPending) {
             cpuInternal.Instruction = new(
-                "BRK", 
+                "BRK",
                 InstructionType.Internal_BRK_NMI,
-                AddressingMode.Implied, 
-                InstructionFlags.HasMemoryReadWriteLogic, 
+                AddressingMode.Implied,
+                InstructionFlags.HasMemoryReadWriteLogic,
                 0x00,
                 1
             );
             cpuInternal.State = CpuInternalState.ExecutionState.ExecutingAddressing;
             cpuInternal.OperationCycle = 0;
             instructionType = cpuInternal.Instruction.Type;
-
-            cpuInternal.NmiPending = false;
         }
-        
-        bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, instructionType);
+
+        bool completed = InstructionLogic.Dispatch(cpu, ref cpuInternal, instructionType);
 
         cpuInternal.OperationCycle++;
         return completed;
     }
 
     [MethodImpl(MethodOptions.Options)]
-    private bool DispatchAddressingLogic(ref CpuState cpu, ref CpuInternalState cpuInternal, AddressingMode addressingMode) {
-        bool completed = AddressingModeLogic.Dispatch(ref cpu, ref cpuInternal, addressingMode);
+    private bool DispatchAddressingLogic(CpuState cpu, ref CpuInternalState cpuInternal, AddressingMode addressingMode) {
+        bool completed = AddressingModeLogic.Dispatch(cpu, ref cpuInternal, addressingMode);
 
         cpuInternal.OperationCycle++;
         return completed;

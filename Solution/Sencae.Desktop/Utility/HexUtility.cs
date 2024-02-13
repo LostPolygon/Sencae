@@ -2,15 +2,9 @@ namespace Sencae.Desktop;
 
 // https://gist.github.com/crozone/06c4aa41e13be89def1352ba0d378b0f
 public static class HexUtility {
-    private static ReadOnlySpan<byte> HexAlphabetUpperCase => new byte[16] {
-        (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4', (byte) '5', (byte) '6', (byte) '7', (byte) '8', (byte) '9',
-        (byte) 'A', (byte) 'B', (byte) 'C', (byte) 'D', (byte) 'E', (byte) 'F'
-    };
+    private static ReadOnlySpan<byte> HexAlphabetUpperCase => "0123456789ABCDEF"u8;
 
-    private static ReadOnlySpan<byte> HexAlphabetLowerCase => new byte[16] {
-        (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4', (byte) '5', (byte) '6', (byte) '7', (byte) '8', (byte) '9',
-        (byte) 'a', (byte) 'b', (byte) 'c', (byte) 'd', (byte) 'e', (byte) 'f'
-    };
+    private static ReadOnlySpan<byte> HexAlphabetLowerCase => "0123456789abcdef"u8;
 
     public static void HexEncodeBytesUpperCase(ReadOnlySpan<byte> inputBytes, Span<byte> hexEncodedBytes) {
         HexEncodeBytes(inputBytes, hexEncodedBytes, HexAlphabetUpperCase);

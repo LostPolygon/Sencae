@@ -69,7 +69,7 @@ public class CpuDebuggerWindow : AppWindow {
 
         ImGui.Separator();
 
-        ref CpuState cpu = ref Emulator.Machine.State.Cpu;
+        CpuState cpu = Emulator.Machine.State.Cpu;
 
         static int DrawRegister(string label, int value, string format, int maxValue) {
             ImGui.TableNextRow();
@@ -94,7 +94,7 @@ public class CpuDebuggerWindow : AppWindow {
             ImGui.Text("CPU Cycles: ");
 
             ImGui.TableSetColumnIndex(1);
-            ImGui.Text(Emulator.Machine.State.CpuProgramCycles.ToString());
+            ImGui.Text(Emulator.Machine.State.CpuCycles.ToString());
 
             ImGui.TableNextRow();
 

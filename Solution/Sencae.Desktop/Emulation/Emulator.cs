@@ -1,3 +1,5 @@
+using Antlr4.Runtime.Atn;
+
 namespace Sencae.Desktop;
 
 public class Emulator : IDisposable {
@@ -68,19 +70,19 @@ public class Emulator : IDisposable {
     }
 
     public void SingleCycleStep() {
-        Machine.CpuClock();
+        Machine.Clock();
     }
 
     public void SingleInstructionStep() {
         do {
-            Machine.CpuClock();
+            Machine.Clock();
         } while (Machine.State.Cpu.Internal.State != CpuInternalState.ExecutionState.InterpretOpcode);
     }
     
     public void RunToInterrupt() {
         do {
-            Machine.CpuClock();
-        } while (Machine.State.Cpu.Internal.Instruction.Type is InstructionType.BRK or InstructionType.Internal_BRK_NMI);
+            Machine.Clock();
+        } while (Machine.State.Cpu.Internal.Instruction.Type is not InstructionType.Internal_BRK_NMI);
     }
 
     public void Dispose() {

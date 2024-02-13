@@ -70,7 +70,7 @@ public unsafe class MachineLogWindow : AppWindow {
             string fileName = $"MachineLog_{DateTime.UtcNow.ToFileTimeUtc()}.txt";
             string text = String.Join(
                 Environment.NewLine,
-                _logOutput.Select(NintendulatorLog.FormatMachineLogEntry)
+                _logOutput.Select(x => NintendulatorLog.FormatMachineLogEntry(x, new NintendulatorLog.FormatOptions(IncludePpu: true)))
             );
             File.WriteAllText(fileName, text);
         }
@@ -95,11 +95,11 @@ public unsafe class MachineLogWindow : AppWindow {
 
         clipper.Begin(_logOutput.Count, ImGui.GetTextLineHeightWithSpacing());
 
-        Span<char> logText = stackalloc char[95];
-        Span<byte> logTextUtf8 = stackalloc byte[95];
+        Span<char> logText = stackalloc char[105];
+        Span<byte> logTextUtf8 = stackalloc byte[105];
         while (clipper.Step()) {
             for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-                NintendulatorLog.FormatMachineLogEntry(_logOutput[i], logText, out int charsWritten);
+                NintendulatorLog.FormatMachineLogEntry(_logOutput[i], new NintendulatorLog.FormatOptions(IncludePpu: true), logText, out int charsWritten);
                 int logTextUtf8BytesWritten = Encoding.UTF8.GetBytes(logText[..charsWritten], logTextUtf8);
                 Debug.Assert(logTextUtf8BytesWritten >= charsWritten);
 

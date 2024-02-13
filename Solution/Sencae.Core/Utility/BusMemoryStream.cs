@@ -22,7 +22,7 @@ public class BusMemoryStream : Stream {
                 break;
 
             byte data = 0;
-            BusDevice.HandleBus((ushort) _position, MemoryAccessMode.Read, ref data);
+            BusDevice.HandleBus((ushort) _position, MemoryAccessMode.ReadObserve, ref data);
             buffer[offset + i] = data;
             Position++;
             resultCount++;

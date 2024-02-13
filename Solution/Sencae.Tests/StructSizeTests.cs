@@ -11,6 +11,6 @@ public unsafe class StructSizeTests {
         Assert.AreEqual(2, sizeof(UInt16Bytes));
         Assert.AreEqual(4, sizeof(PpuObjectAttributes));
         Assert.AreEqual(1024, sizeof(PpuNametable));
-        Assert.AreEqual(32, sizeof(MachineLogEntry));
+        Assert.AreEqual(40, sizeof(MachineLogEntry));
     }
 }

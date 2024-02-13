@@ -25,7 +25,7 @@ public static class MachineStateFormatter {
         CpuState cpu = state.Cpu;
         
         return
-            $"==== Cycle: {state.CpuProgramCycles}, " +
+            $"==== Cycle: {state.CpuCycles}, " +
             $"AB: {cpu.Internal.AddressBus.Value:X4}, " +
             $"DB: {cpu.Internal.DataBus:X2}, " +
             $"PC: {cpu.PC.Value:X4}, " +

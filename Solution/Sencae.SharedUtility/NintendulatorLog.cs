@@ -5,17 +5,17 @@ using FastEnumToString;
 namespace Sencae.SharedUtility;
 
 public static class NintendulatorLog {
-    public static void FormatState(Machine machine, List<string> logOutput) {
-        string? text = FormatState(machine);
+    public static void FormatState(Machine machine, FormatOptions formatOptions, List<string> logOutput) {
+        string? text = FormatState(machine, formatOptions);
         if (!String.IsNullOrWhiteSpace(text)) {
             logOutput.Add(text);
         }
     }
 
     public static bool IsInstructionStartCycle(Machine machine) =>
-        machine.State.Cpu.Internal.State == CpuInternalState.ExecutionState.InterpretOpcode;
+        machine.State.Cpu.Internal.State == CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
 
-    public static string? FormatState(Machine machine) {
+    public static string? FormatState(Machine machine, FormatOptions formatOptions) {
         MachineState machineState = machine.State;
         if (!IsInstructionStartCycle(machine))
             return null;
@@ -24,11 +24,11 @@ public static class NintendulatorLog {
             Instructions.DescriptorByOpcode[machine.CpuMemoryBus.ReadObserve(machineState.Cpu.PC.Value)];
 
         MachineLogEntry logEntry = CreateMachineLogEntry(machine);
-        return FormatMachineLogEntry(logEntry);
+        return FormatMachineLogEntry(logEntry, formatOptions);
     }
 
-    public static void FormatMachineLogEntry(MachineLogEntry machineLogEntry, Span<char> destination, out int charsWritten) {
-        const int maxLength = 92;
+    public static void FormatMachineLogEntry(MachineLogEntry machineLogEntry, FormatOptions formatOptions, Span<char> destination, out int charsWritten) {
+        const int maxLength = 105;
         if (destination.Length < maxLength)
             throw new ArgumentException("Length < " + maxLength, nameof(destination));
 
@@ -209,15 +209,31 @@ public static class NintendulatorLog {
         AppendText(result, "Y:"); AppendHex2(result, cpu.Y); cursor += 1;
         AppendText(result, "P:"); AppendHex2(result, (int) cpu.P); cursor += 1;
         AppendText(result, "SP:"); AppendHex2(result, cpu.SP); cursor += 1;
+        // @formatter:on
+        if (formatOptions.IncludePpu) {
+            AppendText(result, "PPU:");
+
+            if (formatOptions.SwapPpuPositions) {
+                AppendText(result, $"{machineLogEntry.Ppu.ScanlineCycle,3}");
+                AppendText(result, ",");
+                AppendText(result, $"{machineLogEntry.Ppu.Scanline,3} ");
+            } else {
+                AppendText(result, $"{machineLogEntry.Ppu.Scanline,3}");
+                AppendText(result, ",");
+                AppendText(result, $"{machineLogEntry.Ppu.ScanlineCycle,3} ");
+            }
+        }
+
+// @formatter:off
         AppendText(result, "CYC:"); AppendValue(result, cpu.CpuCycles, "0");
         // @formatter:on
 
         charsWritten = cursor;
     }
 
-    public static string FormatMachineLogEntry(MachineLogEntry machineLogEntry) {
-        Span<char> result = stackalloc char[92];
-        FormatMachineLogEntry(machineLogEntry, result, out int charsWritten);
+    public static string FormatMachineLogEntry(MachineLogEntry machineLogEntry, FormatOptions formatOptions) {
+        Span<char> result = stackalloc char[105];
+        FormatMachineLogEntry(machineLogEntry, formatOptions, result, out int charsWritten);
 
         return new String(result[..charsWritten]);
     }
@@ -246,7 +262,7 @@ public static class NintendulatorLog {
         byte Read(int address) {
             return machine.CpuMemoryBus.ReadObserve((ushort) address);
         }
-        
+
         byte dataP1 = Read(machineState.Cpu.PC.Value + 1);
         UInt16Bytes dataU16 = default;
         dataU16.Low = dataP1;
@@ -378,6 +394,16 @@ public static class NintendulatorLog {
             OpcodeData = dataU16
         };
 
-        return new MachineLogEntry(cpuState);
+        MachineLogEntry.PpuState ppuState = new(
+            (short) machine.State.Ppu.Internal.Scanline,
+            (short) machine.State.Ppu.Internal.CyclesInScanline
+        );
+
+        return new MachineLogEntry(cpuState, ppuState);
     }
+
+    public record FormatOptions(
+        bool IncludePpu = false,
+        bool SwapPpuPositions = false
+    );
 }

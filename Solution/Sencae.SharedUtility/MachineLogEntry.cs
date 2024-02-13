@@ -3,7 +3,10 @@ using System.Runtime.InteropServices;
 namespace Sencae.SharedUtility;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly record struct MachineLogEntry(MachineLogEntry.CpuState Cpu) {
+public readonly record struct MachineLogEntry(
+    MachineLogEntry.CpuState Cpu,
+    MachineLogEntry.PpuState Ppu
+) {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public readonly record struct CpuState(
         ushort AddressBus,
@@ -19,5 +22,11 @@ public readonly record struct MachineLogEntry(MachineLogEntry.CpuState Cpu) {
         ushort EffectiveAddress,
         ushort EffectiveAddressAddress,
         ushort EffectiveAddressIndexed
+    );
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public readonly record struct PpuState(
+        short Scanline,
+        short ScanlineCycle
     );
 }

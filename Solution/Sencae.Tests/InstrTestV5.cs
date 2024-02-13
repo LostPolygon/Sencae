@@ -22,7 +22,7 @@ public class InstrTestV5 {
 
     [Test]
     public void Test_03_Immediate() {
-        string message = GenericTest("rom_singles/03-immediate", 50_000_000);
+        string message = GenericTest("rom_singles/03-immediate", 150_000_000);
 
         Assert.AreEqual("\n03-immediate\n\nPassed\n", message);
     }
@@ -36,7 +36,7 @@ public class InstrTestV5 {
 
     [Test]
     public void Test_05_zp_xy() {
-        string message = GenericTest("rom_singles/05-zp_xy", 50_000_000);
+        string message = GenericTest("rom_singles/05-zp_xy", 150_000_000);
 
         Assert.AreEqual("\n05-zp_xy\n\nPassed\n", message);
     }
@@ -50,7 +50,7 @@ public class InstrTestV5 {
 
     [Test]
     public void Test_07_AbsXY() {
-        string message = GenericTest("rom_singles/07-abs_xy", 50_000_000);
+        string message = GenericTest("rom_singles/07-abs_xy", 150_000_000);
 
         Assert.AreEqual("\n07-abs_xy\n\nPassed\n", message);
     }
@@ -117,21 +117,21 @@ public class InstrTestV5 {
 
     [Test]
     public void Test_16_Special() {
-        string message = GenericTest("rom_singles/16-special", 50_000_000);
+        string message = GenericTest("rom_singles/16-special", 250_000_000);
 
         Assert.AreEqual("\n\n16-special\n\nPassed\n", message);
     }
 
     [Test]
     public void OfficialOnly() {
-        string message = GenericTest("official_only", 70_000_000);
+        string message = GenericTest("official_only", 210_000_000);
 
         Assert.AreEqual("All 16 tests passed\n\n\n", message);
     }
 
     [Test]
     public void AllInstrs() {
-        string message = GenericTest("all_instrs", 70_000_000);
+        string message = GenericTest("all_instrs", 210_000_000);
 
         Assert.AreEqual("All 16 tests passed\n\n\n", message);
     }
@@ -152,14 +152,14 @@ public class InstrTestV5 {
                 referenceLogFile == null ?
                     _ => "" :
                     m => {
-                        NintendulatorLog.FormatState(m, logOutput);
+                        NintendulatorLog.FormatState(m, new NintendulatorLog.FormatOptions(IncludePpu: true), logOutput);
                         return "";
                     };
             Emulate(
                 machine,
                 new() {
                     StopOnBRKOrHalt = false,
-                    MaxCycles = maxCycles ?? 5000000,
+                    MaxMachineCycles = maxCycles ?? 15000000,
                     FormatState = formatStateFunc,
                     OutputState = _ => {
                     },

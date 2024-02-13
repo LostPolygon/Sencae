@@ -19,18 +19,15 @@ internal static class Program {
             cpuBenchmark.Setup();
 
             Console.WriteLine("Warming up...");
-            for (int i = 0; i < 600; i++) {
-                cpuBenchmark.Emulate();
+            for (int i = 0; i < 3; i++) {
+                cpuBenchmark.Emulate(600);
             }
 
             Console.WriteLine("Starting benchmark...");
 
             const int iterations = 25000;
             Stopwatch sw = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; i++) {
-                ulong cycles = cpuBenchmark.Emulate();
-                TotalCycles += cycles;
-            }
+            TotalCycles += cpuBenchmark.Emulate(iterations);
 
             sw.Stop();
 

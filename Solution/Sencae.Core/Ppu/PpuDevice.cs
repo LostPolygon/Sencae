@@ -28,8 +28,10 @@ public unsafe class PpuDevice {
         _state.Internal.DataBus = 0;
         _state.Internal.DataBusLatch = 0;
         
-        _state.Internal.NmiPending = false;
-        _state.Internal.CpuCyclesAtNmi = 0;
+        _state.Internal.Scanline = 0;
+        _state.Internal.CyclesInScanline = 0;
+        _state.Internal.Frames = 0;
+        _state.Internal.Reset = true;
 
         _state.Memory.AsSpan().Clear();
         _state.OamMemory.AsSpan().Clear();

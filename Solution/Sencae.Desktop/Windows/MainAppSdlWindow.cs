@@ -3,7 +3,6 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ImGuiNET;
-using NativeFileDialogSharp;
 using Perfolizer.Horology;
 using Sencae.Desktop.Sdl;
 using Sencae.Ppu;
@@ -115,7 +114,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
             case SDL_EventType.SDL_DROPFILE:
                 IntPtr droppedFile = evt.drop.file;
                 string droppedFileStr = Marshal.PtrToStringUTF8(droppedFile)!;
-                SdlNative.SDL_free(droppedFile);
+                SdlNative.SDL_free(droppedFile);   
                 _loadingRomPath = droppedFileStr;
 
                 break;
@@ -153,10 +152,9 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
     private void DrawContentInternal() {
         DrawMainMenu();
         DrawDockSpace();
-
         
-
         float deltaTime = (float) DeltaTime;
+        deltaTime = MathF.Min(deltaTime, 0.33f);
 
         if (_loadingRomPath != null) {
             try {
@@ -189,7 +187,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
             if (ImGui.BeginMenu("File")) {
                 if (ImGui.MenuItem("Open...")) {
                     Task.Run(() => {
-                        DialogResult dialogResult = Dialog.FileOpen("nes", null);
+                        NativeFileDialogSharp.DialogResult dialogResult = NativeFileDialogSharp.Dialog.FileOpen("nes", null);
                         if (dialogResult.IsOk && !String.IsNullOrWhiteSpace(dialogResult.Path)) {
                             _loadingRomPath = dialogResult.Path;
                         }

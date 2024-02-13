@@ -41,8 +41,8 @@ public sealed unsafe class CpuBusDevice : IBusDevice, IDisposable {
     }
 
     public void HardReset(CpuResetOptions options) {
-        ref CpuState cpu = ref Machine.State.Cpu;
-        cpu = new CpuState();
+        Machine.State.Cpu = new CpuState();
+        CpuState cpu = Machine.State.Cpu;
 
         CpuMemoryBus cpuMemoryBus = Machine.CpuMemoryBus;
         switch (options.CpuMemoryResetState) {
@@ -90,7 +90,7 @@ public sealed unsafe class CpuBusDevice : IBusDevice, IDisposable {
     }
 
     public void SoftReset(CpuResetOptions options) {
-        ref CpuState cpu = ref Machine.State.Cpu;
+        CpuState cpu = Machine.State.Cpu;
         CpuMemoryBus cpuMemoryBus = Machine.CpuMemoryBus;
 
         cpu.P.InterruptDisable = true;
@@ -100,7 +100,7 @@ public sealed unsafe class CpuBusDevice : IBusDevice, IDisposable {
     }
 
     private void GenericReset(CpuResetOptions options) {
-        ref CpuState cpu = ref Machine.State.Cpu;
+        CpuState cpu = Machine.State.Cpu;
         CpuMemoryBus cpuMemoryBus = Machine.CpuMemoryBus;
 
         cpuMemoryBus.Write(0x4015, 0); // all APU channels disabled

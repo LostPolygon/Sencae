@@ -1,12 +1,22 @@
-﻿namespace Sencae.Tests;
+﻿using Sencae.Ppu;
+
+namespace Sencae.Tests;
 
 public static class NintendulatorLogCompare {
     public static void ResetMachineToNintendulatorInitialState(Machine machine) {
         CpuMemoryBus cpuMemoryBus = machine.CpuMemoryBus;
-            
-        for (ushort i = 0x2000; i <= 0x2007; i++) {
+
+        machine.State.Ppu.PPUCTRL = (PpuControlRegisterFlags) 0x0;
+        machine.State.Ppu.PPUSTATUS =  (PpuStatusRegisterFlags) 0x0;
+        //cpuMemoryBus.Write(0x2000, 0xFF);
+        //cpuMemoryBus.Write(0x2002, 0xFF);
+        //machine.State.Ppu.OAMADDR = 0xFF;
+        //machine.State.Ppu.PPUCTRL = (PpuControlRegisterFlags) 0xFF;
+        //machine.State.Ppu.PPUMASK = (PpuMaskRegisterFlags) 0xFF;
+        //machine.State.Ppu.PPUSTATUS = (PpuStatusRegisterFlags) 0xFF;
+        /*for (ushort i = 0x2000; i <= 0x2007; i++) {
             cpuMemoryBus.Write(i, 0xFF);
-        }
+        }*/
             
         cpuMemoryBus.Write(0x4017, 0xFF); // frame irq enabled
         cpuMemoryBus.Write(0x4015, 0xFF); // all APU channels disabled

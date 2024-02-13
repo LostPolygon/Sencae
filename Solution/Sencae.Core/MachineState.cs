@@ -10,12 +10,10 @@ public class MachineState {
     public ulong ExecutedInstructionCount;
     public ulong MachineCycles;
     public ulong CpuCycles;
-    public ulong CpuProgramCycles;
 
     public void ResetCounters() {
         ExecutedInstructionCount = 0;
         MachineCycles = 0;
-        CpuCycles = 7;
-        CpuProgramCycles = 0;
+        CpuCycles = 0;
     }
 }

@@ -24,6 +24,7 @@ public unsafe class PpuCpuBusDevice : IBusDevice, IDisposable {
         switch (accessMode) {
             case MemoryAccessMode.Read:
             case MemoryAccessMode.Write:
+            case MemoryAccessMode.ReadObserve:    
                 ref byte ppuBus = ref _state.Internal.DataBus;
 
                 if (accessMode == MemoryAccessMode.Write) {
@@ -32,10 +33,24 @@ public unsafe class PpuCpuBusDevice : IBusDevice, IDisposable {
 
                 bool result = HandleBusInternal(address, accessMode, ref ppuBus, out bool _);
 
+                //PPUCTRL, PPUMASK, PPUSCROLL, PPUADDR, the PPUSCROLL/PPUADDR latch, and the PPUDATA
+                if (_state.Internal.Reset) {
+                    _state.PPUCTRL = 0;
+                    _state.PPUMASK = 0;
+                    _state.PPUSTATUS = 0;
+                    _state.OAMADDR = 0;
+
+                    _state.Internal.Address.Value = 0;
+                    _state.Internal.PpuAddressRegisterLatch = false;
+                    _state.Internal.PpuScrollRegisterLatch = false;
+                    _state.Internal.FineScrollX = 0;
+                    _state.Internal.FineScrollY = 0;
+                }
+
                 bus = ppuBus;
                 return result;
-            case MemoryAccessMode.ReadObserve:
-                return HandleBusInternal(address, accessMode, ref bus, out bool _);
+           //case MemoryAccessMode.ReadObserve:
+            //    return HandleBusInternal(address, accessMode, ref bus, out bool _);
             default:
                 throw new ArgumentOutOfRangeException(nameof(accessMode), accessMode, null);
         }
@@ -51,26 +66,35 @@ public unsafe class PpuCpuBusDevice : IBusDevice, IDisposable {
         switch (address) {
             case >= 0x2000 and <= 0x3FFF: {
                 int registerIndex = address % 0x8;
-
+ 
                 // Writes to the following registers are ignored if earlier than ~29658 CPU clocks after reset:
                 // PPUCTRL, PPUMASK, PPUSCROLL, PPUADDR
-                if (accessMode == MemoryAccessMode.Write && Machine.State.CpuCycles <= 29658) {
+                /*if (accessMode == MemoryAccessMode.Write && Machine.State.CpuCycles <= 33658) {
                     switch (registerIndex) {
                         case PPUCTRL_Index: return true;
                         case PPUMASK_Index: return true;
                         case PPUSCROLL_Index: return true;
                         case PPUADDR_Index: return true;
                     }
-                }
+                }*/
 
                 switch (registerIndex) {
                     // 0x2000
                     case PPUCTRL_Index: {
                         switch (accessMode) {
                             case MemoryAccessMode.Write:
-                            case MemoryAccessMode.ReadObserve:
+                            //case MemoryAccessMode.ReadObserve:
+                                bool oldGenerateNmi = (_state.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0;
                                 ref byte mappedData = ref Unsafe.As<PpuControlRegisterFlags, byte>(ref _state.PPUCTRL);
                                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
+
+                                /*if (accessMode == MemoryAccessMode.Write &&
+                                    !oldGenerateNmi &&
+                                    (_state.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0 &&
+                                    (_state.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) != 0) {
+                                    Machine.State.Cpu.Internal.NmiPending = true;
+                                }*/
+
                                 return true;
                         }
 
@@ -110,7 +134,7 @@ public unsafe class PpuCpuBusDevice : IBusDevice, IDisposable {
                         if (accessMode == MemoryAccessMode.Read) {
                             _state.Internal.PpuAddressRegisterLatch = false;
                             _state.Internal.PpuScrollRegisterLatch = false;
-                            _state.Internal.Address = default;
+                            //_state.Internal.Address = default;
                             mappedData &= (byte) ~PpuStatusRegisterFlags.VerticalBlankStarted;
                         }
 
@@ -246,7 +270,7 @@ public unsafe class PpuCpuBusDevice : IBusDevice, IDisposable {
 
                 break;
             }
-            case 0x4014: {
+            case OAMDMA: {
                 return true;
             }
         }

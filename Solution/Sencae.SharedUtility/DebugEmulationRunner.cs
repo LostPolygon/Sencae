@@ -56,12 +56,14 @@ public static class DebugEmulationRunner {
             outputState(formatState(machine));
         }
 
-        for (ulong i = 0; i < options.MaxCycles; i++) {
-            machine.CpuClock();
-
+        for (ulong i = 0; i < options.MaxMachineCycles; i++) {
             if (!options.SkipOutputState) {
                 outputState(formatState(machine));
             }
+            
+            machine.Clock();
+
+
 
             if (options.StopOnBRKOrHalt) {
                 ref CpuInternalState cpuInternal = ref machine.State.Cpu.Internal;
@@ -79,7 +81,7 @@ public static class DebugEmulationRunner {
     public record RunnerOptions {
         public bool ResetBeforeRun { get; init; } = true;
         public bool StopOnBRKOrHalt { get; init; } = true;
-        public ulong MaxCycles { get; set; } = 10000;
+        public ulong MaxMachineCycles { get; set; } = 10000;
         public ushort? OverrideResetVector { get; init; }
         public Action<Machine>? AfterResetAction { get; init; }
         public bool SkipOutputState { get; init; }

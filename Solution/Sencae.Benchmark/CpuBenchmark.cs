@@ -34,12 +34,12 @@ public class CpuBenchmark {
                     )
             );
 
-            AddJob(
+            /*AddJob(
                 Job.Default
                     .WithPlatform(Platform.X64)
                     .WithRuntime(NativeAotRuntime.Net80)
                     .WithJit(Jit.RyuJit)
-            );
+            );*/
         }
     }
 
@@ -53,12 +53,13 @@ public class CpuBenchmark {
         DebugEmulationRunner.RunnerOptions runnerOptions = new() {
             StopOnBRKOrHalt = false,
             OverrideResetVector = 0xC000,
-            MaxCycles = maxCycles,
+            MaxMachineCycles = maxCycles,
             SkipOutputState = true,
             ResetBeforeRun = false
         };
 
-        for (int i = 0; i < InternalIterations; i++) {
+        ulong totalCycles = 0;
+        for (int i = 0; i < iterations; i++) {
             Machine.Reset(
                 new CpuResetOptions {
                     OverrideResetVector = runnerOptions.OverrideResetVector
@@ -66,9 +67,11 @@ public class CpuBenchmark {
                 false
             );
             DebugEmulationRunner.Emulate(Machine, runnerOptions);
+
+            totalCycles += Machine.State.CpuCycles;
         }
 
-        return Machine.State.CpuProgramCycles;
+        return totalCycles;
     }
 
     [GlobalSetup]

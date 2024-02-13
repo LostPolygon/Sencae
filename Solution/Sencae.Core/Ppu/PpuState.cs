@@ -39,8 +39,10 @@ public unsafe class PpuState {
         public byte DataBusLatch;
         //public bool BusLatchToggle;
 
-        public bool NmiPending;
-        public ulong CpuCyclesAtNmi;
+        public int Scanline;
+        public int CyclesInScanline;
+        public ulong Frames;
 
+        public bool Reset;
     }
 }

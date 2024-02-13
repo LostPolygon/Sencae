@@ -12,7 +12,7 @@ public static class NesConstants {
         Framerate = 50,
         ScreenWidth = 256,
         ScreenHeight = 240,
-        CyclesPerFrame = 33248
+        CyclesPerFrame = 33248 * 3
     };
 
     public class NesVariantConstants {
