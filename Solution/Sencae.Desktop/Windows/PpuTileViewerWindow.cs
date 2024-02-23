@@ -1,6 +1,5 @@
 using System.Drawing;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using ImGuiNET;
 using Perfolizer.Horology;
 using Sencae.Ppu;
@@ -84,6 +83,9 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
 
                 using DynamicSdlTexture.LockedSurface nametable0Surface = _nametable0Texture.Lock();
                 UpdateNametableTexture(_previewState, _previewState.Nametable0, _previewState.Nametable0Attributes, nametable0Surface.Surface);
+                
+                using DynamicSdlTexture.LockedSurface nametable1Surface = _nametable1Texture.Lock();
+                UpdateNametableTexture(_previewState, _previewState.Nametable1, _previewState.Nametable1Attributes, nametable1Surface.Surface);
             }
         }
 
@@ -102,10 +104,12 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
 
             ImGui.Checkbox("Draw Attribute Grid", ref _drawAttributeGrid);
 
+            Vector2 oldItemSpacing = ImGui.GetStyle().ItemSpacing;
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, oldItemSpacing/* with { X = 0 }*/);
             DrawNametable(_nametable0Texture, _previewState.Nametable0, _previewState.Nametable0Attributes, 0);
-
             ImGui.SameLine();
-            DrawNametable(_nametable1Texture, _previewState.Nametable1, _previewState.Nametable0Attributes, 1);
+            DrawNametable(_nametable1Texture, _previewState.Nametable1, _previewState.Nametable1Attributes, 1);
+            ImGui.PopStyleVar();
 
             ImGui.Separator();
 
@@ -146,29 +150,10 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
         drawList.AddRectFilled(imageMin, imageMax, 0xFF000000);
 
         ImGui.SetCursorPos(cursorPos);
-
-        static byte TransformTileIndex(byte index) =>
-            index switch {
-                3 => 0,
-                0 => 1,
-                1 => 2,
-                2 => 3,
-                _ => throw new ArgumentOutOfRangeException(nameof(index), index, null)
-            };
-
-        static byte InverseTransformTileIndex(byte index) =>
-            index switch {
-                0 => 3,
-                1 => 0,
-                2 => 1,
-                3 => 2,
-                _ => throw new ArgumentOutOfRangeException(nameof(index), index, null)
-            };
-
         ImFontPtr font = Context.SharedResources.FontMonospacedNormal;
         ImGui.PushFont(font);
         for (int i = 0; i < 4; i++) {
-            Vector2 tileMin = imageMin + Vector2.UnitX * colorTileSize * TransformTileIndex((byte) i);
+            Vector2 tileMin = imageMin + Vector2.UnitX * colorTileSize * i;
             byte colorIndex = palette.ColorIndices[i];
 
             Color color = Color.FromArgb((int) ColorUtility.ArgbToAbgr(Context.SharedResources.PpuPalette.Colors[colorIndex]));
@@ -209,7 +194,6 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
         object paletteCopyBoxed = palette;
 
         TileTooltip(imageMin, colorTileSize, 0xFFFF0000, (x, _) => {
-            x = InverseTransformTileIndex((byte) x);
             PpuObjectPalette paletteCopy = (PpuObjectPalette) paletteCopyBoxed;
             byte colorIndex = paletteCopy.ColorIndices[x];
             string colorIndexHex = colorIndex.ToString("X2");
@@ -379,8 +363,9 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
                     //pixelPaletteColorIndex = (byte) (3 - pixelPaletteColorIndex);
                     //pixelPaletteColorIndex = (byte) ((pixelPaletteColorIndex + 3) % 4);
                     
-                    //surfacePixels[surfacePixelIndex] = (int) Context.SharedResources.PpuPalette.Colors[palette.ColorIndices[pixelPaletteColorIndex]];
-                    surfacePixels[surfacePixelIndex] = (int) paletteColors[pixelPaletteColorIndex];
+                    surfacePixels[surfacePixelIndex] = (int) Context.SharedResources.PpuPalette.Colors[palette.ColorIndices[pixelPaletteColorIndex]];
+                    
+                    //surfacePixels[surfacePixelIndex] = (int) paletteColors[pixelPaletteColorIndex];
                 }
             }
         }

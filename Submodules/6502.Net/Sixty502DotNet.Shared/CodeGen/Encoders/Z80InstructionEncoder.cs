@@ -5,8 +5,6 @@
 // 
 //-----------------------------------------------------------------------------
 
-using System;
-using System.Text;
 using Antlr4.Runtime.Misc;
 
 namespace Sixty502DotNet.Shared;

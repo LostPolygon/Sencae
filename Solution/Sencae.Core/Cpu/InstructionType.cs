@@ -88,7 +88,7 @@ public enum InstructionType : byte {
     // Interrupts
 
     BRK, // break / software interrupt
-    Internal_BRK_NMI,
+    SpecialNmiHandler,
     RTI, // return from interrupt 
 
     // Other
@@ -106,8 +106,8 @@ public enum InstructionType : byte {
     ALR,
     RRA,
     SHY,
-    ARR,
     SHX,
+    ARR,
     SAX,
     XAA,
     AHX,

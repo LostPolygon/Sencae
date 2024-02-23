@@ -11,7 +11,7 @@ public class BasicTests {
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
         CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData);
 
-        Machine machine = Emulate(
+        using Machine machine = Emulate(
             cartridgeDevice, new() {
                 StopOnBRKOrHalt = false,
                 MaxMachineCycles = 50000, 
@@ -26,7 +26,7 @@ public class BasicTests {
 
     [Test]
     public void Test1() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             .0000    a9 01        LDA #$01
@@ -58,7 +58,7 @@ public class BasicTests {
             """
         );
 
-        Machine machine = Emulate(cartridgeDevice, new() { FormatState = FormatCpuStateNesTest });
+        using Machine machine = Emulate(cartridgeDevice, new() { FormatState = FormatCpuStateNesTest });
 
         Assert.AreEqual(0xC1, machine.State.Cpu.X);
         Assert.AreEqual(0x84, machine.State.Cpu.A);

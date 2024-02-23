@@ -131,6 +131,9 @@ public unsafe class MachineLogWindow : AppWindow {
         if (!NintendulatorLog.IsInstructionStartCycle(Emulator.Machine))
             return;
 
+        if (Emulator.Machine.State.Cpu.Internal.Halted)
+            return;
+
         MachineLogEntry logEntry = NintendulatorLog.CreateMachineLogEntry(Emulator.Machine);
         _logOutput.Add(logEntry);
         _autoScrollTrigger = true;

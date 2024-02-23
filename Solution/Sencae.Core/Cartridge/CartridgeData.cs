@@ -1,6 +1,6 @@
 ﻿namespace Sencae;
 
-public record CartridgeData(
+public sealed record CartridgeData(
     int Mapper,
     byte[] PrgRom,
     byte[] ChrRom,

@@ -12,7 +12,7 @@ public static class MachineStateFormatter {
             $"A: {cpu.A:X2} " +
             $"X: {cpu.X:X2} " +
             $"Y: {cpu.Y:X2} " +
-            $"P: {(int) cpu.P.ToFlags():X2} " +
+            $"P: {(int) cpu.P.AsFlags:X2} " +
             $"SP: {cpu.SP:X2}"
             ;
     }
@@ -25,7 +25,7 @@ public static class MachineStateFormatter {
         CpuState cpu = state.Cpu;
         
         return
-            $"==== Cycle: {state.CpuCycles}, " +
+            $"Cycle: {state.Cpu.Internal.Cycles}, " +
             $"AB: {cpu.Internal.AddressBus.Value:X4}, " +
             $"DB: {cpu.Internal.DataBus:X2}, " +
             $"PC: {cpu.PC.Value:X4}, " +

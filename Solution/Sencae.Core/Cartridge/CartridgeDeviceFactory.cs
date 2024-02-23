@@ -1,20 +1,19 @@
 using System;
+using Sencae.Mappers;
 
-namespace Sencae; 
+namespace Sencae;
 
 public static class CartridgeDeviceFactory {
     public static CartridgeDevice Create(CartridgeData cartridgeData, byte[]? prgRam = null) {
         prgRam ??= new byte[8 * 1024];
-        
-        switch (cartridgeData.Mapper) {
-            case 0:
-                return new CartridgeDevice(
-                    cartridgeData,
-                    new CartridgeToCpuBusDevice(cartridgeData.PrgRom, prgRam),
-                    new CartridgeToPpuBusDevice(cartridgeData.ChrRom)
-                );
-            default:
-                throw new NotImplementedException($"Mapper {cartridgeData.Mapper} is not supported");
-        }
+
+        return cartridgeData.Mapper switch {
+            0 => new CartridgeDevice(
+                cartridgeData,
+                new Mapper000.CartridgeToCpuBusDevice(cartridgeData.PrgRom, prgRam),
+                new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom)
+            ),
+            _ => throw new NotImplementedException($"Mapper {cartridgeData.Mapper} is not supported")
+        };
     }
 }

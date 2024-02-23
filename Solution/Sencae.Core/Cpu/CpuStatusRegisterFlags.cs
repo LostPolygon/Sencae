@@ -11,21 +11,23 @@ public record struct CpuStatusRegisterFlags {
     public bool Overflow;
     public bool NegativeOrSign;
 
-    [MethodImpl(MethodOptions.Options)]
-    public CpuStatusRegisterPackedFlags ToFlags() {
-        byte result = 0;
-        result |= (byte) (Carry ? CpuStatusRegisterPackedFlags.Carry : 0);
-        result |= (byte) (Zero ? CpuStatusRegisterPackedFlags.Zero : 0);
-        result |= (byte) (InterruptDisable ? CpuStatusRegisterPackedFlags.InterruptDisable : 0);
-        result |= (byte) (DecimalMode ? CpuStatusRegisterPackedFlags.DecimalMode : 0);
-        result |= (byte) (BreakFlag ? CpuStatusRegisterPackedFlags.BreakFlag : 0);
-        result |= (byte) (Overflow ? CpuStatusRegisterPackedFlags.Overflow : 0);
-        result |= (byte) (NegativeOrSign ? CpuStatusRegisterPackedFlags.NegativeOrSign : 0);
-        result |= (byte) CpuStatusRegisterPackedFlags.Unused;
-        return (CpuStatusRegisterPackedFlags) result;
+    public CpuStatusRegisterPackedFlags AsFlags {
+        [MethodImpl(AggressiveInlining)]
+        get {
+            byte result = 0;
+            result |= (byte) (Carry ? CpuStatusRegisterPackedFlags.Carry : 0);
+            result |= (byte) (Zero ? CpuStatusRegisterPackedFlags.Zero : 0);
+            result |= (byte) (InterruptDisable ? CpuStatusRegisterPackedFlags.InterruptDisable : 0);
+            result |= (byte) (DecimalMode ? CpuStatusRegisterPackedFlags.DecimalMode : 0);
+            result |= (byte) (BreakFlag ? CpuStatusRegisterPackedFlags.BreakFlag : 0);
+            result |= (byte) (Overflow ? CpuStatusRegisterPackedFlags.Overflow : 0);
+            result |= (byte) (NegativeOrSign ? CpuStatusRegisterPackedFlags.NegativeOrSign : 0);
+            result |= (byte) CpuStatusRegisterPackedFlags.Unused;
+            return (CpuStatusRegisterPackedFlags) result;
+        }
     }
 
-    [MethodImpl(MethodOptions.Options)]
+    [MethodImpl(HotPath)]
     public static CpuStatusRegisterFlags FromFlags(CpuStatusRegisterPackedFlags flags) {
         CpuStatusRegisterFlags result = new() {
             Carry = (flags & CpuStatusRegisterPackedFlags.Carry) != 0,

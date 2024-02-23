@@ -34,12 +34,11 @@ public class CpuBenchmark {
                     )
             );
 
-            /*AddJob(
+            AddJob(
                 Job.Default
                     .WithPlatform(Platform.X64)
                     .WithRuntime(NativeAotRuntime.Net80)
-                    .WithJit(Jit.RyuJit)
-            );*/
+            );
         }
     }
 
@@ -60,15 +59,10 @@ public class CpuBenchmark {
 
         ulong totalCycles = 0;
         for (int i = 0; i < iterations; i++) {
-            Machine.Reset(
-                new CpuResetOptions {
-                    OverrideResetVector = runnerOptions.OverrideResetVector
-                },
-                false
-            );
+            Machine.CpuDevice.ApplyResetVector(0xC000);
             DebugEmulationRunner.Emulate(Machine, runnerOptions);
 
-            totalCycles += Machine.State.CpuCycles;
+            totalCycles += Machine.State.Cpu.Internal.Cycles;
         }
 
         return totalCycles;
@@ -81,7 +75,12 @@ public class CpuBenchmark {
         CartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData);
 
         Machine = new Machine(CartridgeDevice);
-        Machine.Reset();
+        Machine.Reset(
+            new CpuResetOptions {
+                OverrideResetVector = 0xC000,
+                CpuMemoryResetState = CpuMemoryResetState.Uninitialized
+            }
+        );
     }
 
     [GlobalCleanup]

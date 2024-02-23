@@ -1,6 +1,6 @@
 namespace Sencae;
 
-public record InstructionDescriptor(
+public readonly record struct InstructionDescriptor(
     string Mnemonic,
     InstructionType Type,
     AddressingMode AddressingMode,

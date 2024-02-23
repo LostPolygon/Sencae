@@ -17,12 +17,16 @@ public struct CpuInternalState {
     public bool Halted;
 
     public bool IrqPending;
-    public bool NmiPending;
+    public bool NmiPulledDown;
+    public bool NmiPulledDownOld;
+    public bool NmiFlipFlop;
+
+    public ulong Cycles;
 
     public enum ExecutionState {
         ExecutingInstruction,
-        FetchNextInstructionOpcode,
+        FinishingCurrentInstructionAndFetchingNextOpcode,
         ExecutingAddressing,
-        InterpretOpcode
+        InterpretingFetchedOpcode
     }
 }

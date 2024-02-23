@@ -1,10 +1,8 @@
-using Antlr4.Runtime.Atn;
-
 namespace Sencae.Desktop;
 
 public class Emulator : IDisposable {
     public NesConstants.NesVariantConstants NesVariantConstants { get; }
-    public Machine Machine { get; private set; } = null!;
+    public Machine Machine = null!;
 
     public bool IsRunning { get; set; }
     public bool IsLoaded { get; private set; }
@@ -12,6 +10,9 @@ public class Emulator : IDisposable {
     public ulong RemainingCycles { get; private set; }
     
     public double TimeUntilNextFrame { get; private set; }
+
+    public DateTime LastCyclesPrint;
+    public ulong CyclesAtLastCyclesPrint;
 
     public double TimeScale { get; set; } = 1.0;
     
@@ -24,7 +25,7 @@ public class Emulator : IDisposable {
         
         // HACK
         cartridgeData = cartridgeData with {
-            ChrRom = cartridgeData.ChrRom.Length == 0 ? new byte[8 * 1024] : cartridgeData.ChrRom,
+            ChrRom = cartridgeData.ChrRom.Length == 0 ? new byte[16 * 1024] : cartridgeData.ChrRom,
             IsChrRomWriteable = true,
         };
 
@@ -44,8 +45,18 @@ public class Emulator : IDisposable {
         deltaTime *= TimeScale;
         
         double frameDuration = 1.0 / NesVariantConstants.Framerate;
-        double cyclesPerSecond = NesVariantConstants.CyclesPerFrame * NesVariantConstants.Framerate;
-        ulong cycles = (ulong) (deltaTime * cyclesPerSecond);
+        double machineCyclesPerSecond = NesVariantConstants.MachineCyclesPerFrame * NesVariantConstants.Framerate;
+        ulong cycles = (ulong) (deltaTime * machineCyclesPerSecond);
+
+        DateTime now = DateTime.UtcNow;
+        TimeSpan delta = now - LastCyclesPrint;
+        if (delta > TimeSpan.FromSeconds(1)) {
+            double cyclesPerSecond = (Machine.State.MachineCycles - CyclesAtLastCyclesPrint) / delta.TotalSeconds;
+            Console.WriteLine($"Cycles/s: {cyclesPerSecond:0}, ratio: {(machineCyclesPerSecond / cyclesPerSecond * TimeScale):0.0000}");
+            LastCyclesPrint = now;
+            CyclesAtLastCyclesPrint = Machine.State.MachineCycles;
+        }
+
         //Debug.WriteLine($"cycles: {cycles}");
         for (ulong i = 0; i < cycles; i++) {
             Machine.Clock();
@@ -76,13 +87,13 @@ public class Emulator : IDisposable {
     public void SingleInstructionStep() {
         do {
             Machine.Clock();
-        } while (Machine.State.Cpu.Internal.State != CpuInternalState.ExecutionState.InterpretOpcode);
+        } while (Machine.State.Cpu.Internal.State != CpuInternalState.ExecutionState.InterpretingFetchedOpcode);
     }
     
     public void RunToInterrupt() {
         do {
             Machine.Clock();
-        } while (Machine.State.Cpu.Internal.Instruction.Type is not InstructionType.Internal_BRK_NMI);
+        } while (Machine.State.Cpu.Internal.Instruction.Type is not InstructionType.SpecialNmiHandler);
     }
 
     public void Dispose() {

@@ -65,6 +65,7 @@ public abstract unsafe class BaseAppSdlWindow : SdlWindow {
         _performanceCounterCurrent = SDL_GetPerformanceCounter();
 
         DeltaTime = (_performanceCounterCurrent - _performanceCounterPrev) / (double) SDL_GetPerformanceFrequency();
+        DeltaTime = Math.Min(DeltaTime, 0.1f);
 
         Profiler.Begin("Render_Content", showFps: true);
         RenderContent();

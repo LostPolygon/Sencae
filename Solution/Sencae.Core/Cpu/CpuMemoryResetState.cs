@@ -1,7 +1,9 @@
 namespace Sencae; 
 
 public enum CpuMemoryResetState {
-    Random,
+    AllZero,
+    AllOne,
     Pattern,
-    AllZero
+    Random,
+    Uninitialized
 }

@@ -1,6 +1,5 @@
 using System.Drawing;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ImGuiNET;
 using Perfolizer.Horology;
@@ -154,7 +153,6 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         DrawDockSpace();
         
         float deltaTime = (float) DeltaTime;
-        deltaTime = MathF.Min(deltaTime, 0.33f);
 
         if (_loadingRomPath != null) {
             try {

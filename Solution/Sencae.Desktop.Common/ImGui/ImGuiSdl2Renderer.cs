@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
 using ImGuiNET;
 using static SDL2.SDL.SDL_bool;
 using static Sencae.Desktop.Sdl.SdlAssertions;

@@ -10,7 +10,7 @@ public class PpuTests {
     [Test]
     public void PpuOpenBus() {
         static void AfterReset(Machine machine) {
-            //machine.State.CpuCycles = 50000; // PPU doesn't start responding immediately
+            //machine.State.Cpu.Internal.Cycles = 50000; // PPU doesn't start responding immediately
             machine.State.Ppu.Internal.Reset = false;
         }
         
@@ -25,6 +25,7 @@ public class PpuTests {
             """
         ), new () { AfterResetAction = AfterReset });
 
+        machine.Dispose();
         Assert.AreEqual(254, machine.State.Cpu.A);
         
         machine = Emulate(CreateCodeCartridge(
@@ -38,6 +39,7 @@ public class PpuTests {
             """
         ), new () { AfterResetAction = AfterReset });
         
+        machine.Dispose();
         Assert.AreEqual(254, machine.State.Cpu.A);
     }
 }

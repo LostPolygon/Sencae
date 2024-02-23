@@ -6,7 +6,7 @@ namespace Sencae.SharedUtility;
 public static class DebugEmulationRunner {
     public static CartridgeDevice CreateCodeCartridge(
         string assembly,
-        ushort programRomSize = 16 * 1024,
+        ushort programRomSize = 32 * 1024,
         ushort programRamSize = 4 * 1024
     ) {
         CodeOutput codeOutput = AssembleFromListing(assembly);
@@ -53,17 +53,18 @@ public static class DebugEmulationRunner {
         if (!options.SkipOutputState) {
             formatState = options.FormatState ?? (m => MachineStateFormatter.FormatCpuState(m.State));
             outputState = options.OutputState ?? Console.WriteLine;
-            outputState(formatState(machine));
         }
 
         for (ulong i = 0; i < options.MaxMachineCycles; i++) {
             if (!options.SkipOutputState) {
                 outputState(formatState(machine));
             }
-            
-            machine.Clock();
 
-
+            if (options.CpuOnly) {
+                machine.CpuClock();
+            } else {
+                machine.Clock();
+            }
 
             if (options.StopOnBRKOrHalt) {
                 ref CpuInternalState cpuInternal = ref machine.State.Cpu.Internal;
@@ -79,6 +80,7 @@ public static class DebugEmulationRunner {
     }
 
     public record RunnerOptions {
+        public bool CpuOnly { get; init; } = true;
         public bool ResetBeforeRun { get; init; } = true;
         public bool StopOnBRKOrHalt { get; init; } = true;
         public ulong MaxMachineCycles { get; set; } = 10000;

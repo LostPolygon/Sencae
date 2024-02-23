@@ -94,7 +94,7 @@ public class CpuDebuggerWindow : AppWindow {
             ImGui.Text("CPU Cycles: ");
 
             ImGui.TableSetColumnIndex(1);
-            ImGui.Text(Emulator.Machine.State.CpuCycles.ToString());
+            ImGui.Text(Emulator.Machine.State.Cpu.Internal.Cycles.ToString());
 
             ImGui.TableNextRow();
 

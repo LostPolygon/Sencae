@@ -5,39 +5,42 @@ namespace Sencae.Tests;
 using static SharedUtility.DebugEmulationRunner;
 
 public class AddressingModes {
-    private const int BRK_Cycles = 1;
+    private const int BRK_Cycles = 7*0 + 2;
 
     [Test]
     public void Implied() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
+            INX
+            INX
             INX
 
             """
         ));
 
-        Assert.AreEqual(1, machine.State.Cpu.X);
-        Assert.AreEqual(2 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(3, machine.State.Cpu.X);
+        Assert.AreEqual(2 * 3 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void Immediate() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
+            LDA #42
             LDA #42
 
             """
         ));
 
         Assert.AreEqual(42, machine.State.Cpu.A);
-        Assert.AreEqual(2 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(2 * 2 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void Absolute() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             LDA $0200
@@ -50,12 +53,12 @@ public class AddressingModes {
         }
 
         Assert.AreEqual(42, machine.CpuMemoryBus.Read(0x0200));
-        Assert.AreEqual(4 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(4 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void AbsoluteXIndexed() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             INX
@@ -68,12 +71,12 @@ public class AddressingModes {
         ));
 
         Assert.AreEqual(42, machine.CpuMemoryBus.Read(0x203));
-        Assert.AreEqual(2 + 2 + 2 + 2 + 5 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(2 + 2 + 2 + 2 + 5 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void AbsoluteYIndexed() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             INY
@@ -86,12 +89,12 @@ public class AddressingModes {
         ));
 
         Assert.AreEqual(42, machine.CpuMemoryBus.Read(0x203));
-        Assert.AreEqual(2 + 2 + 2 + 2 + 5 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(2 + 2 + 2 + 2 + 5 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void ZeroPageXIndexed() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             INX
@@ -107,12 +110,12 @@ public class AddressingModes {
         }
 
         Assert.AreEqual(42, machine.State.Cpu.Y);
-        Assert.AreEqual(2 + 2 + 2 + 4 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(2 + 2 + 2 + 4 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void ZeroPage() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             LDA $20
@@ -125,12 +128,12 @@ public class AddressingModes {
         }
 
         Assert.AreEqual(42, machine.State.Cpu.A);
-        Assert.AreEqual(3 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(3 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void ZeroPageYIndexed() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             INY
@@ -146,12 +149,12 @@ public class AddressingModes {
         }
 
         Assert.AreEqual(42, machine.State.Cpu.X);
-        Assert.AreEqual(2 + 2 + 2 + 4 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(2 + 2 + 2 + 4 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void ZeroPageIndirectXPreIndexed() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             INX
@@ -168,12 +171,12 @@ public class AddressingModes {
         }
 
         Assert.AreEqual(0x42, machine.State.Cpu.A);
-        Assert.AreEqual(2 + 2 + 2 + 6 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(2 + 2 + 2 + 6 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void ZeroPageIndirectYPostIndexed() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             INY
@@ -190,12 +193,12 @@ public class AddressingModes {
         }
 
         Assert.AreEqual(0x42, machine.State.Cpu.A);
-        Assert.AreEqual(2 + 2 + 2 + 5 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(2 + 2 + 2 + 5 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
     [Test]
     public void AbsoluteIndirect() {
-        Machine machine = Emulate(CreateCodeCartridge(
+        using Machine machine = Emulate(CreateCodeCartridge(
             """
 
             .dsection "start",    $00, $20
@@ -205,7 +208,7 @@ public class AddressingModes {
             JMP ($42)
 
             .section "sec" 
-            INX // 0xC20E in cartridge space
+            INX // 0x820E in cartridge space
             INX
             INX
 
@@ -214,11 +217,11 @@ public class AddressingModes {
 
         static void AfterReset(Machine machine) {
             machine.CpuMemoryBus.Write(0x42, 0x0E);
-            machine.CpuMemoryBus.Write(0x42 + 1, 0xC2);
+            machine.CpuMemoryBus.Write(0x42 + 1, 0x82);
         }
 
         Assert.AreEqual(3, machine.State.Cpu.X);
-        Assert.AreEqual(0xC212, machine.State.Cpu.PC.Value); // +1 due advancing to next opcode
-        Assert.AreEqual(5 + 2 + 2 + 2 + BRK_Cycles, machine.State.CpuCycles);
+        Assert.AreEqual(0x8212, machine.State.Cpu.PC.Value);
+        Assert.AreEqual(5 + 2 + 2 + 2 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 }

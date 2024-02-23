@@ -1,33 +1,36 @@
 ﻿using System.Runtime.CompilerServices;
+using Sencae.Mappers;
+using Sencae.Ppu;
 
 namespace Sencae;
 
 public sealed class PpuMemoryBus : IBusDevice {
-    public readonly Machine Machine;
-    public byte LastBusData;
+    public readonly PpuCpuBusDevice PpuCpuBusDevice;
+    public readonly Mapper000.CartridgeToPpuBusDevice CartridgeToPpuBusDevice;
 
-    public PpuMemoryBus(Machine machine) {
-        Machine = machine;
+    public PpuMemoryBus(PpuCpuBusDevice ppuCpuBusDevice, Mapper000.CartridgeToPpuBusDevice cartridgeToPpuBusDevice) {
+        PpuCpuBusDevice = ppuCpuBusDevice;
+        CartridgeToPpuBusDevice = cartridgeToPpuBusDevice;
     }
 
-    [MethodImpl(MethodOptions.Options)]
+    [MethodImpl(HotPath)]
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
-        if (Machine.PpuCpuBusDevice.HandleBus(address, accessMode, ref bus))
+        if (PpuCpuBusDevice.HandleBus(address, accessMode, ref bus))
             return true;
 
-        if (Machine.CartridgeDevice.CartridgeToPpuBusDevice.HandleBus(address, accessMode, ref bus))
+        if (CartridgeToPpuBusDevice.HandleBus(address, accessMode, ref bus))
             return true;
 
-        BusDeviceHandlers.OpenBus(address);
+        BusDeviceHandlers.AssertNotOpenBus(address);
         return false;
     }
 
-    [MethodImpl(MethodOptions.Options)]
+    [MethodImpl(HotPath)]
     public void Write(ushort address, byte data) {
         HandleBus(address, MemoryAccessMode.Write, ref data);
     }
 
-    [MethodImpl(MethodOptions.Options)]
+    [MethodImpl(HotPath)]
     public byte Read(ushort address) {
         byte data = 0;
         HandleBus(address, MemoryAccessMode.Read, ref data);
@@ -35,7 +38,7 @@ public sealed class PpuMemoryBus : IBusDevice {
         return data;
     }
 
-    [MethodImpl(MethodOptions.Options)]
+    [MethodImpl(HotPath)]
     public ushort GetU16(ushort address) {
         return (ushort) (Read((ushort) (address + 1)) << 8 | Read(address));
     }

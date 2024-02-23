@@ -13,21 +13,22 @@ public static class NintendulatorLog {
     }
 
     public static bool IsInstructionStartCycle(Machine machine) =>
-        machine.State.Cpu.Internal.State == CpuInternalState.ExecutionState.FetchNextInstructionOpcode;
+        machine.State.Cpu.Internal.State == CpuInternalState.ExecutionState.InterpretingFetchedOpcode;
 
     public static string? FormatState(Machine machine, FormatOptions formatOptions) {
-        MachineState machineState = machine.State;
         if (!IsInstructionStartCycle(machine))
             return null;
-
-        machineState.Cpu.Internal.Instruction =
-            Instructions.DescriptorByOpcode[machine.CpuMemoryBus.ReadObserve(machineState.Cpu.PC.Value)];
-
+        
         MachineLogEntry logEntry = CreateMachineLogEntry(machine);
         return FormatMachineLogEntry(logEntry, formatOptions);
     }
 
-    public static void FormatMachineLogEntry(MachineLogEntry machineLogEntry, FormatOptions formatOptions, Span<char> destination, out int charsWritten) {
+    public static void FormatMachineLogEntry(
+        MachineLogEntry machineLogEntry,
+        FormatOptions formatOptions,
+        Span<char> destination,
+        out int charsWritten
+    ) {
         const int maxLength = 105;
         if (destination.Length < maxLength)
             throw new ArgumentException("Length < " + maxLength, nameof(destination));
@@ -224,8 +225,8 @@ public static class NintendulatorLog {
             }
         }
 
-// @formatter:off
-        AppendText(result, "CYC:"); AppendValue(result, cpu.CpuCycles, "0");
+        // @formatter:off
+        AppendText(result, "CYC:"); AppendValue(result, cpu.Cycles, "0");
         // @formatter:on
 
         charsWritten = cursor;
@@ -241,18 +242,19 @@ public static class NintendulatorLog {
     public static MachineLogEntry CreateMachineLogEntry(Machine machine) {
         MachineState machineState = machine.State;
         CpuState cpu = machineState.Cpu;
-        InstructionDescriptor instruction = cpu.Internal.Instruction;
+        //InstructionDescriptor instruction = cpu.Internal.Instruction;
+        InstructionDescriptor instruction = Instructions.DescriptorByOpcode[Read(cpu.Internal.AddressBus.Value)];
 
         MachineLogEntry.CpuState cpuState = new(
             cpu.Internal.AddressBus.Value,
             cpu.A,
             cpu.X,
             cpu.Y,
-            cpu.P.ToFlags(),
+            cpu.P.AsFlags,
             cpu.SP,
-            instruction,
+            instruction.Opcode,
             default,
-            machineState.CpuCycles,
+            machineState.Cpu.Internal.Cycles,
             0,
             0,
             0,
@@ -395,6 +397,7 @@ public static class NintendulatorLog {
         };
 
         MachineLogEntry.PpuState ppuState = new(
+            machine.State.Ppu.Internal.Cycles,
             (short) machine.State.Ppu.Internal.Scanline,
             (short) machine.State.Ppu.Internal.CyclesInScanline
         );

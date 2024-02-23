@@ -10,7 +10,7 @@ public static class AssemblerUtility {
 
         Interpreter interpreter = new(new Options {
             ArchitectureOptions = new ArchitectureOptions {
-                Cpuid = "6502i"
+                Cpuid = "6502i",
             },
             GeneralOptions = new GeneralOptions {
             },

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType>Exe</OutputType>
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -19,7 +19,7 @@
         <PublishSingleFile>True</PublishSingleFile>
         <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
         <SelfContained>true</SelfContained>
-        <PublishReadyToRun>True</PublishReadyToRun>
+        <PublishReadyToRun>False</PublishReadyToRun>
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     </PropertyGroup>

@@ -83,10 +83,15 @@ public readonly unsafe ref struct PpuPreviewStateUpdater {
     }
 
     private PpuObjectPalette FillPalette(ushort address) {
+        byte bgColorIndex = PpuBusDevice.ReadObserve(0x3F00);
+
         PpuObjectPalette palette;
-        for (int i = 0; i < 4; i++) {
+        
+        palette.ColorIndices[0] = bgColorIndex;
+        
+        for (int i = 0; i < 3; i++) {
             byte colorIndex = PpuBusDevice.ReadObserve((ushort) (address + i));
-            palette.ColorIndices[i] = colorIndex;
+            palette.ColorIndices[i + 1] = colorIndex;
         }
 
         return palette;

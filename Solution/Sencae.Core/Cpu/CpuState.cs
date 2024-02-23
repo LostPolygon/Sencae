@@ -1,8 +1,8 @@
 namespace Sencae;
 
 public sealed class CpuState {
-    public byte[] Memory = new byte[2048];
-    public byte[] IORegisters = new byte[32];
+    public byte[] Memory = null!;
+    public byte[] IORegisters = null!;
 
     // General purpose registers
     public byte A = 0;
@@ -20,5 +20,17 @@ public sealed class CpuState {
     public CpuInternalState Internal = default;
 
     public CpuState() {
+        Reset();
+    }
+
+    public void Reset() {
+        Memory = new byte[2048];
+        IORegisters = new byte[32];
+
+        A = X = Y = SP = 0;
+        P = default;
+        PC = default;
+
+        Internal = default;
     }
 }

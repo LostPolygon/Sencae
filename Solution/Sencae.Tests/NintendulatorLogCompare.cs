@@ -4,10 +4,12 @@ namespace Sencae.Tests;
 
 public static class NintendulatorLogCompare {
     public static void ResetMachineToNintendulatorInitialState(Machine machine) {
-        CpuMemoryBus cpuMemoryBus = machine.CpuMemoryBus;
+        MachineCpuMemoryBus cpuMemoryBus = machine.CpuMemoryBus;
 
         machine.State.Ppu.PPUCTRL = (PpuControlRegisterFlags) 0x0;
         machine.State.Ppu.PPUSTATUS =  (PpuStatusRegisterFlags) 0x0;
+        machine.State.Cpu.Internal.Cycles = 7;
+        machine.State.MachineCycles = 7 * 3;
         //cpuMemoryBus.Write(0x2000, 0xFF);
         //cpuMemoryBus.Write(0x2002, 0xFF);
         //machine.State.Ppu.OAMADDR = 0xFF;

@@ -1,11 +1,12 @@
 using System;
+using Sencae.Mappers;
 
 namespace Sencae;
 
-public record CartridgeDevice(
+public sealed record CartridgeDevice(
     CartridgeData CartridgeData,
-    CartridgeToCpuBusDevice CartridgeToCpuBusDevice,
-    CartridgeToPpuBusDevice CartridgeToPpuBusDevice
+    Mapper000.CartridgeToCpuBusDevice CartridgeToCpuBusDevice,
+    Mapper000.CartridgeToPpuBusDevice CartridgeToPpuBusDevice
 ) : IDisposable {
     public void Dispose() {
         CartridgeToCpuBusDevice.Dispose();

@@ -346,7 +346,7 @@
 
                 switch (opcodeInstructionType) {
                     case "JSR":
-                        instructionFlags += (instructionFlags ? " | " : "") + "SpecialAddressing";
+                        //instructionFlags += (instructionFlags ? " | " : "") + "SpecialAddressing";
                         break;
                 }
 
@@ -416,8 +416,10 @@
                     case "BVS":
                     case "BVC":
                     case "JSR":
-                    //case "RTS":
+                    case "RTS":
                     case "RTI":
+                    case "PHP":
+                    case "PHA":
                         instructionFlags += (instructionFlags ? " | " : "") + "FetchesNextOpcode";
                         break;
                 }
@@ -426,16 +428,20 @@
                     case "STA":
                     case "STX":
                     case "STY":
+
                     case "PHA":
                     case "PLA":
                     case "PHP":
                     case "PLP":
+
                     case "INC":
                     case "DEC":
+
                     case "LSR":
                     case "ASL":
                     case "ROL":
                     case "ROR":
+
                     case "BCS":
                     case "BCC":
                     case "BEQ":
@@ -444,11 +450,13 @@
                     case "BPL":
                     case "BVS":
                     case "BVC":
+
                     case "JMP":
                     case "JSR":
                     case "RTS":
                     case "BRK":
                     case "RTI":
+
                     case "SAX":
                     case "DCP":
                     case "ISC":
@@ -473,6 +481,55 @@
                         if (addFlag) {
                             instructionFlags += (instructionFlags ? " | " : "") + "HasMemoryReadWriteLogic";
                         }
+                        break;
+                }
+
+                switch (opcodeInstructionType) {
+                    case "ADC":
+                    case "AND":
+                    case "BIT":
+                    case "CMP":
+                    case "CPX":
+                    case "CPY":
+                    case "EOR":
+                    case "LDA":
+                    case "LDX":
+                    case "LDY":
+                    case "ORA":
+                    case "SBC":
+                        instructionFlags += (instructionFlags ? " | " : "") + "MemoryDataOperation";
+                        break;
+                }
+
+                switch (opcodeInstructionType) {
+                    case "STA":
+                    case "STX":
+                    case "STY":
+                        instructionFlags += (instructionFlags ? " | " : "") + "StoreOperation";
+                        break;
+                } 
+
+                switch (opcodeInstructionType) {
+                    case "ASL":
+                    case "DEC":
+                    case "INC":
+                    case "LSR":
+                    case "ROL":
+                    case "ROR":
+                        instructionFlags += (instructionFlags ? " | " : "") + "ReadModifyWriteOperation";
+                        break;
+                }
+
+                switch (opcodeInstructionType) {
+                    case "BCS":
+                    case "BCC":
+                    case "BEQ":
+                    case "BNE":
+                    case "BMI":
+                    case "BPL":
+                    case "BVS":
+                    case "BVC":
+                        instructionFlags += (instructionFlags ? " | " : "") + "BranchOperation";
                         break;
                 }
 

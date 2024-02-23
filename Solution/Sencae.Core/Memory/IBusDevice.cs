@@ -3,6 +3,6 @@ using System.Runtime.CompilerServices;
 namespace Sencae;
 
 public interface IBusDevice {
-    [MethodImpl(MethodOptions.Options)]
+    [MethodImpl(HotPath)]
     bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus);
 }

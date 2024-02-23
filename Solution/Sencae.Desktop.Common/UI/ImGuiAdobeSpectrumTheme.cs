@@ -123,14 +123,13 @@ public static unsafe class ImGuiAdobeSpectrumTheme {
     }
     
     private static void ConvertColorFormat(ImGuiStyle* style) {
-        return;
-        Vector4* colors = &style->Colors_0;
+        /*Vector4* colors = &style->Colors_0;
         for (int i = 0; i < (int) ImGuiCol.COUNT; i++) {
             colors[i] = colors[i] with {
                 X = colors[i].Z,
                 Z = colors[i].X,
             };
-        }
+        }*/
     }
 
     public static class StaticColors {
