@@ -52,7 +52,7 @@ public static class DebugEmulationRunner {
         Action<string> outputState = default!;
         if (!options.SkipOutputState) {
             formatState = options.FormatState ?? (m => MachineStateFormatter.FormatCpuState(m.State));
-            outputState = options.OutputState ?? Console.WriteLine;
+            outputState = options.OutputState ?? GetDefaultOutputMethod();
         }
 
         for (ulong i = 0; i < options.MaxMachineCycles; i++) {
@@ -77,6 +77,15 @@ public static class DebugEmulationRunner {
                     break;
             }
         }
+    }
+
+    private static Action<string> GetDefaultOutputMethod() {
+        if (CIUtility.IsRunningUnderCI) {
+            return _ => {
+            };
+        }
+        
+        return Console.WriteLine;
     }
 
     public record RunnerOptions {

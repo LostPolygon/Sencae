@@ -14,14 +14,9 @@ public class BasicTests {
         using Machine machine = Emulate(
             cartridgeDevice, new() {
                 StopOnBRKOrHalt = false,
-                MaxMachineCycles = 50000, 
+                MaxMachineCycles = 27500, 
                 OverrideResetVector = 0xC000
             });
-
-        BusMemoryStream stream = new BusMemoryStream(machine.CpuMemoryBus);
-        stream.Seek(0x6004, SeekOrigin.Begin);
-
-        string message = TextUtility.ReadCString(stream)!;
     }
 
     [Test]

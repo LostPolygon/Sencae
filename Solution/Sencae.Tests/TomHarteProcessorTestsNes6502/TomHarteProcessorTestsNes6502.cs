@@ -1,5 +1,6 @@
 using System.Runtime.ExceptionServices;
 using NUnit.Framework;
+using Sencae.SharedUtility;
 using SharpCompress;
 using SharpCompress.Archives;
 
@@ -153,7 +154,7 @@ public class TomHarteProcessorTestsNes6502 {
         using Stream entryStream = firstEntry.OpenEntryStream();
         entryStream.ReadFully(decompressedBuffer);
 
-        if (Environment.GetEnvironmentVariable("CI") != "1") {
+        if (!CIUtility.IsRunningUnderCI) {
             File.WriteAllBytes(testFileCachedPath, decompressedBuffer);
         }
 

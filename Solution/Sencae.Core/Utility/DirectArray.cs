@@ -13,7 +13,7 @@ public readonly struct DirectArray<T> : IDisposable where T : unmanaged {
     public readonly T[] DataRaw;
     public readonly int Length;
     public readonly int Offset;
-    private readonly GCHandle _gcHandler;
+    private readonly GCHandle _gcHandle;
 #if USE_DATA_POINTER
     private readonly unsafe T* _data;
 #else
@@ -31,10 +31,10 @@ public readonly struct DirectArray<T> : IDisposable where T : unmanaged {
         Offset = offset;
         DataRaw = data;
         Length = DataRaw.Length;
-        _gcHandler = GCHandle.Alloc(DataRaw, GCHandleType.Pinned);
+        _gcHandle = GCHandle.Alloc(DataRaw, GCHandleType.Pinned);
 #if USE_DATA_POINTER
         unsafe {
-            _data = (T*) GCHandle.AddrOfPinnedObject();
+            _data = (T*) _gcHandle.AddrOfPinnedObject();
         }
 #else
         _data = DataRaw;
@@ -44,7 +44,7 @@ public readonly struct DirectArray<T> : IDisposable where T : unmanaged {
     [MethodImpl(HotPath)]
     public int CalculateIndex(int address) {
 #if USE_DATA_POINTER
-        Debug.Assert(GCHandle.IsAllocated, "GCHandle.IsAllocated");
+        Debug.Assert(_gcHandle.IsAllocated, "GCHandle.IsAllocated");
 #endif
 
         int index = (address - Offset) % Length;
@@ -58,7 +58,7 @@ public readonly struct DirectArray<T> : IDisposable where T : unmanaged {
     }
 
     public void Dispose() {
-        _gcHandler.Free();
+        _gcHandle.Free();
     }
 
     public override string ToString() =>
