@@ -98,5 +98,9 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: App archive
-        path: ${{ env.Main_Project_Directory }}/bin/${{ matrix.configuration[0] }}/net8.0/publish
+        name: Sencae_${{ matrix.configuration[0] }}_${{ env.Publish_Platform }}
+        path: ${{ env.Main_Project_Directory }}/bin/${{ matrix.configuration[0] }}/net8.0/${{ env.Publish_Platform }}/publish
+        if-no-files-found: error
+        compression-level: 9
+      env:
+        Publish_Platform: win-x64
