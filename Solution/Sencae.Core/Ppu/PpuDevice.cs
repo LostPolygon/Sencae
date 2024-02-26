@@ -23,7 +23,7 @@ public sealed class PpuDevice {
 
         _ppuState.Memory.AsSpan().Clear();
         _ppuState.OamMemory.AsSpan().Clear();
-        _ppuState.PalleteMemory.AsSpan().Clear();
+        _ppuState.PaletteMemory.AsSpan().Clear();
     }
 
     public void Clock() {

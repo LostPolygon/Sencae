@@ -1,33 +1,25 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Sencae.Mappers;
 
 public static class Mapper000 {
-    public readonly struct CartridgeToCpuBusDevice : IBusDevice, IDisposable {
-        private readonly DirectArray<byte> _prgRomMemory;
-        private readonly DirectArray<byte>? _prgRamMemory;
-
-        public CartridgeToCpuBusDevice(byte[] prgRom, byte[]? prgRam = null) {
-            _prgRomMemory = new DirectArray<byte>(prgRom, 0x8000);
-
-            if (prgRam != null) {
-                _prgRamMemory = new DirectArray<byte>(prgRam, 0x6000);
-            }
-        }
+    public readonly struct CartridgeToCpuBusDevice(byte[] prgRom, byte[]? prgRam = null) : IMapperDevice {
+        private readonly DirectArray<byte> _prgRomMemory = new(prgRom, 0x8000);
+        private readonly DirectArray<byte>? _prgRamMemory = DirectArray.FromNullable(prgRam, 0x6000);
 
         [MethodImpl(HotPath)]
         public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
-            switch (address) {
-                case >= 0x6000 and < 0x8000: {
-                    return BusDeviceHandlers.ReadWrite(_prgRamMemory, address, accessMode, ref bus);
-                }
-                case >= 0x8000 and <= 0xFFFF: {
-                    return BusDeviceHandlers.ReadWrite(_prgRomMemory, address, accessMode, ref bus);
-                }
-            }
+            return address switch {
+                >= 0x6000 and < 0x8000 => BusDeviceHandlers.ReadWrite(_prgRamMemory, address, accessMode, ref bus),
+                >= 0x8000 and <= 0xFFFF => BusDeviceHandlers.ReadWrite(_prgRomMemory, address, accessMode, ref bus),
+                _ => false
+            };
+        }
 
-            return false;
+        public void Reset() {
+            _prgRamMemory?.AsSpan().Clear();
         }
 
         public void Dispose() {
@@ -36,26 +28,33 @@ public static class Mapper000 {
         }
     }
 
-    public readonly struct CartridgeToPpuBusDevice : IBusDevice, IDisposable {
-        public readonly byte[] ChrRom;
-
-        private readonly DirectArray<byte> _chrRomMemory;
-
-        public CartridgeToPpuBusDevice(byte[] chrRom) {
-            ChrRom = chrRom;
-            _chrRomMemory = new DirectArray<byte>(ChrRom, -ChrRom.Length);
-        }
+    public readonly struct CartridgeToPpuBusDevice(byte[]? chrRom, byte[]? chrRam) : IMapperDevice {
+        private readonly DirectArray<byte>? _chrRomMemory = DirectArray.FromNullable(chrRom);
+        private readonly DirectArray<byte>? _chrRamMemory = DirectArray.FromNullable(chrRam);
 
         [MethodImpl(HotPath)]
         public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
-            return address switch {
-                >= 0x0000 and <= 0x1FFF => BusDeviceHandlers.ReadOnly(_chrRomMemory, address, accessMode, ref bus),
-                _ => false
-            };
+            switch (address) {
+                case >= 0x0000 and <= 0x1FFF:
+                    if (_chrRomMemory != null)
+                        return BusDeviceHandlers.ReadOnlyIndexed(_chrRomMemory.Value, address, accessMode, ref bus);
+
+                    if (_chrRamMemory != null)
+                        return BusDeviceHandlers.ReadWriteIndexed(_chrRamMemory.Value, address, accessMode, ref bus);
+
+                    Debug.Assert(_chrRomMemory != null || _chrRamMemory != null, "_chrRomMemory != null || _chrRamMemory != null");
+                    return false;
+                default:
+                    return false;
+            }
+        }
+        
+        public void Reset() {
+            _chrRamMemory?.AsSpan().Clear();
         }
 
         public void Dispose() {
-            _chrRomMemory.Dispose();
+            _chrRomMemory?.Dispose();
         }
     }
 }

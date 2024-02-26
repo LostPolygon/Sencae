@@ -31,12 +31,12 @@ public sealed class Machine : IDisposable {
 
         PpuDevice = new PpuDevice(State.Ppu, State.Cpu);
         PpuBusDevice = new PpuBusDevice(this);
-        PpuCpuBusDevice = new PpuCpuBusDevice(State, State.Ppu, PpuBusDevice);
+        PpuMemoryBus = new PpuMemoryBus(PpuBusDevice, CartridgeDevice.CartridgeToPpuBusDevice);
+        PpuCpuBusDevice = new PpuCpuBusDevice(State, State.Ppu, PpuMemoryBus);
 
         CpuBusDevice = new CpuBusDevice(State.Cpu);
         CpuMemoryBus = new MachineCpuMemoryBus(CpuBusDevice, PpuCpuBusDevice, CartridgeDevice.CartridgeToCpuBusDevice);
         CpuDevice = new CpuDevice<MachineCpuMemoryBus>(State.Cpu, CpuMemoryBus);
-        PpuMemoryBus = new PpuMemoryBus(PpuCpuBusDevice, CartridgeDevice.CartridgeToPpuBusDevice);
     }
 
     public void Reset(CpuResetOptions? options = null, bool hardReset = true) {
@@ -51,6 +51,8 @@ public sealed class Machine : IDisposable {
             CpuDevice.SoftReset(options.Value);
         }
 
+        CartridgeDevice.CartridgeToCpuBusDevice.Reset();
+        CartridgeDevice.CartridgeToPpuBusDevice.Reset();
         PpuDevice.SoftReset();
     }
 

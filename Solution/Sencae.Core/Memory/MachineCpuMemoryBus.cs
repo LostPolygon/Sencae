@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using Sencae.Mappers;
 using Sencae.Ppu;
 
 namespace Sencae;
@@ -7,12 +6,12 @@ namespace Sencae;
 public sealed class MachineCpuMemoryBus : CpuMemoryBusBase {
     public readonly CpuBusDevice CpuBusDevice;
     public readonly PpuCpuBusDevice PpuCpuBusDevice;
-    public readonly Mapper000.CartridgeToCpuBusDevice CartridgeToCpuBusDevice;
+    public readonly IBusDevice CartridgeToCpuBusDevice;
 
     public MachineCpuMemoryBus(
         CpuBusDevice cpuBusDevice,
         PpuCpuBusDevice ppuCpuBusDevice,
-        Mapper000.CartridgeToCpuBusDevice cartridgeToCpuBusDevice
+        IBusDevice cartridgeToCpuBusDevice
     ) {
         CpuBusDevice = cpuBusDevice;
         PpuCpuBusDevice = ppuCpuBusDevice;

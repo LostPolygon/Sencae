@@ -5,8 +5,8 @@ namespace Sencae;
 
 public sealed record CartridgeDevice(
     CartridgeData CartridgeData,
-    Mapper000.CartridgeToCpuBusDevice CartridgeToCpuBusDevice,
-    Mapper000.CartridgeToPpuBusDevice CartridgeToPpuBusDevice
+    IMapperDevice CartridgeToCpuBusDevice,
+    IMapperDevice CartridgeToPpuBusDevice
 ) : IDisposable {
     public void Dispose() {
         CartridgeToCpuBusDevice.Dispose();

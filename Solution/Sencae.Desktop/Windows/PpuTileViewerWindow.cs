@@ -68,7 +68,12 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
 
         {
             using (Profiler.Begin(nameof(PpuTileViewerWindow) + "_UpdateState", TimeUnit.Millisecond)) {
-                new PpuPreviewStateUpdater(Emulator.Machine.PpuBusDevice, _previewState).Update();
+                new PpuPreviewStateUpdater(
+                        Emulator.Machine.PpuBusDevice,
+                        Emulator.Machine.PpuMemoryBus,
+                        _previewState
+                    )
+                    .Update();
             }
 
             using (Profiler.Begin(nameof(PpuTileViewerWindow) + "_UpdateTextures", TimeUnit.Millisecond)) {
@@ -83,7 +88,7 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
 
                 using DynamicSdlTexture.LockedSurface nametable0Surface = _nametable0Texture.Lock();
                 UpdateNametableTexture(_previewState, _previewState.Nametable0, _previewState.Nametable0Attributes, nametable0Surface.Surface);
-                
+
                 using DynamicSdlTexture.LockedSurface nametable1Surface = _nametable1Texture.Lock();
                 UpdateNametableTexture(_previewState, _previewState.Nametable1, _previewState.Nametable1Attributes, nametable1Surface.Surface);
             }
@@ -93,9 +98,9 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
             ImGui.TextUnformatted($"Scanline: {Emulator.Machine.State.Ppu.Internal.Scanline}");
             ImGui.TextUnformatted($"Scanline cycle: {Emulator.Machine.State.Ppu.Internal.CyclesInScanline}");
             ImGui.TextUnformatted($"Frames: {Emulator.Machine.State.Ppu.Internal.Frames}");
-            
+
             ImGui.Separator();
-            
+
             DrawPatternTable(_patternTable0Texture, "Pattern Table 1");
             ImGui.SameLine();
             DrawPatternTable(_patternTable1Texture, "Pattern Table 2");
@@ -105,7 +110,7 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
             ImGui.Checkbox("Draw Attribute Grid", ref _drawAttributeGrid);
 
             Vector2 oldItemSpacing = ImGui.GetStyle().ItemSpacing;
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, oldItemSpacing/* with { X = 0 }*/);
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, oldItemSpacing /* with { X = 0 }*/);
             DrawNametable(_nametable0Texture, _previewState.Nametable0, _previewState.Nametable0Attributes, 0);
             ImGui.SameLine();
             DrawNametable(_nametable1Texture, _previewState.Nametable1, _previewState.Nametable1Attributes, 1);
@@ -360,11 +365,12 @@ public unsafe class PpuTileViewerWindow : AppWindow, IDisposable {
 
                     byte pixelPaletteColorIndex = patternTable.Tiles[patternTableTileIndex].PaletteColorIndices[tilePixelIndex];
                     PpuObjectPalette palette = _previewState.BackgroundPalettes[tilePaletteIndex];
+
                     //pixelPaletteColorIndex = (byte) (3 - pixelPaletteColorIndex);
                     //pixelPaletteColorIndex = (byte) ((pixelPaletteColorIndex + 3) % 4);
-                    
+
                     surfacePixels[surfacePixelIndex] = (int) Context.SharedResources.PpuPalette.Colors[palette.ColorIndices[pixelPaletteColorIndex]];
-                    
+
                     //surfacePixels[surfacePixelIndex] = (int) paletteColors[pixelPaletteColorIndex];
                 }
             }

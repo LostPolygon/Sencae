@@ -22,12 +22,6 @@ public class Emulator : IDisposable {
 
     public void LoadRom(string romFilePath) {
         CartridgeData cartridgeData = NesFileParser.Parse(File.ReadAllBytes(romFilePath));
-        
-        // HACK
-        cartridgeData = cartridgeData with {
-            ChrRom = cartridgeData.ChrRom.Length == 0 ? new byte[16 * 1024] : cartridgeData.ChrRom,
-            IsChrRomWriteable = true,
-        };
 
         Machine newMachine = new(CartridgeDeviceFactory.Create(cartridgeData));
         

@@ -19,10 +19,10 @@ public static class DebugEmulationRunner {
         programRom[^4] = (byte) resetVector;
         programRom[^3] = (byte) (resetVector >> 8);
 
-        byte[] characterRom = new byte[8 * 1024];
+        byte[] characterRam = new byte[8 * 1024];
         byte[] programRam = new byte[programRamSize];
 
-        CartridgeData cartridgeData = new(0, programRom, characterRom, true);
+        CartridgeData cartridgeData = new(0, programRom, null, characterRam);
         CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, programRam);
         return cartridgeDevice;
     }

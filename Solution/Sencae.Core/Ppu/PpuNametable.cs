@@ -20,7 +20,7 @@ public struct PpuNametable {
     public struct PpuAttributeTable {
         private PpuAttributeTableEntryFlags _element0;
 
-        public(byte bottomRight, byte bottomLeft, byte topRight, byte topLeft) Decode(PpuAttributeTableEntryFlags flags) {
+        public readonly (byte bottomRight, byte bottomLeft, byte topRight, byte topLeft) Decode(PpuAttributeTableEntryFlags flags) {
             /*
             7654 3210
             |||| ||++- Color bits 3-2 for top left quadrant of this byte

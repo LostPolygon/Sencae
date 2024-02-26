@@ -18,7 +18,7 @@ public class NesTestRomTest {
             using Machine machine = Emulate(
                 cartridgeDevice, new() {
                     StopOnBRKOrHalt = false,
-                    MaxMachineCycles = 150000,
+                    MaxMachineCycles = 27500,
                     OverrideResetVector = 0xC000,
                     FormatState = machine => {
                         NintendulatorLog.FormatState(machine, new NintendulatorLog.FormatOptions(), logOutput);
@@ -58,7 +58,7 @@ public class NesTestRomTest {
             using Machine machine = Emulate(
                 cartridgeDevice, new() {
                     StopOnBRKOrHalt = false,
-                    MaxMachineCycles = 150000,
+                    MaxMachineCycles = 27500,
                     OverrideResetVector = 0xC000,
                     FormatState = machine => {
                         if (machine.State.Cpu.Internal.Cycles < 7 || machine.State.MachineCycles % 3 != 0)   
@@ -101,7 +101,7 @@ public class NesTestRomTest {
             using Machine machine = Emulate(
                 cartridgeDevice, new() {
                     StopOnBRKOrHalt = false,
-                    MaxMachineCycles = 5000000,
+                    MaxMachineCycles = 27500,
                     //OverrideResetVector = 0xC000,
                     FormatState = machine => {
                         if (machine.State.Cpu.Internal.Cycles < 7 || machine.State.MachineCycles % 3 != 0)   

@@ -4,32 +4,21 @@ using System.Runtime.CompilerServices;
 namespace Sencae.Ppu;
 
 public sealed class PpuBusDevice : IBusDevice, IDisposable {
-    public readonly Machine Machine;
-
-    private readonly DirectArray<byte> _chrRomMemory;
     private readonly DirectArray<byte> _memory;
     private readonly DirectArray<byte> _oamMemory;
-    private readonly DirectArray<byte> _palleteMemory;
+    private readonly DirectArray<byte> _paletteMemory;
     private PpuState _state;
 
     public PpuBusDevice(Machine machine) {
-        Machine = machine;
-
         _state = machine.State.Ppu;
-        _chrRomMemory = new DirectArray<byte>(Machine.CartridgeDevice.CartridgeData.ChrRom);
         _memory = new DirectArray<byte>(_state.Memory);
         _oamMemory = new DirectArray<byte>(_state.OamMemory);
-        _palleteMemory = new DirectArray<byte>(_state.PalleteMemory);
+        _paletteMemory = new DirectArray<byte>(_state.PaletteMemory);
     }
 
     [MethodImpl(HotPath)]
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
         switch (address) {
-            case >= 0x0000 and <= 0x1FFF: // Pattern tables
-                return
-                    Machine.CartridgeDevice.CartridgeData.IsChrRomWriteable ?
-                        BusDeviceHandlers.ReadWriteIndexed(_chrRomMemory, address % 0x2000, accessMode, ref bus) :
-                        BusDeviceHandlers.ReadOnlyIndexed(_chrRomMemory, address % 0x2000, accessMode, ref bus);
             case >= 0x2000 and <= 0x3EFF: // Nametables
                 return BusDeviceHandlers.ReadWriteIndexed(_memory, address % 0x800, accessMode, ref bus);
             case >= 0x3F00 and <= 0x3FFF: // Palette RAM
@@ -46,7 +35,7 @@ public sealed class PpuBusDevice : IBusDevice, IDisposable {
                 };
 
                 const int colorIndexBits = 1 << 6;
-                ref byte mappedData = ref _palleteMemory[address];
+                ref byte mappedData = ref _paletteMemory[address];
                 if (accessMode == MemoryAccessMode.Write) {
                     mappedData = (byte) (bus % colorIndexBits);
                 } else {
@@ -60,10 +49,9 @@ public sealed class PpuBusDevice : IBusDevice, IDisposable {
     }
 
     private void ReleaseUnmanagedResources() {
-        _chrRomMemory.Dispose();
         _memory.Dispose();
         _oamMemory.Dispose();
-        _palleteMemory.Dispose();
+        _paletteMemory.Dispose();
     }
 
     private void Dispose(bool disposing) {

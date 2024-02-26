@@ -9,12 +9,12 @@ using static PpuConstants.RegisterAddresses;
 public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
     private readonly MachineState _machineState;
     private readonly PpuState _state;
-    private readonly PpuBusDevice _ppuBusDevice;
+    private readonly PpuMemoryBus _ppuMemoryBus;
 
-    public PpuCpuBusDevice(MachineState machineState, PpuState state, PpuBusDevice ppuBusDevice) {
+    public PpuCpuBusDevice(MachineState machineState, PpuState state, PpuMemoryBus ppuBusDevice) {
         _machineState = machineState;
         _state = state;
-        _ppuBusDevice = ppuBusDevice;
+        _ppuMemoryBus = ppuBusDevice;
     }
 
     [MethodImpl(HotPath)]
@@ -225,7 +225,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                             if (vramAddress <= 0x3EFF) {
                                 bus = _state.Internal.DataBusLatch;
 
-                                _ppuBusDevice.HandleBus(vramAddress, accessMode, ref _state.Internal.DataBusLatch);
+                                _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref _state.Internal.DataBusLatch);
                             } else if (vramAddress <= 0x3FFF) {
                                 /*
                                  * "Reading palette data from $3F00–$3FFF works differently.
@@ -236,8 +236,8 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                                  * that would appear "underneath" the palette."
                                  */
 
-                                _ppuBusDevice.HandleBus(vramAddress, accessMode, ref bus);
-                                _ppuBusDevice.HandleBus(
+                                _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
+                                _ppuMemoryBus.HandleBus(
                                     (ushort) (vramAddress % 0x1000 + Nametable0StartAddress), // FIXME: is this correct?
                                     accessMode,
                                     ref _state.Internal.DataBusLatch
@@ -246,7 +246,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                                 mustUpdateBus = false;
                             }
                         } else {
-                            _ppuBusDevice.HandleBus(vramAddress, accessMode, ref bus);
+                            _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
                         }
 
                         if (accessMode != MemoryAccessMode.ReadObserve) {

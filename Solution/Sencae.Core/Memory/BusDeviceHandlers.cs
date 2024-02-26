@@ -10,7 +10,7 @@ public static class BusDeviceHandlers {
 
     [MethodImpl(HotPath)]
     public static bool ReadWriteIndexed(DirectArray<byte> array, int arrayIndex, MemoryAccessMode accessMode, ref byte bus) {
-        Debug.Assert(array.Length > arrayIndex, $"{ReadWriteIndexed}: array.Length > arrayIndex");
+        Debug.Assert(array.Length > arrayIndex, $"{nameof(ReadWriteIndexed)}: array.Length > arrayIndex");
 
         ref byte mappedData = ref array[arrayIndex];
         ReadWriteRaw(ref mappedData, accessMode, ref bus);
@@ -20,7 +20,7 @@ public static class BusDeviceHandlers {
 
     [MethodImpl(HotPath)]
     public static bool ReadOnlyIndexed(DirectArray<byte> array, int arrayIndex, MemoryAccessMode accessMode, ref byte bus) {
-        Debug.Assert(array.Length > arrayIndex, $"{ReadOnlyIndexed}: array.Length > arrayIndex");
+        Debug.Assert(array.Length > arrayIndex, $"{nameof(ReadOnlyIndexed)}: array.Length > arrayIndex");
         if (accessMode == MemoryAccessMode.Write)
             return false;
 
@@ -29,10 +29,18 @@ public static class BusDeviceHandlers {
 
         return true;
     }
+    
+    [MethodImpl(HotPath)]
+    public static bool ReadOnlyIndexed(DirectArray<byte>? array, int arrayIndex, MemoryAccessMode accessMode, ref byte bus) {
+        if (array == null)
+            return false;
+
+        return ReadOnlyIndexed(array.Value, arrayIndex, accessMode, ref bus);
+    }
 
     [MethodImpl(HotPath)]
     public static bool WriteOnlyIndexed(DirectArray<byte> array, int arrayIndex, MemoryAccessMode accessMode, ref byte bus) {
-        Debug.Assert(array.Length > arrayIndex, $"{WriteOnlyIndexed}: array.Length > arrayIndex");
+        Debug.Assert(array.Length > arrayIndex, $"{nameof(WriteOnlyIndexed)}: array.Length > arrayIndex");
         if (accessMode != MemoryAccessMode.Write)
             return false;
 

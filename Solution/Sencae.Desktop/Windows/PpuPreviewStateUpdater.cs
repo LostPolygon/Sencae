@@ -6,10 +6,12 @@ namespace Sencae.Desktop;
 
 public readonly unsafe ref struct PpuPreviewStateUpdater {
     public readonly PpuBusDevice PpuBusDevice;
+    public readonly PpuMemoryBus PpuMemoryBus;
     public readonly PpuPreviewState PreviewState;
 
-    public PpuPreviewStateUpdater(PpuBusDevice ppuBusDevice, PpuPreviewState previewState) {
+    public PpuPreviewStateUpdater(PpuBusDevice ppuBusDevice, PpuMemoryBus ppuMemoryBus, PpuPreviewState previewState) {
         PpuBusDevice = ppuBusDevice;
+        PpuMemoryBus = ppuMemoryBus;
         PreviewState = previewState;
     }
 
@@ -114,8 +116,8 @@ public readonly unsafe ref struct PpuPreviewStateUpdater {
             ushort address = (ushort) (baseAddress + tilePixelRow);
 
             byte pixelPaletteValue = (byte) (
-                ((PpuBusDevice.ReadObserve(address) >> bit) & 1) |
-                (((PpuBusDevice.ReadObserve((ushort) (address + 8)) >> bit) & 1) << 1)
+                ((PpuMemoryBus.ReadObserve(address) >> bit) & 1) |
+                (((PpuMemoryBus.ReadObserve((ushort) (address + 8)) >> bit) & 1) << 1)
             );
 
             tile64Bytes[tilePixelIndex] = pixelPaletteValue;

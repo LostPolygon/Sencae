@@ -4,7 +4,7 @@ namespace Sencae.Ppu;
 
 public sealed class PpuState {
     public byte[] Memory = new byte[2048];
-    public byte[] PalleteMemory = new byte[32];
+    public byte[] PaletteMemory = new byte[32];
     public byte[] OamMemory = new byte[256];
 
     public PpuControlRegisterFlags PPUCTRL;

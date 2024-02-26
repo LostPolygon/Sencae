@@ -11,10 +11,10 @@ public static unsafe class NesFileParser {
         Nes20Header header = MemoryMarshal.Cast<byte, Nes20Header>(byteSpan)[0];
         if (header.Magic != Nes20Header.ValidMagic)
             throw new Exception("Invalid NES 2.0 magic");
-        
+
         position += sizeof(Nes20Header);
 
-        int mapper = 
+        int mapper =
             (int) (header.Flags6 & Nes20Header.Flags.Flags6.MapperNumberLowerNybble) >> 4 |
             (int) (header.Flags7 & Nes20Header.Flags.Flags7.MapperNumberUpperNybble);
 
@@ -25,6 +25,14 @@ public static unsafe class NesFileParser {
         position += prgRomSize;
         Span<byte> chrRom = byteSpan[position..(position + chrRomSize)];
 
-        return new CartridgeData(mapper, prgRom.ToArray(), chrRom.ToArray(), false);
+        byte[]? chrRomArray = chrRomSize != 0 ? chrRom.ToArray() : null;
+        byte[]? chrRam = chrRomSize == 0 ? new byte[0x2000] : null;
+
+        return new CartridgeData(
+            mapper,
+            prgRom.ToArray(),
+            chrRomArray,
+            chrRam
+        );
     }
 }
