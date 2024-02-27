@@ -15,7 +15,7 @@ public sealed class Machine : IDisposable {
     public PpuMemoryBus PpuMemoryBus;
     public PpuBusDevice PpuBusDevice;
 
-    public CartridgeDevice CartridgeDevice;
+    public MapperDevice MapperDevice;
 
     public MachineState State;
 
@@ -24,18 +24,18 @@ public sealed class Machine : IDisposable {
 
     private bool _disposed;
 
-    public Machine(CartridgeDevice cartridgeDevice) {
-        CartridgeDevice = cartridgeDevice;
+    public Machine(MapperDevice mapperDevice) {
+        MapperDevice = mapperDevice;
 
         State = new MachineState();
 
         PpuDevice = new PpuDevice(State.Ppu, State.Cpu);
         PpuBusDevice = new PpuBusDevice(this);
-        PpuMemoryBus = new PpuMemoryBus(PpuBusDevice, CartridgeDevice.CartridgeToPpuBusDevice);
+        PpuMemoryBus = new PpuMemoryBus(PpuBusDevice, MapperDevice.CartridgeToPpuBusDevice);
         PpuCpuBusDevice = new PpuCpuBusDevice(State, State.Ppu, PpuMemoryBus);
 
         CpuBusDevice = new CpuBusDevice(State.Cpu);
-        CpuMemoryBus = new MachineCpuMemoryBus(CpuBusDevice, PpuCpuBusDevice, CartridgeDevice.CartridgeToCpuBusDevice);
+        CpuMemoryBus = new MachineCpuMemoryBus(CpuBusDevice, PpuCpuBusDevice, MapperDevice.CartridgeToCpuBusDevice);
         CpuDevice = new CpuDevice<MachineCpuMemoryBus>(State.Cpu, CpuMemoryBus);
     }
 
@@ -51,8 +51,8 @@ public sealed class Machine : IDisposable {
             CpuDevice.SoftReset(options.Value);
         }
 
-        CartridgeDevice.CartridgeToCpuBusDevice.Reset();
-        CartridgeDevice.CartridgeToPpuBusDevice.Reset();
+        MapperDevice.CartridgeToCpuBusDevice.Reset();
+        MapperDevice.CartridgeToPpuBusDevice.Reset();
         PpuDevice.SoftReset();
     }
 
@@ -92,7 +92,7 @@ public sealed class Machine : IDisposable {
         //PpuMemoryBus.Dispose();
         PpuBusDevice.Dispose();
 
-        CartridgeDevice.Dispose();
+        MapperDevice.Dispose();
     }
 
     public void Dispose() {

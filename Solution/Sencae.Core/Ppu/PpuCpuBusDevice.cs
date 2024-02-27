@@ -63,7 +63,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
         switch (address) {
             case >= 0x2000 and <= 0x3FFF: {
                 int registerIndex = address % 0x8;
- 
+
                 // Writes to the following registers are ignored if earlier than ~29658 CPU clocks after reset:
                 // PPUCTRL, PPUMASK, PPUSCROLL, PPUADDR
                 if (accessMode == MemoryAccessMode.Write && _state.Internal.Cycles <= 29658 * 3) {
@@ -84,7 +84,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                                 bool oldGenerateNmi = (_state.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0;
                                 ref byte mappedData = ref Unsafe.As<PpuControlRegisterFlags, byte>(ref _state.PPUCTRL);
                                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
-                            
+
                                 //Debug.WriteLine($"Set PPUCTRL to: {_state.PPUCTRL}");
                                 return true;
                         }
@@ -110,7 +110,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                     case PPUSTATUS_Index: {
                         ref byte mappedData = ref Unsafe.As<PpuStatusRegisterFlags, byte>(ref _state.PPUSTATUS);
                         byte oldBus = bus;
-                        
+
                         if (accessMode != MemoryAccessMode.Write) {
                             BusDeviceHandlers.ReadOnlyRaw(ref mappedData, accessMode, ref bus);
                         }
@@ -124,6 +124,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                             _state.Internal.LastPPUSTATUS_ReadCycle = _machineState.MachineCycles;
                             _state.Internal.PpuAddressRegisterLatch = false;
                             _state.Internal.PpuScrollRegisterLatch = false;
+
                             //_state.Internal.Address = default;
 
                             mappedData &= (byte) ~PpuStatusRegisterFlags.VerticalBlankStarted;
@@ -204,6 +205,8 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                                     _state.Internal.Address.High = _state.Internal.AddressHighTemp;
                                 }
 
+                                _state.Internal.Address.Value &= 0x7FFF;
+
                                 _state.Internal.PpuAddressRegisterLatch = !_state.Internal.PpuAddressRegisterLatch;
                                 if ((_state.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) == 0) {
                                 }
@@ -222,28 +225,30 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                         // Contents in range 0–$3EFF (before pallete RAM) are buffered
                         ref ushort vramAddress = ref _state.Internal.Address.Value;
                         if (accessMode != MemoryAccessMode.Write) {
-                            if (vramAddress <= 0x3EFF) {
-                                bus = _state.Internal.DataBusLatch;
+                            switch (vramAddress) {
+                                case <= 0x3EFF:
+                                    bus = _state.Internal.DataBusLatch;
 
-                                _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref _state.Internal.DataBusLatch);
-                            } else if (vramAddress <= 0x3FFF) {
-                                /*
-                                 * "Reading palette data from $3F00–$3FFF works differently.
-                                 * The palette data is placed immediately on the data bus,
-                                 * and hence no priming read is required.
-                                 * Reading the palettes still updates the internal buffer though,
-                                 * but the data placed in it is the mirrored nametable data
-                                 * that would appear "underneath" the palette."
-                                 */
+                                    _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref _state.Internal.DataBusLatch);
+                                    break;
+                                case <= 0x3FFF:
+                                    /*
+                                     * "Reading palette data from $3F00–$3FFF works differently.
+                                     * The palette data is placed immediately on the data bus,
+                                     * and hence no priming read is required.
+                                     * Reading the palettes still updates the internal buffer though,
+                                     * but the data placed in it is the mirrored nametable data
+                                     * that would appear "underneath" the palette."
+                                     */
+                                    _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
+                                    _ppuMemoryBus.HandleBus(
+                                        (ushort) (vramAddress % 0x1000 + Nametable0StartAddress), // FIXME: is this correct?
+                                        accessMode,
+                                        ref _state.Internal.DataBusLatch
+                                    );
 
-                                _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
-                                _ppuMemoryBus.HandleBus(
-                                    (ushort) (vramAddress % 0x1000 + Nametable0StartAddress), // FIXME: is this correct?
-                                    accessMode,
-                                    ref _state.Internal.DataBusLatch
-                                );
-
-                                mustUpdateBus = false;
+                                    mustUpdateBus = false;
+                                    break;
                             }
                         } else {
                             _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);

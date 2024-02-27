@@ -3,8 +3,7 @@ using Sencae.Mappers;
 
 namespace Sencae;
 
-public sealed record CartridgeDevice(
-    CartridgeData CartridgeData,
+public sealed record MapperDevice(
     IMapperDevice CartridgeToCpuBusDevice,
     IMapperDevice CartridgeToPpuBusDevice
 ) : IDisposable {

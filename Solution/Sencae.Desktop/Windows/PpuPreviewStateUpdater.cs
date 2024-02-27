@@ -1,69 +1,70 @@
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Sencae.Ppu;
 
 namespace Sencae.Desktop;
 
-public readonly unsafe ref struct PpuPreviewStateUpdater {
-    public readonly PpuBusDevice PpuBusDevice;
-    public readonly PpuMemoryBus PpuMemoryBus;
-    public readonly PpuPreviewState PreviewState;
+public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevice, PpuMemoryBus ppuMemoryBus) {
+    public readonly PpuBusDevice PpuBusDevice = ppuBusDevice;
+    public readonly PpuMemoryBus PpuMemoryBus = ppuMemoryBus;
 
-    public PpuPreviewStateUpdater(PpuBusDevice ppuBusDevice, PpuMemoryBus ppuMemoryBus, PpuPreviewState previewState) {
-        PpuBusDevice = ppuBusDevice;
-        PpuMemoryBus = ppuMemoryBus;
-        PreviewState = previewState;
+    public void FillPalettes(PpuPreviewState.PalettesData palettes) {
+        palettes.Background[0] = FillPalette(0x3F01);
+        palettes.Background[1] = FillPalette(0x3F05);
+        palettes.Background[2] = FillPalette(0x3F09);
+        palettes.Background[3] = FillPalette(0x3F0D);
+
+        palettes.Sprite[0] = FillPalette(0x3F11);
+        palettes.Sprite[1] = FillPalette(0x3F15);
+        palettes.Sprite[2] = FillPalette(0x3F19);
+        palettes.Sprite[3] = FillPalette(0x3F1D);
     }
 
-    public void Update() {
-        FillPatternTable(PpuConstants.PatternTable0.Start.Value, PreviewState.PatternTable0);
-        FillPatternTable(PpuConstants.PatternTable1.Start.Value, PreviewState.PatternTable1);
-
-        PreviewState.BackgroundPalettes[0] = FillPalette(0x3F01);
-        PreviewState.BackgroundPalettes[1] = FillPalette(0x3F05);
-        PreviewState.BackgroundPalettes[2] = FillPalette(0x3F09);
-        PreviewState.BackgroundPalettes[3] = FillPalette(0x3F0D);
-
-        PreviewState.SpritePalettes[0] = FillPalette(0x3F11);
-        PreviewState.SpritePalettes[1] = FillPalette(0x3F15);
-        PreviewState.SpritePalettes[2] = FillPalette(0x3F19);
-        PreviewState.SpritePalettes[3] = FillPalette(0x3F1D);
-
-        FillNametable(0, ref PreviewState.Nametable0, ref PreviewState.Nametable0Attributes);
-        FillNametable(1, ref PreviewState.Nametable1, ref PreviewState.Nametable1Attributes);
+    public void FillPatternTables(PpuPreviewState.PatternTablesData patternTables) {
+        FillPatternTable(PpuConstants.PatternTable0.Start.Value, ref patternTables.PatternTable0);
+        FillPatternTable(PpuConstants.PatternTable1.Start.Value, ref patternTables.PatternTable1);
     }
 
-    private void FillNametableAttributes(
+    public void FillNametables(PpuPreviewState.NametablesData nametables) {
+        Span<PpuPreviewState.NametableData> nametablesSpan = nametables.AsSpan();
+        for (int i = 0; i < nametablesSpan.Length; i++) {
+            FillNametable(i, ref nametablesSpan[i].Nametable, ref nametablesSpan[i].Attributes);
+        }
+    }
+    
+    private static void FillNametableAttributes(
         in PpuNametable nametable,
-        ref PpuPreviewState.PpuNametableAttributesDecoded attributes
+        ref PpuPreviewState.PpuNametableAttributesPaletteIndices attributesPaletteIndices
     ) {
-        fixed (byte* paletteIndicesPtr = attributes.PaletteIndices) {
-            for (int y = 0; y < 8; y++) {
-                for (int x = 0; x < 8; x++) {
-                    int attributeIndex = y * 8 + x;
-                    (byte bottomRight, byte bottomLeft, byte topRight, byte topLeft) =
-                        nametable.AttributeTable.Decode(nametable.AttributeTable[attributeIndex]);
+        Span<byte> paletteIndicesSpan = attributesPaletteIndices;
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                int attributeIndex = y * 8 + x;
+                (byte bottomRight, byte bottomLeft, byte topRight, byte topLeft) =
+                    nametable.AttributeTable.Decode(nametable.AttributeTable[attributeIndex]);
 
-                    int tileBaseIndex = y * 8 * 4 * 4 + x * 4;
+                int tileBaseIndex = y * 8 * 4 * 4 + x * 4;
 
-                    byte* row0 = paletteIndicesPtr + tileBaseIndex;
-                    byte* row1 = row0 + PpuConstants.NametableWidthTiles;
-                    byte* row2 = row1 + PpuConstants.NametableWidthTiles;
-                    byte* row3 = row2 + PpuConstants.NametableWidthTiles;
-
-                    /*
-                     00 01 02 03
-                     04 05 06 07
-                     08 09 10 11
-                     12 13 14 15
-                     */
-
-                    row0[0] = row0[1] = row1[0] = row1[1] = topLeft;
-                    row0[2] = row0[3] = row1[2] = row1[3] = topRight;
-
-                    row2[0] = row2[1] = row3[0] = row3[1] = bottomLeft;
-                    row2[2] = row2[3] = row3[2] = row3[3] = bottomRight;
+                Range CreateRowRange(int index) {
+                    int rangeStart = tileBaseIndex + PpuConstants.NametableWidthTiles * index;
+                    return new(rangeStart, rangeStart + 4);
                 }
+
+                Span<byte> row0 = paletteIndicesSpan[CreateRowRange(0)];
+                Span<byte> row1 = paletteIndicesSpan[CreateRowRange(1)];
+                Span<byte> row2 = paletteIndicesSpan[CreateRowRange(2)];
+                Span<byte> row3 = paletteIndicesSpan[CreateRowRange(3)];
+
+                /*
+                 00 01 02 03
+                 04 05 06 07
+                 08 09 10 11
+                 12 13 14 15
+                 */
+
+                row0[0] = row0[1] = row1[0] = row1[1] = topLeft;
+                row0[2] = row0[3] = row1[2] = row1[3] = topRight;
+
+                row2[0] = row2[1] = row3[0] = row3[1] = bottomLeft;
+                row2[2] = row2[3] = row3[2] = row3[3] = bottomRight;
             }
         }
     }
@@ -71,26 +72,23 @@ public readonly unsafe ref struct PpuPreviewStateUpdater {
     private void FillNametable(
         int nametableIndex,
         ref PpuNametable nametable,
-        ref PpuPreviewState.PpuNametableAttributesDecoded nametableAttributes
+        ref PpuPreviewState.PpuNametableAttributesPaletteIndices nametableAttributes
     ) {
         int baseAddress = PpuConstants.Nametable0StartAddress + sizeof(PpuNametable) * nametableIndex;
 
-        Span<byte> nametableDataRaw = MemoryMarshal.CreateSpan(ref Unsafe.As<PpuNametable, byte>(ref nametable), PpuNametable.Size);
+        Span<byte> nametableDataRaw = MemoryUtility.AsBytes(ref nametable);
         for (ushort i = 0; i < PpuNametable.Size; i++) {
             nametableDataRaw[i] = PpuBusDevice.ReadObserve((ushort) (baseAddress + i));
         }
 
-        nametable = Unsafe.As<byte, PpuNametable>(ref nametableDataRaw[0]);
         FillNametableAttributes(nametable, ref nametableAttributes);
     }
 
     private PpuObjectPalette FillPalette(ushort address) {
-        byte bgColorIndex = PpuBusDevice.ReadObserve(0x3F00);
-
         PpuObjectPalette palette;
-        
+
+        byte bgColorIndex = PpuBusDevice.ReadObserve(0x3F00);
         palette.ColorIndices[0] = bgColorIndex;
-        
         for (int i = 0; i < 3; i++) {
             byte colorIndex = PpuBusDevice.ReadObserve((ushort) (address + i));
             palette.ColorIndices[i + 1] = colorIndex;
@@ -99,11 +97,10 @@ public readonly unsafe ref struct PpuPreviewStateUpdater {
         return palette;
     }
 
-    private void FillPatternTable(int vramOffset, PpuPreviewState.PpuPatternTableDecoded output) {
-        for (int tileIndex = 0; tileIndex < PpuConstants.PatternTableTotalTiles; tileIndex++) {
-            fixed (byte* paletteIndices = output.Tiles[tileIndex].PaletteColorIndices) {
-                FillTileData(vramOffset, tileIndex, new Span<byte>(paletteIndices, PpuConstants.BytesPerDecodedTile));
-            }
+    private void FillPatternTable(int vramOffset, ref PpuPreviewState.PpuPatternTableTiles output) {
+        Span<PpuPreviewState.PpuTilePaletteColorIndices> outputSpan = output;
+        for (int tileIndex = 0; tileIndex < outputSpan.Length; tileIndex++) {
+            FillTileData(vramOffset, tileIndex, outputSpan[tileIndex]);
         }
     }
 

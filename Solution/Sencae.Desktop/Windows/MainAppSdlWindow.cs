@@ -13,7 +13,9 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
     protected SharedResources SharedResources { get; set; }
     protected Emulator Emulator { get; set; }
     protected CpuDebuggerWindow CpuDebuggerWindow { get; set; }
-    protected PpuTileViewerWindow PpuTileViewerWindow { get; set; }
+    protected PpuPatternTableViewerWindow PpuPatternTableViewerWindow { get; set; }
+    protected PpuNametableViewerWindow PpuNametableViewerWindow { get; set; }
+    protected PpuPalettesViewerWindow PpuPalettesViewerWindow { get; set; }
     protected ProfilerWindow ProfilerWindow { get; set; }
     protected CpuMemoryEditor CpuMemoryEditor { get; set; }
     protected MachineLogWindow MachineLogWindow { get; set; }
@@ -66,13 +68,16 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
 
         CpuDebuggerWindow = new CpuDebuggerWindow(appWindowContext, Emulator);
 
-        PpuTileViewerWindow = new PpuTileViewerWindow(appWindowContext, Emulator);
+        PpuPatternTableViewerWindow = new PpuPatternTableViewerWindow(appWindowContext, Emulator);
+        PpuNametableViewerWindow = new PpuNametableViewerWindow(appWindowContext, Emulator);
+        PpuPalettesViewerWindow = new PpuPalettesViewerWindow(appWindowContext, Emulator);
 
         ProfilerWindow = new ProfilerWindow(appWindowContext);
         CpuMemoryEditor = new CpuMemoryEditor(appWindowContext, Emulator);
         MachineLogWindow = new MachineLogWindow(appWindowContext, Emulator);
         
         DearImGuiDemoWindow = new DearImGuiDemoWindow(appWindowContext);
+        DearImGuiDemoWindow.Close();
     }
 
     public override void MainLoopEvent(MainLoopEvent mainLoopEvent) {
@@ -130,7 +135,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         Emulator.Dispose();
         SharedResources.Dispose();
 
-        PpuTileViewerWindow.Dispose();
+        PpuPatternTableViewerWindow.Dispose();
     }
 
     protected override void RenderContent() {
@@ -169,7 +174,9 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         }
 
         CpuDebuggerWindow.Draw(deltaTime);
-        PpuTileViewerWindow.Draw(deltaTime);
+        PpuPatternTableViewerWindow.Draw(deltaTime);
+        PpuNametableViewerWindow.Draw(deltaTime);
+        PpuPalettesViewerWindow.Draw(deltaTime);
         ProfilerWindow.Draw(deltaTime);
 
         CpuMemoryEditor.Draw(deltaTime);
@@ -214,7 +221,9 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
 
                 DrawWindowItem(IconsFontAwesome5.Bug + " CPU Debugger", CpuDebuggerWindow);
                 DrawWindowItem("CPU Memory", CpuMemoryEditor);
-                DrawWindowItem("CHR Viewer", PpuTileViewerWindow);
+                DrawWindowItem(PpuPatternTableViewerWindow.Title, PpuPatternTableViewerWindow);
+                DrawWindowItem(PpuNametableViewerWindow.Title, PpuNametableViewerWindow);
+                DrawWindowItem(PpuPalettesViewerWindow.Title, PpuPalettesViewerWindow);
                 DrawWindowItem("Profiler", ProfilerWindow);
                 DrawWindowItem("Machine Log", MachineLogWindow);
                 ImGui.Separator();

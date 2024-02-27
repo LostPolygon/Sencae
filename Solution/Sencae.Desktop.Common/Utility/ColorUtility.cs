@@ -32,6 +32,10 @@ public static class ColorUtility {
 
         return L;
     }
+    
+    public static uint ColorAsAbgrUint(byte r, byte g, byte b, byte a) {
+        return (uint) ((a << 24) | (b << 16) | (g << 8) | r);
+    }
 
     public static uint ArgbToAbgr(uint color) {
         const uint RMask = 0x00FF0000;

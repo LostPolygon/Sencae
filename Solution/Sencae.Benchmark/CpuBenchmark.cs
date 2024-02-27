@@ -45,7 +45,7 @@ public class CpuBenchmark {
     public const ulong CycleCount = 26548; // nestest.log ends here
     public const int InternalIterations = 1000;
 
-    public CartridgeDevice CartridgeDevice { get; private set; } = null!;
+    public MapperDevice MapperDevice { get; private set; } = null!;
     public Machine Machine { get; private set; } = null!;
 
     public ulong Emulate(int iterations = InternalIterations, ulong maxCycles = CycleCount) {
@@ -72,9 +72,9 @@ public class CpuBenchmark {
     public void Setup() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData);
+        MapperDevice = MapperDeviceFactory.Create(cartridgeData);
 
-        Machine = new Machine(CartridgeDevice);
+        Machine = new Machine(MapperDevice);
         Machine.Reset(
             new CpuResetOptions {
                 OverrideResetVector = 0xC000,

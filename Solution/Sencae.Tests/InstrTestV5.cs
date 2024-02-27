@@ -141,10 +141,10 @@ public class InstrTestV5 {
     ) {
         byte[] testRom = File.ReadAllBytes($"Resources/instr_test-v5/{testRomName}.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
+        MapperDevice mapperDevice = MapperDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
 
         List<string> logOutput = new();
-        using Machine machine = new Machine(cartridgeDevice);
+        using Machine machine = new Machine(mapperDevice);
         try {
             Func<Machine, string> formatStateFunc =
                 referenceLogFile == null ?

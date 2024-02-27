@@ -4,7 +4,7 @@ using static Sencae.SharedUtility.AssemblerUtility;
 namespace Sencae.SharedUtility;
 
 public static class DebugEmulationRunner {
-    public static CartridgeDevice CreateCodeCartridge(
+    public static MapperDevice CreateCodeCartridge(
         string assembly,
         ushort programRomSize = 32 * 1024,
         ushort programRamSize = 4 * 1024
@@ -23,12 +23,12 @@ public static class DebugEmulationRunner {
         byte[] programRam = new byte[programRamSize];
 
         CartridgeData cartridgeData = new(0, programRom, null, characterRam);
-        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, programRam);
-        return cartridgeDevice;
+        MapperDevice mapperDevice = MapperDeviceFactory.Create(cartridgeData, programRam);
+        return mapperDevice;
     }
 
-    public static Machine Emulate(CartridgeDevice cartridgeDevice, RunnerOptions? options = null) {
-        Machine machine = new(cartridgeDevice);
+    public static Machine Emulate(MapperDevice mapperDevice, RunnerOptions? options = null) {
+        Machine machine = new(mapperDevice);
         Emulate(machine, options);
 
         return machine;

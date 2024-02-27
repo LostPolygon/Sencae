@@ -23,7 +23,7 @@ public class Emulator : IDisposable {
     public void LoadRom(string romFilePath) {
         CartridgeData cartridgeData = NesFileParser.Parse(File.ReadAllBytes(romFilePath));
 
-        Machine newMachine = new(CartridgeDeviceFactory.Create(cartridgeData));
+        Machine newMachine = new(MapperDeviceFactory.Create(cartridgeData));
         
         Machine?.Dispose();
         Machine = newMachine;

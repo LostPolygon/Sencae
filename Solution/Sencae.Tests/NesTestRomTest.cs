@@ -9,14 +9,14 @@ public class NesTestRomTest {
     public void NesTestCpuOnly() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
+        MapperDevice mapperDevice = MapperDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
 
         List<string> logOutput = new();
 
         Exception? emulationException = null;
         try {
             using Machine machine = Emulate(
-                cartridgeDevice, new() {
+                mapperDevice, new() {
                     StopOnBRKOrHalt = false,
                     MaxMachineCycles = 27500,
                     OverrideResetVector = 0xC000,
@@ -49,14 +49,14 @@ public class NesTestRomTest {
     public void NesTestFull() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
+        MapperDevice mapperDevice = MapperDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
 
         List<string> logOutput = new();
 
         Exception? emulationException = null;
         try {
             using Machine machine = Emulate(
-                cartridgeDevice, new() {
+                mapperDevice, new() {
                     StopOnBRKOrHalt = false,
                     MaxMachineCycles = 27500,
                     OverrideResetVector = 0xC000,
@@ -92,14 +92,14 @@ public class NesTestRomTest {
     public void NesTestFull2() {
         byte[] testRom = File.ReadAllBytes("Resources/1942 (Japan, USA).nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
+        MapperDevice mapperDevice = MapperDeviceFactory.Create(cartridgeData, new byte[8 * 1024]);
 
         List<string> logOutput = new();
 
         Exception? emulationException = null;
         try {
             using Machine machine = Emulate(
-                cartridgeDevice, new() {
+                mapperDevice, new() {
                     StopOnBRKOrHalt = false,
                     MaxMachineCycles = 27500,
                     //OverrideResetVector = 0xC000,

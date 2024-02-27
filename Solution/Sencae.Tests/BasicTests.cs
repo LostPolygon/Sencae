@@ -9,10 +9,10 @@ public class BasicTests {
     public void NesTest() {
         byte[] testRom = File.ReadAllBytes("Resources/nestest.nes");
         CartridgeData cartridgeData = NesFileParser.Parse(testRom);
-        CartridgeDevice cartridgeDevice = CartridgeDeviceFactory.Create(cartridgeData);
+        MapperDevice mapperDevice = MapperDeviceFactory.Create(cartridgeData);
 
         using Machine machine = Emulate(
-            cartridgeDevice, new() {
+            mapperDevice, new() {
                 StopOnBRKOrHalt = false,
                 MaxMachineCycles = 27500, 
                 OverrideResetVector = 0xC000
@@ -41,7 +41,7 @@ public class BasicTests {
 
     [Test]
     public void Test2() {
-        CartridgeDevice cartridgeDevice = CreateCodeCartridge(
+        MapperDevice mapperDevice = CreateCodeCartridge(
             """
 
             .0000    a9 c0        LDA #$c0  ; Load the hex value $c0 into the A register
@@ -53,7 +53,7 @@ public class BasicTests {
             """
         );
 
-        using Machine machine = Emulate(cartridgeDevice, new() { FormatState = FormatCpuStateNesTest });
+        using Machine machine = Emulate(mapperDevice, new() { FormatState = FormatCpuStateNesTest });
 
         Assert.AreEqual(0xC1, machine.State.Cpu.X);
         Assert.AreEqual(0x84, machine.State.Cpu.A);
