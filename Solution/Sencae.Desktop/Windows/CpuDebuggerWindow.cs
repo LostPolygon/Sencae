@@ -22,14 +22,14 @@ public class CpuDebuggerWindow : AppWindow {
 
 
         //ImGui.PushFont(Context.SharedResources.FontFontAwesomeIconsSolid);
-        ImGui.TextColored(new Vector4(1, 0, 0, 1), IconsFontAwesome5.FolderOpen);
+        /*ImGui.TextColored(new Vector4(1, 0, 0, 1), IconsFontAwesome5.FolderOpen);
 
         //ImGui.InputFloat2("Awesome vector:", ref TestVector2, "%f", ImGuiInputTextFlags.CharsScientific);
         //if (ImGuiProto2.InputFloat2("Awesome vector123456789112233445566:", ref TestVector2, "%f", ImGuiInputTextFlags.CharsScientific)) {
         if (ImGuiProto2.InputFloat2("omg!1", ref TestVector2, "%f", ImGuiInputTextFlags.CharsScientific)) {
             Console.WriteLine($"Changed: {TestVector2}");
         }
-        
+        */
         
         
         if (!Emulator.IsLoaded)
@@ -67,6 +67,11 @@ public class CpuDebuggerWindow : AppWindow {
             Emulator.TimeScale = timeScale;
         }
 
+        ImGui.Separator();
+        
+        ImGui.TextUnformatted($"PPU position: {Emulator.Machine.State.Ppu.Internal.CyclesInScanline,3}, {Emulator.Machine.State.Ppu.Internal.Scanline,3}");
+        ImGui.TextUnformatted($"Frames: {Emulator.Machine.State.Ppu.Internal.Frames}");
+        
         ImGui.Separator();
 
         CpuState cpu = Emulator.Machine.State.Cpu;

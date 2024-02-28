@@ -4,8 +4,11 @@ using System.Runtime.InteropServices;
 namespace Sencae;
 
 public static class MemoryUtility {
-    public static Span<byte> AsBytes<T>(ref T data) where T : unmanaged {
-        Span<T> dataSpan = MemoryMarshal.CreateSpan(ref data, 1);
-        return MemoryMarshal.AsBytes(dataSpan);
+    public static Span<byte> AsBytes<T>(scoped ref T data, int length = 1) where T : unmanaged {
+        return MemoryMarshal.CreateSpan(ref data, length).AsBytes();
+    }
+
+    public static ReadOnlySpan<byte> AsReadOnlyBytes<T>(ref T data, int length = 1) where T : unmanaged {
+        return MemoryMarshal.CreateReadOnlySpan(ref data, length).AsBytes();
     }
 }

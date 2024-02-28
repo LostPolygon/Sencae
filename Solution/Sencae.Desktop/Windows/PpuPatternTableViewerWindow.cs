@@ -87,12 +87,12 @@ public unsafe class PpuPatternTableViewerWindow : AppWindow, IDisposable {
         Span<uint> palette,
         SDL_Surface* surface
     ) {
-        ReadOnlySpan<PpuPreviewState.PpuTilePaletteColorIndices> patternTableTilesSpan = patternTable;
+        ReadOnlySpan<PpuPreviewState.PpuTilePaletteColorIndices> patternTableTilesSpan = patternTable.AsReadOnlySpan() ;
         
         const int totalTiles = PpuConstants.PatternTableWidthTiles * PpuConstants.PatternTableHeightTiles;
         int* surfacePixels = (int*) surface->pixels;
         for (int tileIndex = 0; tileIndex < totalTiles; tileIndex++) {
-            ReadOnlySpan<byte> tilePaletteIndices = patternTableTilesSpan[tileIndex];
+            ReadOnlySpan<byte> tilePaletteIndices = patternTableTilesSpan[tileIndex].AsReadOnlySpan();
 
             int tileRow = tileIndex / PpuConstants.BytesPerTile;
             int tileColumn = tileIndex % PpuConstants.BytesPerTile;

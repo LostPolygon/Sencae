@@ -57,8 +57,9 @@ public sealed class CpuDevice<TCpuMemoryBus> where TCpuMemoryBus : CpuMemoryBusB
 
         switch (options.CpuMemoryResetState) {
             case CpuMemoryResetState.Random:
+                Random random = new();
                 for (ushort i = 0x0000; i < 0x2000; i++) {
-                    CpuMemoryBus.Write(i, (byte) Random.Shared.Next());
+                    CpuMemoryBus.Write(i, (byte) random.Next());
                 }
 
                 break;

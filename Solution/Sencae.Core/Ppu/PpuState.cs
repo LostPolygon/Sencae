@@ -49,6 +49,10 @@ public sealed class PpuState {
 
         public int Scanline;
         public int CyclesInScanline;
+
+        //public bool IsOddFrame;
+        public int NextFrameLastScanlineLastCycle;
+        
         public ulong Frames;
         public ulong LastPPUSTATUS_ReadCycle;
 

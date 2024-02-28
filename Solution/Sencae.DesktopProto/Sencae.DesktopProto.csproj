@@ -7,6 +7,8 @@
         <OutputType>Exe</OutputType>
         <LangVersion>preview</LangVersion>
         <Nullable>enable</Nullable>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <PropertyGroup>

@@ -15,7 +15,7 @@ public static class InstructionLogic {
     #region Dispatcher
 
     // Enabling inlining here actually reduces perf on x64 by about 25%!
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(NoInlining)]
     public static bool Dispatch(CpuState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
         int operationCycle = cpuInternal.OperationCycle;
 

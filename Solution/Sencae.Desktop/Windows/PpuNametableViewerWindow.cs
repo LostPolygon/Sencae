@@ -55,7 +55,7 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
         for (int i = 0; i < nametablesSpan.Length; i++) {
             using DynamicSdlTexture.LockedSurface nametableSurface = _nametablesContainers[i].Texture.Lock();
             ref PpuPreviewState.NametableData nametable = ref nametablesSpan[i];
-            UpdateNametableTexture(nametable.Nametable, nametable.Attributes, nametableSurface.Surface);
+            UpdateNametableTexture(ref nametable.Nametable, nametable.Attributes, nametableSurface.Surface);
         }
 
         ImGui.Checkbox("Draw Attribute Grid", ref _drawAttributeGrid);
@@ -75,22 +75,31 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
     }
 
     private void UpdateNametableTexture(
-        in PpuNametable nametable,
+        ref PpuNametable nametable,
         in PpuPreviewState.PpuNametableAttributesPaletteIndices attributes,
         SDL_Surface* surface
     ) {
+        ReadOnlySpan<byte> attributesSpan = attributes.AsReadOnlySpan();
+        Span<PpuNametable.PpuNametableRow> nametableRowsSpan = nametable.Rows.AsSpan();
+
         ref PpuPreviewState.PpuPatternTableTiles patternTable =
             ref (Emulator.Machine.State.Ppu.PPUCTRL & PpuControlRegisterFlags.BackgroundPatternTableAddress) == 0 ?
                 ref _patternTables.PatternTable0 :
                 ref _patternTables.PatternTable1;
+
+        ReadOnlySpan<PpuPreviewState.PpuTilePaletteColorIndices> patternTableSpan = patternTable.AsReadOnlySpan();
 
         //Span<uint> palette = stackalloc uint[4];
         //PaletteUtility.GetGreyscalePalette(palette, 255);
 
         int* surfacePixels = (int*) surface->pixels;
         for (int tileRow = 0; tileRow < PpuConstants.NametableHeightTiles; tileRow++) {
+            ReadOnlySpan<byte> nametableRowSpan = PpuNametable.PpuNametableRow.AsReadOnlySpan(ref nametableRowsSpan[tileRow]);
+            
             for (int tileColumn = 0; tileColumn < PpuConstants.NametableWidthTiles; tileColumn++) {
-                byte tilePaletteIndex = attributes[tileRow * PpuConstants.NametableWidthTiles + tileColumn];
+                byte tilePaletteIndex = attributesSpan[tileRow * PpuConstants.NametableWidthTiles + tileColumn];
+                byte patternTableTileIndex = nametableRowSpan[tileColumn];
+                ReadOnlySpan<byte> patternTableTilePaletteColorIndices = patternTableSpan[patternTableTileIndex].AsReadOnlySpan();
 
                 for (int tilePixelIndex = 0; tilePixelIndex < PpuConstants.BytesPerDecodedTile; tilePixelIndex++) {
                     int tilePixelRow = tilePixelIndex / PpuConstants.TileSize;
@@ -101,9 +110,7 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
 
                     int surfacePixelIndex = surfacePixelRow * PpuConstants.NametableWidthPixels + surfacePixelColumn;
 
-                    byte patternTableTileIndex = nametable.Rows[tileRow][tileColumn];
-
-                    byte pixelPaletteColorIndex = patternTable[patternTableTileIndex][tilePixelIndex];
+                    byte pixelPaletteColorIndex = patternTableTilePaletteColorIndices[tilePixelIndex];
                     ref PpuObjectPalette palette = ref _palettes.Background[tilePaletteIndex];
 
                     surfacePixels[surfacePixelIndex] = (int) Context.SharedResources.PpuPalette.Colors[palette.ColorIndices[pixelPaletteColorIndex]];
@@ -153,7 +160,7 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
         float tileSize,
         Vector2 nametableRectMin
     ) {
-        Span<byte> attributesSpan = attributes;
+        ReadOnlySpan<byte> attributesSpan = attributes.AsReadOnlySpan();
         ImDrawListPtr drawList = ImGui.GetWindowDrawList();
 
         Span<uint> palette = stackalloc uint[4];

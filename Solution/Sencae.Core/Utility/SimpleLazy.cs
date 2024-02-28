@@ -4,7 +4,7 @@ namespace Sencae;
 
 public class SimpleLazy<T>(Func<T> valueFactory) {
     private bool _isCreated;
-    private T _value;
+    private T _value = default!;
 
     public T Value => GetValue();
 
@@ -16,9 +16,9 @@ public class SimpleLazy<T>(Func<T> valueFactory) {
 
     private T GetValue() {
         if (_isCreated)
-            return _value;
+            return _value!;
 
-        _value = valueFactory();
+        _value = valueFactory()!;
         _isCreated = true;
 
         return _value;

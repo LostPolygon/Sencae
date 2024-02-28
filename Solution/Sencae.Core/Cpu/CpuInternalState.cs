@@ -18,7 +18,6 @@ public struct CpuInternalState {
 
     public bool IrqPending;
     public bool NmiPulledDown;
-    public bool NmiPulledDownOld;
     public bool NmiFlipFlop;
 
     public ulong Cycles;

@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Sencae.Ppu;
 
 namespace Sencae.Desktop;
@@ -31,15 +32,16 @@ public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevi
     }
     
     private static void FillNametableAttributes(
-        in PpuNametable nametable,
+        ref PpuNametable nametable,
         ref PpuPreviewState.PpuNametableAttributesPaletteIndices attributesPaletteIndices
     ) {
-        Span<byte> paletteIndicesSpan = attributesPaletteIndices;
+        Span<byte> paletteIndicesSpan = attributesPaletteIndices.AsSpan();
+        ReadOnlySpan<PpuAttributeTableEntryFlags> attributeTable = nametable.AttributeTable.AsSpan();
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
                 int attributeIndex = y * 8 + x;
                 (byte bottomRight, byte bottomLeft, byte topRight, byte topLeft) =
-                    nametable.AttributeTable.Decode(nametable.AttributeTable[attributeIndex]);
+                    PpuNametable.PpuAttributeTable.Decode(attributeTable[attributeIndex]);
 
                 int tileBaseIndex = y * 8 * 4 * 4 + x * 4;
 
@@ -76,12 +78,12 @@ public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevi
     ) {
         int baseAddress = PpuConstants.Nametable0StartAddress + sizeof(PpuNametable) * nametableIndex;
 
-        Span<byte> nametableDataRaw = MemoryUtility.AsBytes(ref nametable);
+        Span<byte> nametableDataRaw = MemoryMarshal.CreateSpan(ref nametable, 1).AsBytes();
         for (ushort i = 0; i < PpuNametable.Size; i++) {
             nametableDataRaw[i] = PpuBusDevice.ReadObserve((ushort) (baseAddress + i));
         }
 
-        FillNametableAttributes(nametable, ref nametableAttributes);
+        FillNametableAttributes(ref nametable, ref nametableAttributes);
     }
 
     private PpuObjectPalette FillPalette(ushort address) {
@@ -98,9 +100,9 @@ public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevi
     }
 
     private void FillPatternTable(int vramOffset, ref PpuPreviewState.PpuPatternTableTiles output) {
-        Span<PpuPreviewState.PpuTilePaletteColorIndices> outputSpan = output;
+        Span<PpuPreviewState.PpuTilePaletteColorIndices> outputSpan = output.AsSpan();
         for (int tileIndex = 0; tileIndex < outputSpan.Length; tileIndex++) {
-            FillTileData(vramOffset, tileIndex, outputSpan[tileIndex]);
+            FillTileData(vramOffset, tileIndex, outputSpan[tileIndex].AsSpan());
         }
     }
 

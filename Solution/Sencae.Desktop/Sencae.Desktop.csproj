@@ -11,6 +11,10 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
         <ApplicationIcon>ResourcesEmbedded/icon.ico</ApplicationIcon>
+
+        <Configurations>Debug;Release</Configurations>
+
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseSelfContained' ">
@@ -22,44 +26,6 @@
         <PublishReadyToRun>False</PublishReadyToRun>
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
         <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseNativeAot' ">
-        <Optimize>True</Optimize>
-
-        <PublishAot>True</PublishAot>
-        <PublishTrimmed>true</PublishTrimmed>
-        <SelfContained>true</SelfContained>
-        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-
-        <TrimMode>link</TrimMode>
-
-        <IlcGenerateMstatFile>true</IlcGenerateMstatFile>
-        <IlcGenerateDgmlFile>true</IlcGenerateDgmlFile>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseNativeAot' ">
-        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
-        <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
-        <DebuggerSupport>True</DebuggerSupport>
-        <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
-        <EventSourceSupport>false</EventSourceSupport>
-        <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
-        <InvariantGlobalization>true</InvariantGlobalization>
-        <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
-        <UseNativeHttpHandler>true</UseNativeHttpHandler>
-        <UseSystemResourceKeys>true</UseSystemResourceKeys>
-        <StripSymbols>false</StripSymbols>
-
-        <IlcScanReflection>false</IlcScanReflection>
-        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-        <IlcTrimMetadata>true</IlcTrimMetadata>
-        <IlcInvariantGlobalization>false</IlcInvariantGlobalization>
-        <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
-        <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
-        <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
-
-        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>
 
     <ItemGroup>

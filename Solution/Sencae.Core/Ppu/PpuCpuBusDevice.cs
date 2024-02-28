@@ -81,7 +81,6 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                         switch (accessMode) {
                             case MemoryAccessMode.Write:
                             case MemoryAccessMode.ReadObserve:
-                                bool oldGenerateNmi = (_state.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0;
                                 ref byte mappedData = ref Unsafe.As<PpuControlRegisterFlags, byte>(ref _state.PPUCTRL);
                                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
 

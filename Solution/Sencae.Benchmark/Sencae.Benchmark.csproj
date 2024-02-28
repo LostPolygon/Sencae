@@ -6,6 +6,8 @@
         <LangVersion>preview</LangVersion>
 		<TieredPGO>true</TieredPGO>
 		<Nullable>enable</Nullable>
+		<Configurations>Debug;Release</Configurations>
+		<Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -14,18 +16,19 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Content Include="Resources\**">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="BenchmarkDotNet" Version="0.13.9" />
       <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.9" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Sencae.Core\Sencae.Core.csproj" />
       <ProjectReference Include="..\Sencae.SharedUtility\Sencae.SharedUtility.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Include="Resources\nestest.nes">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
     </ItemGroup>
 
 </Project>
