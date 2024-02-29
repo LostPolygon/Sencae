@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using ImGuiNET;
 using Sencae.Ppu;
 
@@ -72,6 +73,37 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
         DrawNametable(_nametablesContainers[3].Texture, _nametables.Nametable3.Nametable, ref _nametables.Nametable3.Attributes, 3);
         
         ImGui.PopStyleVar();
+        
+        ImGui.BeginTable("Stats", 4, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
+        {
+            ImGui.TableSetupColumn("Id");
+            ImGui.TableSetupColumn("Position", ImGuiTableColumnFlags.WidthFixed, 90);
+            ImGui.TableSetupColumn("Tile", ImGuiTableColumnFlags.WidthFixed, 50);
+            ImGui.TableSetupColumn("Attributes", ImGuiTableColumnFlags.WidthFixed, 70);
+            
+            ImGui.TableHeadersRow();
+
+            ReadOnlySpan<byte> oamMemoryBytes = Emulator.Machine.State.Ppu.OamMemory.AsSpan();
+            ReadOnlySpan<PpuObjectAttributes> oamObjects = MemoryMarshal.Cast<byte, PpuObjectAttributes>(oamMemoryBytes);
+            for (int i = 0; i < oamObjects.Length; i++) {
+                PpuObjectAttributes oamObject = oamObjects[i];
+                
+                ImGui.TableNextRow();
+                
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text($"{i:00}");
+                    
+                ImGui.TableSetColumnIndex(1);
+                ImGui.Text($"{oamObject.SpriteX}, {oamObject.SpriteY}");
+                
+                ImGui.TableSetColumnIndex(2);
+                ImGui.Text($"{oamObject.SpriteTileIndex:X2}");
+                
+                ImGui.TableSetColumnIndex(3);
+                ImGui.Text($"{oamObject.SpriteAttributes:X2}");
+            }
+        }
+        ImGui.EndTable();
     }
 
     private void UpdateNametableTexture(
@@ -151,6 +183,20 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
         }
 
         Tooltips.TileTooltip(Context, imageMin, Vector2.One * previewTileSize, 0xFFFF0000, null);
+        
+        ImDrawListPtr drawListPtr = ImGui.GetWindowDrawList();
+        ReadOnlySpan<byte> oamMemoryBytes = Emulator.Machine.State.Ppu.OamMemory.AsSpan();
+        ReadOnlySpan<PpuObjectAttributes> oamObjects = MemoryMarshal.Cast<byte, PpuObjectAttributes>(oamMemoryBytes);
+
+        bool is8X16Sprite = (Emulator.Machine.State.Ppu.PPUCTRL & PpuControlRegisterFlags.SpriteSize) != 0;
+        Vector2 previewSpriteSize = (is8X16Sprite ? new Vector2(8, 16) : new Vector2(8, 8)) * previewScale;
+        for (int i = 0; i < oamObjects.Length; i++) {
+            PpuObjectAttributes oamObject = oamObjects[i];
+
+            Vector2 spriteRectMin = imageMin + new Vector2(oamObject.SpriteX, oamObject.SpriteY) * previewScale;
+            Vector2 spriteRectMax = spriteRectMin + Vector2.One * previewSpriteSize;
+            drawListPtr.AddRect(spriteRectMin, spriteRectMax, 0xFF0000FF, 0, ImDrawFlags.None, 1);
+        }
 
         ImGui.EndGroup();
     }

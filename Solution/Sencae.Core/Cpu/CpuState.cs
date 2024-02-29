@@ -17,6 +17,8 @@ public sealed class CpuState {
     // Stack pointer
     public byte SP = 0;
 
+    public DmaDeviceState OamDmaDevice = new();
+
     public CpuInternalState Internal = default;
 
     public CpuState() {

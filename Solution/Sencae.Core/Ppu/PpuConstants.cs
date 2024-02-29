@@ -47,7 +47,5 @@ public static class PpuConstants {
         public const int PPUSCROLL_Index = PPUSCROLL - FirstRegisterAddress;
         public const int PPUADDR_Index = PPUADDR - FirstRegisterAddress;
         public const int PPUDATA_Index = PPUDATA - FirstRegisterAddress;
-        
-        public const ushort OAMDMA = 0x4014;
     }
 }

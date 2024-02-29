@@ -8,7 +8,8 @@ namespace Sencae;
 public sealed class Machine : IDisposable {
     public MachineCpuMemoryBus CpuMemoryBus;
     public CpuBusDevice CpuBusDevice;
-    public CpuDevice<MachineCpuMemoryBus> CpuDevice;
+    public CpuDevice<MachineCpuMemoryBus, OamDmaDevice> CpuDevice;
+    public OamDmaDevice OamDmaDevice;
     public PpuCpuBusDevice PpuCpuBusDevice;
 
     public PpuDevice PpuDevice;
@@ -36,7 +37,10 @@ public sealed class Machine : IDisposable {
 
         CpuBusDevice = new CpuBusDevice(State.Cpu);
         CpuMemoryBus = new MachineCpuMemoryBus(CpuBusDevice, PpuCpuBusDevice, MapperDevice.CartridgeToCpuBusDevice);
-        CpuDevice = new CpuDevice<MachineCpuMemoryBus>(State.Cpu, CpuMemoryBus);
+        OamDmaDevice = new OamDmaDevice(State.Cpu.OamDmaDevice, State.Cpu, CpuMemoryBus, State.Ppu);
+        CpuMemoryBus.OamDmaDevice = OamDmaDevice;
+        
+        CpuDevice = new CpuDevice<MachineCpuMemoryBus, OamDmaDevice>(State.Cpu, CpuMemoryBus, OamDmaDevice);
     }
 
     public void Reset(CpuResetOptions? options = null, bool hardReset = true) {

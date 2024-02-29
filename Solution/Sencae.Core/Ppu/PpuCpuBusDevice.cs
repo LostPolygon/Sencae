@@ -271,9 +271,6 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
 
                 break;
             }
-            case OAMDMA: {
-                return true;
-            }
         }
 
         mustUpdateBus = false;

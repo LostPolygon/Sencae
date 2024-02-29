@@ -5,7 +5,7 @@ public class TestMachine : IDisposable {
     public ulong CpuCycles;
 
     public TestCpuMemoryBus CpuMemoryBus;
-    public CpuDevice<TestCpuMemoryBus> CpuDevice;
+    public CpuDevice<TestCpuMemoryBus, DummyDmaDevice> CpuDevice;
 
     public byte[] ExtraRam = new byte[0x10000];
 
@@ -15,7 +15,7 @@ public class TestMachine : IDisposable {
         CpuMemoryBus = new TestCpuMemoryBus(
             new Test64kRamCpuBusDevice(ExtraRam)
         );
-        CpuDevice = new CpuDevice<TestCpuMemoryBus>(CpuState, CpuMemoryBus);
+        CpuDevice = new CpuDevice<TestCpuMemoryBus, DummyDmaDevice>(CpuState, CpuMemoryBus, new DummyDmaDevice(CpuState.OamDmaDevice));
         CpuDevice.HardReset(new CpuResetOptions {
             // Initializing memory is very slow in debug,
             // but since we create a new 0-filled array each time,

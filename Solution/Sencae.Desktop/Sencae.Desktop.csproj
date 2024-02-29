@@ -37,7 +37,7 @@
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 
         <TrimMode>link</TrimMode>
-        <IlcInstructionSet>native</IlcInstructionSet>
+        <!--<IlcInstructionSet>native</IlcInstructionSet>-->
 
         <IlcGenerateMstatFile>true</IlcGenerateMstatFile>
         <IlcGenerateDgmlFile>true</IlcGenerateDgmlFile>

@@ -1,19 +1,25 @@
 using System;
 using System.Runtime.CompilerServices;
+using Sencae.Ppu;
 
 namespace Sencae;
 
-public sealed class CpuDevice<TCpuMemoryBus> where TCpuMemoryBus : CpuMemoryBusBase {
+public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice> 
+    where TCpuMemoryBus : CpuMemoryBusBase 
+    where TOamDmaDevice : DmaDevice
+{
     public readonly CpuState Cpu;
     public readonly TCpuMemoryBus CpuMemoryBus;
+    public readonly TOamDmaDevice OamDmaDevice;
 
     public delegate void CpuBusHandlingDelegate(ushort address, bool isRead, byte busData);
 
     public event CpuBusHandlingDelegate? CpuBusHandling;
 
-    public CpuDevice(CpuState cpu, TCpuMemoryBus cpuMemoryBus) {
+    public CpuDevice(CpuState cpu, TCpuMemoryBus cpuMemoryBus, TOamDmaDevice oamDmaDevice) {
         Cpu = cpu;
         CpuMemoryBus = cpuMemoryBus;
+        OamDmaDevice = oamDmaDevice;
     }
 
     [MethodImpl(HotPath)]
@@ -28,27 +34,23 @@ public sealed class CpuDevice<TCpuMemoryBus> where TCpuMemoryBus : CpuMemoryBusB
             return;
         }*/
 
-        // Assume that zero page and stack page are never IO mapped
-        /*bool alwaysCpuMemory = address <= 0x01FF;
-            if (alwaysCpuMemory) {
-                ref byte mappedData = ref CpuBusDevice.Memory.Data[address];
-                BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref dataBus);
-            } else {
-                CpuMemoryBus.HandleBus(address, accessMode, ref dataBus);
-            }*/
-
         ushort address = cpuInternal.AddressBus.Value;
         MemoryAccessMode accessMode =
             cpuInternal.Read ?
                 MemoryAccessMode.Read :
                 MemoryAccessMode.Write;
-        ref byte dataBus = ref cpuInternal.DataBus;
 
+        bool mustExecuteState = true;
+        OamDmaDevice.Execute(accessMode, ref mustExecuteState);
+        
+        ref byte dataBus = ref cpuInternal.DataBus;
         CpuMemoryBus.HandleBus(address, accessMode, ref dataBus);
         CpuBusHandling?.Invoke(address, accessMode == MemoryAccessMode.Read, dataBus);
 
-        ExecuteState(Cpu, ref cpuInternal);
-        
+        if (mustExecuteState) {
+            ExecuteState(Cpu, ref cpuInternal);
+        }
+
         Cpu.Internal.Cycles++;
     }
 
@@ -136,7 +138,6 @@ public sealed class CpuDevice<TCpuMemoryBus> where TCpuMemoryBus : CpuMemoryBusB
 
         ApplyResetVector(options.OverrideResetVector);
     }
-
     [MethodImpl(HotPath)]
     private static void ExecuteState(CpuState cpu, ref CpuInternalState cpuInternal) {
         while (true) {

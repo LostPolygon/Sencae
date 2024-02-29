@@ -7,6 +7,7 @@ public sealed class MachineCpuMemoryBus : CpuMemoryBusBase {
     public readonly CpuBusDevice CpuBusDevice;
     public readonly PpuCpuBusDevice PpuCpuBusDevice;
     public readonly IBusDevice CartridgeToCpuBusDevice;
+    public OamDmaDevice OamDmaDevice;
 
     public MachineCpuMemoryBus(
         CpuBusDevice cpuBusDevice,
@@ -27,6 +28,9 @@ public sealed class MachineCpuMemoryBus : CpuMemoryBusBase {
             return true;
 
         if (PpuCpuBusDevice.HandleBus(address, accessMode, ref bus))
+            return true;
+        
+        if (OamDmaDevice.HandleBus(address, accessMode, ref bus))
             return true;
 
         //BusDeviceHandlers.OpenBus(address);

@@ -4,12 +4,14 @@ using System.Runtime.CompilerServices;
 namespace Sencae;
 
 public sealed class CpuBusDevice : IBusDevice, IDisposable {
+    private readonly CpuState _cpuState;
     private readonly DirectArray<byte> _memory;
     private readonly DirectArray<byte> _ioRegisters;
 
     public DirectArray<byte> Memory => _memory;
 
     public CpuBusDevice(CpuState cpuState) {
+        _cpuState = cpuState;
         _memory = new DirectArray<byte>(cpuState.Memory);
         _ioRegisters = new DirectArray<byte>(cpuState.IORegisters);
     }
@@ -22,7 +24,7 @@ public sealed class CpuBusDevice : IBusDevice, IDisposable {
                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
                 return true;
             }
-            case >= 0x4000 and <= 0x401F: {
+            case >= 0x4000 and <= 0x401F and not CpuInternalState.OamDmaRegister: {
                 ref byte mappedData = ref _ioRegisters[address % (0x18 + 0x08)];
                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
                 if (address is 0x4016 or 0x4017 && accessMode == MemoryAccessMode.Read) {
