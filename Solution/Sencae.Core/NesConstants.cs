@@ -4,7 +4,7 @@ public static class NesConstants {
     public static readonly NesVariantConstants Ntsc = new NesVariantConstants {
         Framerate = 60,
         ScreenWidth = 256,
-        ScreenHeight = 224,
+        ScreenHeight = 240,
         MachineCyclesPerFrame = 29780 * 3
     };
 

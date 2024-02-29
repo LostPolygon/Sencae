@@ -25,10 +25,9 @@ public sealed class PpuDevice {
         _ppuState.Memory.AsSpan().Clear();
         _ppuState.OamMemory.AsSpan().Clear();
         _ppuState.PaletteMemory.AsSpan().Clear();
-
-        StartNewFrame(ref _ppuState.Internal);
     }
 
+    [MethodImpl(HotPath)]
     public void Clock() {
         ref PpuState.PpuInternalState ppuStateInternal = ref _ppuState.Internal;
         int scanline = ppuStateInternal.Scanline;
@@ -49,21 +48,29 @@ public sealed class PpuDevice {
                 goto default;
             }
             case 261: {
-                if (scanlineCycle == 1) {
-                    _ppuState.PPUSTATUS &= ~PpuStatusRegisterFlags.VerticalBlankStarted;
-                    ppuStateInternal.Reset = false;
-                }
+                switch (scanlineCycle) {
+                    case 1:
+                        _ppuState.PPUSTATUS &= ~PpuStatusRegisterFlags.VerticalBlankStarted;
+                        ppuStateInternal.Reset = false;
+                        scanlineCycle++;
+                        break;
+                    case >= 339:
+                        bool mustSkipDot = !_ppuState.IsRenderingDisabled && ppuStateInternal.Frames % 2 == 0;
+                        int targetColumn = mustSkipDot ? 339 : 340;
+                        if (scanlineCycle == targetColumn) {
+                            //_lastPpuFrameStart = State.MachineCycles;
+                            ppuStateInternal.Frames++;
 
-                if (scanlineCycle == ppuStateInternal.NextFrameLastScanlineLastCycle) {
-                    scanlineCycle = 0;
-                    scanline = 0;
+                            scanlineCycle = 0;
+                            scanline = 0;
+                        } else {
+                            scanlineCycle++;
+                        }
 
-                    //_lastPpuFrameStart = State.MachineCycles;
-                    ppuStateInternal.Frames++;
-
-                    StartNewFrame(ref ppuStateInternal);
-                } else {
-                    scanlineCycle++;
+                        break;
+                    default:
+                        scanlineCycle++;
+                        break;
                 }
 
                 break;
@@ -106,12 +113,5 @@ public sealed class PpuDevice {
         }
 
         ppuStateInternal.Cycles++;
-    }
-
-    [MethodImpl(HotPath)]
-    private void StartNewFrame(ref PpuState.PpuInternalState ppuStateInternal) {
-        bool canSkipOddDot = !_ppuState.IsRenderingDisabled;
-        int targetColumn = canSkipOddDot ? 339 + (int) (ppuStateInternal.Frames % 2) : 340;
-        ppuStateInternal.NextFrameLastScanlineLastCycle = targetColumn;
     }
 }

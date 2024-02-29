@@ -68,6 +68,7 @@ public sealed class Machine : IDisposable {
         State.MachineCycles++;
     }
 
+    [MethodImpl(HotPath)]
     public void CpuClock() {
         CpuDevice.Clock();
         CpuClocked?.Invoke();

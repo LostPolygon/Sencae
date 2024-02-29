@@ -53,6 +53,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
         }
     }
 
+    [MethodImpl(HotPath)]
     private bool HandleBusInternal(ushort address, MemoryAccessMode accessMode, ref byte bus, out bool mustUpdateBus) {
         /*
         $2000–$2007 ($0008) NES PPU registers
