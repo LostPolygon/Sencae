@@ -2,6 +2,7 @@ using System.IO;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnostics.Windows;
 using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
@@ -16,6 +17,10 @@ public class Benchmark {
         public static bool AddNativeAotJob;
 
         public Config() {
+            Add(new InliningDiagnoser(
+                allowedNamespaces: ["Sencae"]
+            ));
+            
             AddJob(
                 Job.Default
                     .WithPlatform(Platform.X64)
@@ -23,7 +28,7 @@ public class Benchmark {
                     .WithJit(Jit.RyuJit)
                     .AsBaseline()
             );
-            
+
             /*AddJob(
                 Job.Default
                     .WithPlatform(Platform.X64)
@@ -138,7 +143,7 @@ public class Benchmark {
         public string GetValue(Summary summary, BenchmarkCase benchmarkCase) {
             if (summary == null || benchmarkCase == null)
                 return "N/A";
-            
+
             BenchmarkReport report = summary[benchmarkCase];
             double meanSeconds = TimeInterval.FromNanoseconds(report.ResultStatistics!.Mean).ToSeconds();
             double averageFps = TotalFrames / meanSeconds;
@@ -167,7 +172,7 @@ public class Benchmark {
         public string GetValue(Summary summary, BenchmarkCase benchmarkCase) {
             if (summary == null || benchmarkCase == null)
                 return "N/A";
-            
+
             BenchmarkReport report = summary[benchmarkCase];
             double meanSeconds = TimeInterval.FromNanoseconds(report.ResultStatistics!.Mean).ToSeconds();
             double realtimeX = TotalFrames / meanSeconds / FramesPerSecond;

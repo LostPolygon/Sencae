@@ -3,40 +3,37 @@ using System.Runtime.CompilerServices;
 namespace Sencae;
 
 public record struct CpuStatusRegisterFlags {
-    public bool Carry;
-    public bool Zero;
-    public bool InterruptDisable;
-    public bool DecimalMode;
-    public bool BreakFlag;
-    public bool Overflow;
-    public bool NegativeOrSign;
+    public ByteBool Carry;
+    public ByteBool Zero;
+    public ByteBool InterruptDisable;
+    public ByteBool DecimalMode;
+    public ByteBool BreakFlag;
+    public ByteBool Overflow;
+    public ByteBool NegativeOrSign;
 
     public CpuStatusRegisterPackedFlags AsFlags {
         [MethodImpl(AggressiveInlining)]
-        get {
-            byte result = 0;
-            result |= (byte) (Carry ? CpuStatusRegisterPackedFlags.Carry : 0);
-            result |= (byte) (Zero ? CpuStatusRegisterPackedFlags.Zero : 0);
-            result |= (byte) (InterruptDisable ? CpuStatusRegisterPackedFlags.InterruptDisable : 0);
-            result |= (byte) (DecimalMode ? CpuStatusRegisterPackedFlags.DecimalMode : 0);
-            result |= (byte) (BreakFlag ? CpuStatusRegisterPackedFlags.BreakFlag : 0);
-            result |= (byte) (Overflow ? CpuStatusRegisterPackedFlags.Overflow : 0);
-            result |= (byte) (NegativeOrSign ? CpuStatusRegisterPackedFlags.NegativeOrSign : 0);
-            result |= (byte) CpuStatusRegisterPackedFlags.Unused;
-            return (CpuStatusRegisterPackedFlags) result;
-        }
+        get =>
+            (Carry.BoolValue ? CpuStatusRegisterPackedFlags.Carry : 0) |
+            (Zero.BoolValue ? CpuStatusRegisterPackedFlags.Zero : 0) |
+            (InterruptDisable.BoolValue ? CpuStatusRegisterPackedFlags.InterruptDisable : 0) |
+            (DecimalMode.BoolValue ? CpuStatusRegisterPackedFlags.DecimalMode : 0) |
+            (BreakFlag.BoolValue ? CpuStatusRegisterPackedFlags.BreakFlag : 0) |
+            (Overflow.BoolValue ? CpuStatusRegisterPackedFlags.Overflow : 0) |
+            (NegativeOrSign.BoolValue ? CpuStatusRegisterPackedFlags.NegativeOrSign : 0) |
+            CpuStatusRegisterPackedFlags.Unused;
     }
 
     [MethodImpl(HotPath)]
     public static CpuStatusRegisterFlags FromFlags(CpuStatusRegisterPackedFlags flags) {
         CpuStatusRegisterFlags result = new() {
-            Carry = (flags & CpuStatusRegisterPackedFlags.Carry) != 0,
-            Zero = (flags & CpuStatusRegisterPackedFlags.Zero) != 0,
-            InterruptDisable = (flags & CpuStatusRegisterPackedFlags.InterruptDisable) != 0,
-            DecimalMode = (flags & CpuStatusRegisterPackedFlags.DecimalMode) != 0,
-            BreakFlag = (flags & CpuStatusRegisterPackedFlags.BreakFlag) != 0,
-            Overflow = (flags & CpuStatusRegisterPackedFlags.Overflow) != 0,
-            NegativeOrSign = (flags & CpuStatusRegisterPackedFlags.NegativeOrSign) != 0
+            Carry = (byte) (flags & CpuStatusRegisterPackedFlags.Carry),
+            Zero = (byte) (flags & CpuStatusRegisterPackedFlags.Zero),
+            InterruptDisable = (byte) (flags & CpuStatusRegisterPackedFlags.InterruptDisable),
+            DecimalMode = (byte) (flags & CpuStatusRegisterPackedFlags.DecimalMode),
+            BreakFlag = (byte) (flags & CpuStatusRegisterPackedFlags.BreakFlag),
+            Overflow = (byte) (flags & CpuStatusRegisterPackedFlags.Overflow),
+            NegativeOrSign = (byte) (flags & CpuStatusRegisterPackedFlags.NegativeOrSign),
         };
 
         return result;

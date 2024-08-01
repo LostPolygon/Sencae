@@ -143,9 +143,9 @@ public class Instructions {
         ));
         machine.Dispose();
 
-        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry);
-        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Zero);
-        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry.BoolValue);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Zero.BoolValue);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign.BoolValue);
         
         machine = Emulate(CreateCodeCartridge(
             """
@@ -159,9 +159,9 @@ public class Instructions {
         ));
         machine.Dispose();
 
-        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry);
-        Assert.AreEqual(false, machine.State.Cpu.Registers.P.Zero);
-        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry.BoolValue);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.Zero.BoolValue);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign.BoolValue);
         
         machine = Emulate(CreateCodeCartridge(
             """
@@ -174,9 +174,9 @@ public class Instructions {
         ));
         machine.Dispose();
 
-        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry);
-        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Zero);
-        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry.BoolValue);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Zero.BoolValue);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign.BoolValue);
     }
     
     [Test]

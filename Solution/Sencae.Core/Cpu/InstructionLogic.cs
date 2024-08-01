@@ -429,13 +429,13 @@ public static class InstructionLogic {
 
     [MethodImpl(HotPath)]
     private static bool ADC_SBC_Internal(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal, byte data) {
-        ushort result16 = (ushort) (cpu.A + data + (cpu.P.Carry ? 1 : 0));
+        ushort result16 = (ushort) (cpu.A + data + (cpu.P.Carry.BoolValue ? 1 : 0));
         byte result = (byte) result16;
 
         cpu.P.Carry = result16 > Byte.MaxValue;
         SetGenericZeroAndNegativeSignFlags(ref cpu.P, result);
 
-        cpu.P.Overflow = ((cpu.A ^ result) & (data ^ result) & 1 << 7) != 0;
+        cpu.P.Overflow = (byte) ((cpu.A ^ result) & (data ^ result) & 1 << 7);
         cpu.A = result;
 
         return false;
@@ -496,7 +496,7 @@ public static class InstructionLogic {
             value = (byte) (value << 1);
 
             SetGenericZeroAndNegativeSignFlags(ref cpu.P, value);
-            cpu.P.Carry = (input & 1 << 7) != 0;
+            cpu.P.Carry = (byte) (input & 1 << 7);
         }
 
         return completed;
@@ -516,10 +516,10 @@ public static class InstructionLogic {
 
         if (mustHandle) {
             byte input = value;
-            value = (byte) ((value << 1) | (cpu.P.Carry ? 1 : 0));
+            value = (byte) ((value << 1) | (cpu.P.Carry.BoolValue ? 1 : 0));
 
-            cpu.P.Carry = (input & 1 << 7) != 0;
-            cpu.P.NegativeOrSign = (input & 1 << 6) != 0;
+            cpu.P.Carry = (byte) (input & 1 << 7);
+            cpu.P.NegativeOrSign = (byte) (input & 1 << 6);
             cpu.P.Zero = value == 0;
         }
 
@@ -546,10 +546,10 @@ public static class InstructionLogic {
         if (mustHandle) {
             byte input = value;
             value = (byte) (value >> 1);
-            value |= (byte) (cpu.P.Carry ? 1 << 7 : 0);
+            value |= (byte) (cpu.P.Carry.BoolValue ? 1 << 7 : 0);
 
             cpu.P.NegativeOrSign = cpu.P.Carry;
-            cpu.P.Carry = (input & 1 << 0) != 0;
+            cpu.P.Carry = (byte) (input & 1 << 0);
             cpu.P.Zero = value == 0;
         }
 
@@ -573,7 +573,7 @@ public static class InstructionLogic {
 
             cpu.P.NegativeOrSign = false;
             cpu.P.Zero = value == 0;
-            cpu.P.Carry = (input & 1 << 0) != 0;
+            cpu.P.Carry = (byte) (input & 1 << 0);
         }
 
         return completed;
@@ -676,35 +676,35 @@ public static class InstructionLogic {
 
     [MethodImpl(HotPath)]
     public static bool BCS(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Carry);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Carry.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BCC(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Carry);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Carry.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BEQ(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Zero);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Zero.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BNE(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Zero);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Zero.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BMI(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.NegativeOrSign);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.NegativeOrSign.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BPL(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.NegativeOrSign);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.NegativeOrSign.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BVS(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Overflow);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Overflow.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BVC(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Overflow);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Overflow.BoolValue);
 
     [MethodImpl(HotPath)]
     private static bool BranchInternal(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal, bool condition) {
@@ -866,8 +866,8 @@ public static class InstructionLogic {
     [MethodImpl(HotPath)]
     public static bool BIT(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
         byte result = (byte) (cpu.A & cpuInternal.DataBus);
-        cpu.P.NegativeOrSign = (cpuInternal.DataBus & 1 << 7) != 0;
-        cpu.P.Overflow = (cpuInternal.DataBus & 1 << 6) != 0;
+        cpu.P.NegativeOrSign = (byte) (cpuInternal.DataBus & 1 << 7);
+        cpu.P.Overflow = (byte) (cpuInternal.DataBus & 1 << 6);
         cpu.P.Zero = result == 0;
 
         return false;
@@ -981,7 +981,7 @@ public static class InstructionLogic {
                 return AND(operationCycle, ref cpu, ref cpuInternal);
             case AfterNextOpcodeFetched:
                 AND(operationCycle, ref cpu, ref cpuInternal);
-                cpu.P.Carry = (cpu.A & 1 << 7) != 0;
+                cpu.P.Carry = (byte) (cpu.A & 1 << 7);
                 return false;
         }
     }
@@ -993,8 +993,8 @@ public static class InstructionLogic {
         ROR_Internal(operationCycle, ref cpu, ref cpuInternal, true);
 
         SetGenericZeroAndNegativeSignFlags(ref cpu.P, cpu.A);
-        cpu.P.Carry = (cpu.A & 1 << 6) != 0;
-        cpu.P.Overflow = (((cpu.A & 1 << 5) >> 5) ^ ((cpu.A & 1 << 6) >> 6)) != 0;
+        cpu.P.Carry = (byte) (cpu.A & 1 << 6);
+        cpu.P.Overflow = (byte) (((cpu.A & 1 << 5) >> 5) ^ ((cpu.A & 1 << 6) >> 6));
 
         return true;
     }
@@ -1077,6 +1077,7 @@ public static class InstructionLogic {
     public static bool XXX(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
         //Debug.WriteLine($"!!! Unhandled opcode ({cpuInternal.Instruction})");
         throw new NotImplementedException($"!!! Unhandled opcode ({cpuInternal.Instruction})");
+
         //return true;
     }
 
@@ -1085,7 +1086,7 @@ public static class InstructionLogic {
     [MethodImpl(HotPath)]
     private static void SetGenericZeroAndNegativeSignFlags(ref CpuStatusRegisterFlags status, byte value) {
         status.Zero = value == 0;
-        status.NegativeOrSign = (value & 1 << 7) != 0;
+        status.NegativeOrSign = (byte) (value & 1 << 7);
     }
 
     [MethodImpl(HotPath)]
