@@ -429,7 +429,7 @@ public static class InstructionLogic {
 
     [MethodImpl(HotPath)]
     private static bool ADC_SBC_Internal(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal, byte data) {
-        ushort result16 = (ushort) (cpu.A + data + (cpu.P.Carry ? 1 : 0));
+        ushort result16 = (ushort) (cpu.A + data + (cpu.P.Carry.BoolValue ? 1 : 0));
         byte result = (byte) result16;
 
         cpu.P.Carry = result16 > Byte.MaxValue;
@@ -516,7 +516,7 @@ public static class InstructionLogic {
 
         if (mustHandle) {
             byte input = value;
-            value = (byte) ((value << 1) | (cpu.P.Carry ? 1 : 0));
+            value = (byte) ((value << 1) | (cpu.P.Carry.BoolValue ? 1 : 0));
 
             cpu.P.Carry = (input & 1 << 7) != 0;
             cpu.P.NegativeOrSign = (input & 1 << 6) != 0;
@@ -546,7 +546,7 @@ public static class InstructionLogic {
         if (mustHandle) {
             byte input = value;
             value = (byte) (value >> 1);
-            value |= (byte) (cpu.P.Carry ? 1 << 7 : 0);
+            value |= (byte) (cpu.P.Carry.BoolValue ? 1 << 7 : 0);
 
             cpu.P.NegativeOrSign = cpu.P.Carry;
             cpu.P.Carry = (input & 1 << 0) != 0;
@@ -676,35 +676,35 @@ public static class InstructionLogic {
 
     [MethodImpl(HotPath)]
     public static bool BCS(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Carry);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Carry.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BCC(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Carry);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Carry.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BEQ(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Zero);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Zero.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BNE(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Zero);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Zero.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BMI(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.NegativeOrSign);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.NegativeOrSign.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BPL(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.NegativeOrSign);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.NegativeOrSign.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BVS(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Overflow);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, cpu.P.Overflow.BoolValue);
 
     [MethodImpl(HotPath)]
     public static bool BVC(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) =>
-        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Overflow);
+        BranchInternal(operationCycle, ref cpu, ref cpuInternal, !cpu.P.Overflow.BoolValue);
 
     [MethodImpl(HotPath)]
     private static bool BranchInternal(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal, bool condition) {
