@@ -23,11 +23,11 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
     }
 
     [MethodImpl(HotPath)]
-    public void Clock() {
+    public bool Clock() {
         ref CpuInternalState cpuInternal = ref Cpu.Internal;
 
         if (cpuInternal.Halted)
-            return;
+            return false;
 
         /*if (cpuCycles < 7) {
             cpuCycles++;
@@ -48,10 +48,12 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
         CpuBusHandling?.Invoke(address, accessMode == MemoryAccessMode.Read, dataBus);
 
         if (mustExecuteState) {
-            ExecuteState(Cpu, ref cpuInternal);
+            ExecuteState(ref Cpu.Registers, ref cpuInternal);
         }
 
-        Cpu.Internal.Cycles++;
+        cpuInternal.Cycles++;
+
+        return true;
     }
 
     public void HardReset(CpuResetOptions options) {
@@ -91,13 +93,13 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
                 throw new ArgumentOutOfRangeException();
         }
 
-        Cpu.P = new CpuStatusRegisterFlags {
+        Cpu.Registers.P = new CpuStatusRegisterFlags {
             InterruptDisable = true,
             BreakFlag = true
         };
 
-        Cpu.A = Cpu.X = Cpu.Y = 0x00;
-        Cpu.SP = 0xFD;
+        Cpu.Registers.A = Cpu.Registers.X = Cpu.Registers.Y = 0x00;
+        Cpu.Registers.SP = 0xFD;
 
         CpuMemoryBus.Write(0x4017, 0); // frame irq enabled
         CpuMemoryBus.Write(0x4015, 0); // all APU channels disabled
@@ -114,15 +116,15 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
     }
 
     public void SoftReset(CpuResetOptions options) {
-        Cpu.P.InterruptDisable = true;
-        Cpu.SP -= 3;
+        Cpu.Registers.P.InterruptDisable = true;
+        Cpu.Registers.SP -= 3;
 
         GenericReset(options);
     }
 
     public void ApplyResetVector(ushort? overrideResetVector) {
         ushort resetVector = overrideResetVector ?? CpuMemoryBus.ReadU16(CpuConstants.ResetVector);
-        Cpu.PC.Value = (ushort) (resetVector + 0);
+        Cpu.Registers.PC.Value = (ushort) (resetVector + 0);
 
         Cpu.Internal.State = CpuInternalState.ExecutionState.InterpretingFetchedOpcode;
         Cpu.Internal.DataBus = CpuMemoryBus.ReadObserve(resetVector);
@@ -138,14 +140,15 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
 
         ApplyResetVector(options.OverrideResetVector);
     }
+    
     [MethodImpl(HotPath)]
-    private static void ExecuteState(CpuState cpu, ref CpuInternalState cpuInternal) {
+    private static void ExecuteState(ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
         while (true) {
             switch (cpuInternal.State) {
                 case CpuInternalState.ExecutionState.FinishingCurrentInstructionAndFetchingNextOpcode: {
                     // Execute current opcode
                     cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
-                    InstructionLogic.Dispatch(cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                    InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
 
                     // Set up fetching next opcode
                     cpuInternal.Read = true;
@@ -162,14 +165,14 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
                     break;
                 }
                 case CpuInternalState.ExecutionState.InterpretingFetchedOpcode: {
-                    byte instructionOpcode = cpuInternal.DataBus;
-                    cpuInternal.Instruction = Instructions.DescriptorByOpcode[instructionOpcode];
-
                     cpuInternal.State = CpuInternalState.ExecutionState.ExecutingAddressing;
                     cpuInternal.OperationCycle = 0;
 
-                    if (CheckCpuNmi(cpu, ref cpuInternal))
+                    if (CheckCpuNmi(ref cpuInternal))
                         break;
+                    
+                    byte instructionOpcode = cpuInternal.DataBus;
+                    cpuInternal.Instruction = Instructions.DescriptorByOpcode[instructionOpcode];
 
                     cpu.PC.Value++;
                     cpuInternal.AddressBus = cpu.PC;
@@ -184,7 +187,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
                 case CpuInternalState.ExecutionState.ExecutingAddressing: {
                     bool completed =
                         cpuInternal.Instruction.Type == InstructionType.JSR ||
-                        AddressingModeLogic.Dispatch(cpu, ref cpuInternal, cpuInternal.Instruction.AddressingMode);
+                        AddressingModeLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.AddressingMode);
 
                     cpuInternal.OperationCycle++;
                     if (!completed)
@@ -216,7 +219,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
                             (cpuInternal.Instruction.Flags & InstructionFlags.MemoryDataOperation) == 0
                         )
                     );*/
-                    bool completed = InstructionLogic.Dispatch(cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                    bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
                     cpuInternal.OperationCycle++;
 
                     if (completed) {
@@ -240,7 +243,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
         }
     }
 
-    private static bool CheckCpuNmi(CpuState cpu, ref CpuInternalState cpuInternal) {
+    private static bool CheckCpuNmi(ref CpuInternalState cpuInternal) {
         if (!cpuInternal.NmiFlipFlop ||
             cpuInternal.Instruction.Type == InstructionType.SpecialNmiHandler)
             return false;

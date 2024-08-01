@@ -106,7 +106,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
             // Wait for user to close the window or press Esc
             case SDL_EventType.SDL_QUIT:
                 MainLoop.Quit();
-                break;
+                return;
 
             case SDL_EventType.SDL_KEYDOWN:
                 if (evt.key.keysym.sym == SDL_Keycode.SDLK_ESCAPE) {
@@ -123,6 +123,9 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
 
                 break;
         }
+
+        if (CpuDebuggerWindow.HandleSdlEvent(evt))
+            return;
 
         fixed (SDL_Event* evtPtr = &evt) {
             ImGuiNative.ImGui_ImplSDL2_ProcessEvent(evtPtr);

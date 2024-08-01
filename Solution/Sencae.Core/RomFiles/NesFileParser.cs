@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Sencae.Nes20File;
 
 namespace Sencae;
 
@@ -15,8 +16,8 @@ public static unsafe class NesFileParser {
         position += sizeof(Nes20Header);
 
         int mapper =
-            (int) (header.Flags6 & Nes20Header.Flags.Flags6.MapperNumberLowerNybble) >> 4 |
-            (int) (header.Flags7 & Nes20Header.Flags.Flags7.MapperNumberUpperNybble);
+            (int) (header.Flags6 & Nes20Header.Flags.Flags6.MapperNumberLsbLowerNybble) >> 4 |
+            (int) (header.Flags7 & Nes20Header.Flags.Flags7.MapperNumberLsbUpperNybble);
 
         int prgRomSize = header.PrgRomSize * 16 * 1024;
         int chrRomSize = header.ChrRomSize * 8 * 1024;

@@ -241,12 +241,14 @@ public static class NintendulatorLog {
 
     public static MachineLogEntry CreateMachineLogEntry(Machine machine) {
         MachineState machineState = machine.State;
-        CpuState cpu = machineState.Cpu;
+        ref CpuRegistersState cpu = ref machineState.Cpu.Registers;
+        ref CpuInternalState cpuInternal = ref machineState.Cpu.Internal;
+        
         //InstructionDescriptor instruction = cpu.Internal.Instruction;
-        InstructionDescriptor instruction = Instructions.DescriptorByOpcode[Read(cpu.Internal.AddressBus.Value)];
+        InstructionDescriptor instruction = Instructions.DescriptorByOpcode[Read(cpuInternal.AddressBus.Value)];
 
         MachineLogEntry.CpuState cpuState = new(
-            cpu.Internal.AddressBus.Value,
+            cpuInternal.AddressBus.Value,
             cpu.A,
             cpu.X,
             cpu.Y,
@@ -265,7 +267,7 @@ public static class NintendulatorLog {
             return machine.CpuMemoryBus.ReadObserve((ushort) address);
         }
 
-        byte dataP1 = Read(machineState.Cpu.PC.Value + 1);
+        byte dataP1 = Read(cpu.PC.Value + 1);
         UInt16Bytes dataU16 = default;
         dataU16.Low = dataP1;
 
@@ -275,7 +277,7 @@ public static class NintendulatorLog {
             case AddressingMode.Immediate:
                 break;
             case AddressingMode.Absolute: {
-                dataU16.High = Read(machineState.Cpu.PC.Value + 2);
+                dataU16.High = Read(cpu.PC.Value + 2);
                 byte targetData = Read(dataU16.Value);
                 cpuState = cpuState with {
                     TargetData = targetData
@@ -291,7 +293,7 @@ public static class NintendulatorLog {
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                dataU16.High = Read(machineState.Cpu.PC.Value + 2);
+                dataU16.High = Read(cpu.PC.Value + 2);
                 ushort effectiveAddress = (ushort) (dataU16.Value + index);
                 byte targetData = Read(effectiveAddress);
 
@@ -328,7 +330,7 @@ public static class NintendulatorLog {
                 break;
             }
             case AddressingMode.AbsoluteIndirect: {
-                dataU16.High = Read(machineState.Cpu.PC.Value + 2);
+                dataU16.High = Read(cpu.PC.Value + 2);
                 UInt16Bytes effectiveAddressAddress = dataU16;
                 bool pageBoundaryBug = effectiveAddressAddress.Low == 0xFF;
 
@@ -382,7 +384,7 @@ public static class NintendulatorLog {
             }
             case AddressingMode.Relative: {
                 // +2 for instruction size itself
-                ushort effectiveAddress = (ushort) (machineState.Cpu.PC.Value + (sbyte) dataP1 + 2);
+                ushort effectiveAddress = (ushort) (cpu.PC.Value + (sbyte) dataP1 + 2);
                 cpuState = cpuState with {
                     EffectiveAddress = effectiveAddress,
                 };

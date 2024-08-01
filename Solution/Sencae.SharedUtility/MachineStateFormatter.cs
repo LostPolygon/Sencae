@@ -6,7 +6,8 @@ public static class MachineStateFormatter {
     }
     
     public static string FormatCpuStateNesTest(MachineState state) {
-        CpuState cpu = state.Cpu;
+        ref CpuRegistersState cpu = ref state.Cpu.Registers;
+        
         return
             $"{cpu.PC.Value:X4} " +
             $"A: {cpu.A:X2} " +
@@ -22,15 +23,16 @@ public static class MachineStateFormatter {
     }
     
     public static string FormatCpuState(in MachineState state) {
-        CpuState cpu = state.Cpu;
+        ref CpuRegistersState cpu = ref state.Cpu.Registers;
+        ref CpuInternalState cpuInternal = ref state.Cpu.Internal;
         
         return
             $"Cycle: {state.Cpu.Internal.Cycles}, " +
-            $"AB: {cpu.Internal.AddressBus.Value:X4}, " +
-            $"DB: {cpu.Internal.DataBus:X2}, " +
+            $"AB: {cpuInternal.AddressBus.Value:X4}, " +
+            $"DB: {cpuInternal.DataBus:X2}, " +
             $"PC: {cpu.PC.Value:X4}, " +
-            $"RW: {(cpu.Internal.Read ? "R" : "W")}, " +
-            $"OP: {cpu.Internal.Instruction.Mnemonic} ({cpu.Internal.Instruction.Opcode:X2}), " +
+            $"RW: {(cpuInternal.Read ? "R" : "W")}, " +
+            $"OP: {cpuInternal.Instruction.Mnemonic} ({cpuInternal.Instruction.Opcode:X2}), " +
             $"A: {cpu.A:X2}, " +
             $"X: {cpu.X:X2}, " +
             $"Y: {cpu.Y:X2}, " +

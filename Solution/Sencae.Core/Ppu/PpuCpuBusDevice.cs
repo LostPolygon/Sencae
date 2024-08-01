@@ -8,53 +8,77 @@ using static PpuConstants.RegisterAddresses;
 
 public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
     private readonly MachineState _machineState;
-    private readonly PpuState _state;
+    private readonly PpuState _ppuState;
     private readonly PpuMemoryBus _ppuMemoryBus;
 
-    public PpuCpuBusDevice(MachineState machineState, PpuState state, PpuMemoryBus ppuBusDevice) {
+    public PpuCpuBusDevice(MachineState machineState, PpuState ppuState, PpuMemoryBus ppuBusDevice) {
         _machineState = machineState;
-        _state = state;
+        _ppuState = ppuState;
         _ppuMemoryBus = ppuBusDevice;
     }
 
     [MethodImpl(HotPath)]
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
+        ref PpuState.PpuRegisterState registerState = ref _ppuState.Registers;
+        ref PpuState.PpuInternalState internalState = ref _ppuState.Internal;
+
+        bool isPpuAddress = address is >= 0x2000 and <= 0x3FFF;
+        if (!isPpuAddress)
+            return false;
+        
         switch (accessMode) {
             case MemoryAccessMode.Read:
             case MemoryAccessMode.Write:
-                ref byte ppuBus = ref _state.Internal.DataBus;
-
                 if (accessMode == MemoryAccessMode.Write) {
-                    ppuBus = bus;
+                    internalState.CpuDataBusLatch = bus;
                 }
 
-                bool result = HandleBusInternal(address, accessMode, ref ppuBus, out bool _);
+                bool result = HandleBusInternal(address, accessMode, ref internalState.CpuDataBusLatch, out bool _, ref registerState, ref internalState);
+                if (accessMode == MemoryAccessMode.Read) {
+                    bus = internalState.CpuDataBusLatch;
+                }
+
+                /*ref byte cpuDataBusLatch = ref internalState.CpuDataBusLatch;
+
+                if (accessMode == MemoryAccessMode.Write) {
+                    cpuDataBusLatch = bus;
+                }
+
+                bool result = HandleBusInternal(address, accessMode, ref cpuDataBusLatch, out bool _, ref registerState, ref internalState);
+
+                bus = cpuDataBusLatch;*/
 
                 //PPUCTRL, PPUMASK, PPUSCROLL, PPUADDR, the PPUSCROLL/PPUADDR latch, and the PPUDATA
-                /*if (_state.Internal.Reset) {
-                    _state.PPUCTRL = 0;
-                    _state.PPUMASK = 0;
-                    _state.PPUSTATUS = 0;
-                    _state.OAMADDR = 0;
+                /*if (internalState.Reset) {
+                    registerState.PPUCTRL = 0;
+                    registerState.PPUMASK = 0;
+                    registerState.PPUSTATUS = 0;
+                    registerState.OAMADDR = 0;
 
-                    _state.Internal.Address.Value = 0;
-                    _state.Internal.PpuAddressRegisterLatch = false;
-                    _state.Internal.PpuScrollRegisterLatch = false;
-                    _state.Internal.FineScrollX = 0;
-                    _state.Internal.FineScrollY = 0;
+                    internalState.Address.Value = 0;
+                    internalState.PpuAddressRegisterLatch = false;
+                    internalState.PpuScrollRegisterLatch = false;
+                    internalState.FineScrollX = 0;
+                    internalState.FineScrollY = 0;
                 }*/
 
-                bus = ppuBus;
                 return result;
             case MemoryAccessMode.ReadObserve:
-                return HandleBusInternal(address, accessMode, ref bus, out bool _);
+                return HandleBusInternal(address, accessMode, ref bus, out bool _, ref registerState, ref internalState);
             default:
                 throw new ArgumentOutOfRangeException(nameof(accessMode), accessMode, null);
         }
     }
 
     [MethodImpl(HotPath)]
-    private bool HandleBusInternal(ushort address, MemoryAccessMode accessMode, ref byte bus, out bool mustUpdateBus) {
+    private bool HandleBusInternal(
+        ushort address,
+        MemoryAccessMode accessMode,
+        ref byte bus,
+        out bool mustUpdateBus,
+        ref PpuState.PpuRegisterState registerState,
+        ref PpuState.PpuInternalState internalState
+    ) {
         /*
         $2000–$2007 ($0008) NES PPU registers
         $2008–$3FFF ($1FF8) Mirrors of $2000–$2007 (repeats every 8 bytes)
@@ -67,7 +91,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
 
                 // Writes to the following registers are ignored if earlier than ~29658 CPU clocks after reset:
                 // PPUCTRL, PPUMASK, PPUSCROLL, PPUADDR
-                if (accessMode == MemoryAccessMode.Write && _state.Internal.Cycles <= 29658 * 3) {
+                if (accessMode == MemoryAccessMode.Write && internalState.Cycles <= 29658 * 3) {
                     switch (registerIndex) {
                         case PPUCTRL_Index: return true;
                         case PPUMASK_Index: return true;
@@ -82,10 +106,10 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                         switch (accessMode) {
                             case MemoryAccessMode.Write:
                             case MemoryAccessMode.ReadObserve:
-                                ref byte mappedData = ref Unsafe.As<PpuControlRegisterFlags, byte>(ref _state.PPUCTRL);
+                                ref byte mappedData = ref Unsafe.As<PpuControlRegisterFlags, byte>(ref registerState.PPUCTRL);
                                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
 
-                                //Debug.WriteLine($"Set PPUCTRL to: {_state.PPUCTRL}");
+                                //Debug.WriteLine($"Set PPUCTRL to: {registerState.PPUCTRL}");
                                 return true;
                         }
 
@@ -97,7 +121,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                         switch (accessMode) {
                             case MemoryAccessMode.ReadObserve:
                             case MemoryAccessMode.Write:
-                                ref byte mappedData = ref Unsafe.As<PpuMaskRegisterFlags, byte>(ref _state.PPUMASK);
+                                ref byte mappedData = ref Unsafe.As<PpuMaskRegisterFlags, byte>(ref registerState.PPUMASK);
                                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
 
                                 return true;
@@ -108,7 +132,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
 
                     // 0x2002
                     case PPUSTATUS_Index: {
-                        ref byte mappedData = ref Unsafe.As<PpuStatusRegisterFlags, byte>(ref _state.PPUSTATUS);
+                        ref byte mappedData = ref Unsafe.As<PpuStatusRegisterFlags, byte>(ref registerState.PPUSTATUS);
                         byte oldBus = bus;
 
                         if (accessMode != MemoryAccessMode.Write) {
@@ -116,23 +140,23 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                         }
 
                         bus = (byte) (
-                            (bus & (int) ~PpuStatusRegisterFlags.OpenBusMask) |
-                            (oldBus & (int) PpuStatusRegisterFlags.OpenBusMask)
+                            (bus & (int) ~PpuStatusRegisterFlags.StatusMask) |
+                            (oldBus & (int) PpuStatusRegisterFlags.StatusMask)
                         );
 
                         if (accessMode == MemoryAccessMode.Read) {
-                            _state.Internal.LastPPUSTATUS_ReadCycle = _machineState.MachineCycles;
-                            _state.Internal.PpuAddressRegisterLatch = false;
-                            _state.Internal.PpuScrollRegisterLatch = false;
+                            internalState.LastPPUSTATUS_ReadCycle = _machineState.MachineCycles;
+                            internalState.PpuAddressRegisterLatch = false;
+                            internalState.PpuScrollRegisterLatch = false;
 
-                            //_state.Internal.Address = default;
+                            //internalState.Address = default;
 
                             mappedData &= (byte) ~PpuStatusRegisterFlags.VerticalBlankStarted;
                         }
 
                         bus = (byte) (
-                            (bus & (int) ~PpuStatusRegisterFlags.OpenBusMask) |
-                            (oldBus & (int) PpuStatusRegisterFlags.OpenBusMask)
+                            (bus & (int) ~PpuStatusRegisterFlags.StatusMask) |
+                            (oldBus & (int) PpuStatusRegisterFlags.StatusMask)
                         );
 
                         return true;
@@ -143,7 +167,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                         switch (accessMode) {
                             case MemoryAccessMode.Write:
                             case MemoryAccessMode.ReadObserve:
-                                ref byte mappedData = ref _state.OAMADDR;
+                                ref byte mappedData = ref registerState.OAMADDR;
                                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
                                 return true;
                         }
@@ -153,10 +177,10 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
 
                     // 0x2004
                     case OAMDATA_Index: {
-                        ref byte mappedData = ref _state.OamMemory[_state.OAMADDR];
+                        ref byte mappedData = ref _ppuState.OamMemory[registerState.OAMADDR];
                         BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
                         if (accessMode == MemoryAccessMode.Write) {
-                            _state.OAMADDR++;
+                            registerState.OAMADDR++;
                         }
 
                         return true;
@@ -167,17 +191,17 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                         byte dummyByte = 0;
                         ref byte mappedData = ref dummyByte;
 
-                        if (_state.Internal.PpuScrollRegisterLatch) {
-                            mappedData = ref _state.Internal.FineScrollY;
+                        if (internalState.PpuScrollRegisterLatch) {
+                            mappedData = ref internalState.FineScrollY;
                         } else {
-                            mappedData = ref _state.Internal.FineScrollX;
+                            mappedData = ref internalState.FineScrollX;
                         }
 
                         switch (accessMode) {
                             case MemoryAccessMode.Write:
                                 mappedData = bus;
-                                _state.Internal.PpuScrollRegisterLatch = !_state.Internal.PpuScrollRegisterLatch;
-                                _state.Internal.PpuAddressRegisterLatch = !_state.Internal.PpuAddressRegisterLatch;
+                                internalState.PpuScrollRegisterLatch = !internalState.PpuScrollRegisterLatch;
+                                internalState.PpuAddressRegisterLatch = !internalState.PpuAddressRegisterLatch;
                                 return true;
                             case MemoryAccessMode.ReadObserve:
                                 bus = mappedData;
@@ -192,23 +216,23 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                         byte dummyByte = 0;
                         ref byte mappedData = ref dummyByte;
 
-                        if (_state.Internal.PpuAddressRegisterLatch) {
-                            mappedData = ref _state.Internal.Address.Low;
+                        if (internalState.PpuAddressRegisterLatch) {
+                            mappedData = ref internalState.Address.Low;
                         } else {
-                            mappedData = ref _state.Internal.AddressHighTemp;
+                            mappedData = ref internalState.AddressHighTemp;
                         }
 
                         switch (accessMode) {
                             case MemoryAccessMode.Write:
                                 mappedData = bus;
-                                if (_state.Internal.PpuAddressRegisterLatch) {
-                                    _state.Internal.Address.High = _state.Internal.AddressHighTemp;
+                                if (internalState.PpuAddressRegisterLatch) {
+                                    internalState.Address.High = internalState.AddressHighTemp;
                                 }
 
-                                _state.Internal.Address.Value &= 0x7FFF;
+                                internalState.Address.Value &= 0x7FFF;
 
-                                _state.Internal.PpuAddressRegisterLatch = !_state.Internal.PpuAddressRegisterLatch;
-                                if ((_state.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) == 0) {
+                                internalState.PpuAddressRegisterLatch = !internalState.PpuAddressRegisterLatch;
+                                if ((registerState.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) == 0) {
                                 }
 
                                 return true;
@@ -223,13 +247,13 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                     // 0x2007
                     case PPUDATA_Index: {
                         // Contents in range 0–$3EFF (before pallete RAM) are buffered
-                        ref ushort vramAddress = ref _state.Internal.Address.Value;
+                        ref ushort vramAddress = ref internalState.Address.Value;
                         if (accessMode != MemoryAccessMode.Write) {
                             switch (vramAddress) {
                                 case <= 0x3EFF:
-                                    bus = _state.Internal.DataBusLatch;
+                                    bus = internalState.DataBusLatch;
 
-                                    _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref _state.Internal.DataBusLatch);
+                                    _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref internalState.DataBusLatch);
                                     break;
                                 case <= 0x3FFF:
                                     /*
@@ -244,7 +268,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
                                     _ppuMemoryBus.HandleBus(
                                         (ushort) (vramAddress % 0x1000 + Nametable0StartAddress), // FIXME: is this correct?
                                         accessMode,
-                                        ref _state.Internal.DataBusLatch
+                                        ref internalState.DataBusLatch
                                     );
 
                                     mustUpdateBus = false;
@@ -256,7 +280,7 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
 
                         if (accessMode != MemoryAccessMode.ReadObserve) {
                             int addressIncrement =
-                                (_state.PPUCTRL & PpuControlRegisterFlags.VramAddressIncrement) == 0 ?
+                                (registerState.PPUCTRL & PpuControlRegisterFlags.VramAddressIncrement) == 0 ?
                                     1 :
                                     32;
 

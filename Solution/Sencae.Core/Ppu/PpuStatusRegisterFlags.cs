@@ -5,7 +5,7 @@ namespace Sencae.Ppu;
 [Flags]
 public enum PpuStatusRegisterFlags : byte {
     // PPU open bus. Returns stale PPU bus contents.
-    OpenBusMask = 0b_0001_1111,
+    StatusMask = 0b_0001_1111,
 
     /*
     Sprite overflow. The intent was for this flag to be set

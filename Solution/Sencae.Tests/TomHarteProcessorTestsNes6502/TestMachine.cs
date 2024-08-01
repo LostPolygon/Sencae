@@ -23,10 +23,9 @@ public class TestMachine : IDisposable {
             CpuMemoryResetState = CpuMemoryResetState.Uninitialized,
         });
     }
-    
+
     public void Clock() {
         CpuDevice.Clock();
-        CpuCycles++;
     }
 
     public void Dispose() {

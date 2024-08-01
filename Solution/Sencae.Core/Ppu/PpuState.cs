@@ -6,19 +6,9 @@ public sealed class PpuState {
     public byte[] Memory = new byte[2048];
     public byte[] PaletteMemory = new byte[32];
     public byte[] OamMemory = new byte[256];
-
-    public PpuControlRegisterFlags PPUCTRL;
-    public PpuMaskRegisterFlags PPUMASK;
-    public PpuStatusRegisterFlags PPUSTATUS;
-
-    public byte OAMADDR;
-
+    
+    public PpuRegisterState Registers;
     public PpuInternalState Internal;
-
-    public bool IsRenderingDisabled {
-        [MethodImpl(AggressiveInlining)]
-        get => (PPUMASK & (PpuMaskRegisterFlags.ShowBackground | PpuMaskRegisterFlags.ShowSprites)) == 0;
-    }
 
     /*
     PPUCTRL 	$2000 	VPHB SINN 	NMI enable (V), PPU master/slave (P), sprite height (H), background tile select (B), sprite tile select (S), increment mode (I), nametable select (NN)
@@ -30,6 +20,19 @@ public sealed class PpuState {
     PPUADDR 	$2006 	aaaa aaaa 	PPU read/write address (two writes: most significant byte, least significant byte)
     PPUDATA 	$2007 	dddd dddd 	PPU data read/write
     */
+    
+    public struct PpuRegisterState {
+        public PpuControlRegisterFlags PPUCTRL;
+        public PpuMaskRegisterFlags PPUMASK;
+        public PpuStatusRegisterFlags PPUSTATUS;
+
+        public byte OAMADDR;
+        
+        public bool IsRenderingDisabled {
+            [MethodImpl(AggressiveInlining)]
+            get => (PPUMASK & (PpuMaskRegisterFlags.ShowBackground | PpuMaskRegisterFlags.ShowSprites)) == 0;
+        }
+    }
 
     public struct PpuInternalState {
         public UInt16Bytes Address;
@@ -41,7 +44,7 @@ public sealed class PpuState {
         public byte FineScrollX;
         public byte FineScrollY;
 
-        public byte DataBus;
+        public byte CpuDataBusLatch;
 
         public byte DataBusLatch;
 
@@ -49,7 +52,7 @@ public sealed class PpuState {
 
         public int Scanline;
         public int CyclesInScanline;
-        //public int CyclesInFrame;
+        public int FrameCycle;
 
         //public bool IsOddFrame;
         

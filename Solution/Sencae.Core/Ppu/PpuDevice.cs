@@ -1,23 +1,27 @@
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Sencae.Ppu;
 
-public sealed class PpuDevice {
+public sealed partial class PpuDevice {
     private readonly PpuState _ppuState;
     private readonly CpuState _cpuState;
+    private readonly PpuCycleOperation[] _operations;
 
     public PpuDevice(PpuState ppuState, CpuState cpuState) {
         _ppuState = ppuState;
         _cpuState = cpuState;
+        _operations = CreatePpuCycleOperationTable();
     }
 
     public void SoftReset() {
         // https://www.nesdev.org/wiki/PPU_power_up_state
-        _ppuState.PPUCTRL = 0;
-        _ppuState.PPUMASK = 0;
-        _ppuState.PPUSTATUS = 0;
-        _ppuState.OAMADDR = 0;
+        _ppuState.Registers.PPUCTRL = 0;
+        _ppuState.Registers.PPUMASK = 0;
+        _ppuState.Registers.PPUSTATUS = 0;
+        _ppuState.Registers.OAMADDR = 0;
 
         _ppuState.Internal = default;
         _ppuState.Internal.Reset = true;
@@ -29,64 +33,55 @@ public sealed class PpuDevice {
 
     [MethodImpl(HotPath)]
     public void Clock() {
-        ref PpuState.PpuInternalState ppuStateInternal = ref _ppuState.Internal;
-        int scanline = ppuStateInternal.Scanline;
-        int scanlineCycle = ppuStateInternal.CyclesInScanline;
+        ref PpuState.PpuRegisterState registers = ref _ppuState.Registers;
+        ref PpuState.PpuInternalState internalState = ref _ppuState.Internal;
 
-        bool suppressNmi = false;
-        switch (scanline) {
-            case 241 when scanlineCycle == 1: {
-                // Effectively end of frame, so set vertical blank flag
-                _ppuState.PPUSTATUS |= PpuStatusRegisterFlags.VerticalBlankStarted;
-
-                long cyclesSinceLastPpuStatusRead = (long) (ppuStateInternal.Cycles - ppuStateInternal.LastPPUSTATUS_ReadCycle);
-                suppressNmi = false;
-                if (cyclesSinceLastPpuStatusRead is 0) {
-                } else {
-                }
-
-                goto default;
-            }
-            case 261: {
-                switch (scanlineCycle) {
-                    case 1:
-                        _ppuState.PPUSTATUS &= ~PpuStatusRegisterFlags.VerticalBlankStarted;
-                        ppuStateInternal.Reset = false;
-                        scanlineCycle++;
-                        break;
-                    case >= 339:
-                        bool mustSkipDot = !_ppuState.IsRenderingDisabled && ppuStateInternal.Frames % 2 == 0;
-                        int targetColumn = mustSkipDot ? 339 : 340;
-                        if (scanlineCycle == targetColumn) {
-                            //_lastPpuFrameStart = State.MachineCycles;
-                            ppuStateInternal.Frames++;
-
-                            scanlineCycle = 0;
-                            scanline = 0;
-                        } else {
-                            scanlineCycle++;
-                        }
-
-                        break;
-                    default:
-                        scanlineCycle++;
-                        break;
-                }
-
+        int frameCycle = internalState.FrameCycle;
+        PpuCycleOperation operation = _operations[frameCycle];
+        switch (operation.Flag) {
+            case PpuCycleFlagOperation.None:
                 break;
-            }
+            case PpuCycleFlagOperation.Scanline0Cycle0:
+                break;
+            case PpuCycleFlagOperation.ScanlineNon0Cycle0:
+                break;
+            case PpuCycleFlagOperation.SetVerticalBlankFlag:
+                registers.PPUSTATUS |= PpuStatusRegisterFlags.VerticalBlankStarted;
+                internalState.Reset = false;
+                break;
+            case PpuCycleFlagOperation.ClearFlags:
+                registers.PPUSTATUS &= ~(PpuStatusRegisterFlags.VerticalBlankStarted | PpuStatusRegisterFlags.SpriteOverflow | PpuStatusRegisterFlags.Sprite0Hit);
+                break;
             default:
-                scanlineCycle++;
-                if (scanlineCycle == 341) {
-                    scanlineCycle = 0;
-                    scanline++;
-                }
-
-                break;
+                throw new ArgumentOutOfRangeException();
         }
 
-        ppuStateInternal.Scanline = scanline;
-        ppuStateInternal.CyclesInScanline = scanlineCycle;
+        switch (operation.Register) {
+            case PpuCycleRegisterOperation.None:
+                break;
+            case PpuCycleRegisterOperation.SpriteAttributeFetch:
+                break;
+            case PpuCycleRegisterOperation.SpriteXFetch:
+                break;
+            case PpuCycleRegisterOperation.IncrementHorizontalV:
+                break;
+            case PpuCycleRegisterOperation.IncrementHorizontalAndVerticalV:
+                break;
+            case PpuCycleRegisterOperation.SetHorizontalVToHorizontalT:
+                break;
+            case PpuCycleRegisterOperation.SetVerticalVToVerticalT:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        frameCycle++;
+        if (frameCycle == _operations.Length - 1) {
+            bool mustSkipDot = !registers.IsRenderingDisabled && internalState.Frames % 2 == 0;
+
+            frameCycle = mustSkipDot ? 1 : 0;
+            internalState.Frames++;
+        }
 
         // If the control register tells us to emit a NMI when-
         // entering vertical blanking period, do it! The CPU
@@ -97,21 +92,64 @@ public sealed class PpuDevice {
 
         bool nmiPulledDownOld = cpuInternalState.NmiPulledDown;
         cpuInternalState.NmiPulledDown =
-            !suppressNmi &&
-            (_ppuState.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0 &&
-            (_ppuState.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) != 0;
+
+            //!suppressNmi &&
+            (registers.PPUCTRL & PpuControlRegisterFlags.GenerateNmi) != 0 &&
+            (registers.PPUSTATUS & PpuStatusRegisterFlags.VerticalBlankStarted) != 0;
 
         if (cpuInternalState.NmiPulledDown && !nmiPulledDownOld) {
             cpuInternalState.NmiFlipFlop = true;
         }
 
         // HACK
-        if (_cpuState.Internal.Cycles % 28394 == 0) {
-            _ppuState.PPUSTATUS |= PpuStatusRegisterFlags.Sprite0Hit;
-        } else if (_cpuState.Internal.Cycles % 30000 == 0) {
-            _ppuState.PPUSTATUS &= ~PpuStatusRegisterFlags.Sprite0Hit;
+        if ((registers.PPUMASK & PpuMaskRegisterFlags.ShowBackground) != 0 &&
+            (registers.PPUMASK & PpuMaskRegisterFlags.ShowSprites) != 0) {
+            if (_cpuState.Internal.Cycles % 5000 == 0) {
+                registers.PPUSTATUS |= PpuStatusRegisterFlags.Sprite0Hit;
+            }
         }
 
-        ppuStateInternal.Cycles++;
+        internalState.FrameCycle = frameCycle;
+        internalState.Cycles++;
+    }
+
+    public record struct PpuCycleOperation(
+        PpuCycleVRamFetchOperation VRamFetch,
+        PpuCycleRegisterOperation Register = PpuCycleRegisterOperation.None,
+        PpuCycleFlagOperation Flag = PpuCycleFlagOperation.None
+    );
+
+    public enum PpuCycleFlagOperation : byte {
+        None,
+
+        Scanline0Cycle0,
+        ScanlineNon0Cycle0,
+        SetVerticalBlankFlag,
+        ClearFlags,
+    }
+
+    public enum PpuCycleRegisterOperation : byte {
+        None,
+
+        SpriteAttributeFetch,
+        SpriteXFetch,
+
+        IncrementHorizontalV,
+        IncrementHorizontalAndVerticalV,
+        SetHorizontalVToHorizontalT,
+        SetVerticalVToVerticalT
+    }
+
+    public enum PpuCycleVRamFetchOperation : byte {
+        Idle,
+
+        NametableFetchCycle0,
+        NametableFetchCycle1,
+        AttributeTableFetchCycle0,
+        AttributeTableFetchCycle1,
+        PatternTableLsbFetchCycle0,
+        PatternTableLsbFetchCycle1,
+        PatternTableMsbFetchCycle0,
+        PatternTableMsbFetchCycle1
     }
 }

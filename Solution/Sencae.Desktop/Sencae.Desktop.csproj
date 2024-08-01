@@ -29,7 +29,8 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseNativeAot' ">
-        <Optimize>True</Optimize>
+        <Optimize>False</Optimize>
+        <StripSymbols>false</StripSymbols>
 
         <PublishAot>True</PublishAot>
         <PublishTrimmed>true</PublishTrimmed>

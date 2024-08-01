@@ -45,18 +45,16 @@ public class TomHarteProcessorTestsNes6502 {
     }
 
     private bool RunTestCase(int id, TestCaseDto testCaseDto) {
-        if (id != 0) {
-            //return false;
-        }
-
         using TestMachine machine = new() {
             CpuState = {
-                A = testCaseDto.Initial.A,
-                X = testCaseDto.Initial.X,
-                Y = testCaseDto.Initial.Y,
-                SP = testCaseDto.Initial.S,
-                PC = new UInt16Bytes((ushort) (testCaseDto.Initial.PC  -0)),
-                P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) testCaseDto.Initial.P),
+                Registers = {
+                    A = testCaseDto.Initial.A,
+                    X = testCaseDto.Initial.X,
+                    Y = testCaseDto.Initial.Y,
+                    SP = testCaseDto.Initial.S,
+                    PC = new UInt16Bytes((ushort) (testCaseDto.Initial.PC  -0)),
+                    P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) testCaseDto.Initial.P),
+                },
 
                 Internal = {
                     AddressBus = new UInt16Bytes((ushort) (testCaseDto.Initial.PC -0)),
@@ -87,12 +85,12 @@ public class TomHarteProcessorTestsNes6502 {
 
         //Assert.IsFalse(machine.CpuState.Internal.Halted, "Machine halted");
 
-        Assert.AreEqual(testCaseDto.Final.A, machine.CpuState.A, "CpuState.A mismatch");
-        Assert.AreEqual(testCaseDto.Final.X, machine.CpuState.X, "CpuState.X mismatch");
-        Assert.AreEqual(testCaseDto.Final.Y, machine.CpuState.Y, "CpuState.Y mismatch");
-        Assert.AreEqual(testCaseDto.Final.S, machine.CpuState.SP, "CpuState.SP mismatch");
-        Assert.AreEqual(testCaseDto.Final.PC, machine.CpuState.PC.Value, "CpuState.PC mismatch");
-        Assert.AreEqual((CpuStatusRegisterPackedFlags) testCaseDto.Final.P, machine.CpuState.P.AsFlags, "CpuState.P mismatch");
+        Assert.AreEqual(testCaseDto.Final.A, machine.CpuState.Registers.A, "CpuState.A mismatch");
+        Assert.AreEqual(testCaseDto.Final.X, machine.CpuState.Registers.X, "CpuState.X mismatch");
+        Assert.AreEqual(testCaseDto.Final.Y, machine.CpuState.Registers.Y, "CpuState.Y mismatch");
+        Assert.AreEqual(testCaseDto.Final.S, machine.CpuState.Registers.SP, "CpuState.SP mismatch");
+        Assert.AreEqual(testCaseDto.Final.PC, machine.CpuState.Registers.PC.Value, "CpuState.PC mismatch");
+        Assert.AreEqual((CpuStatusRegisterPackedFlags) testCaseDto.Final.P, machine.CpuState.Registers.P.AsFlags, "CpuState.P mismatch");
 
         for (int i = 0; i < testCaseDto.Final.Ram.Length; i++) {
             TestCaseDto.RamEntryDto ramEntryDto = testCaseDto.Final.Ram[i];

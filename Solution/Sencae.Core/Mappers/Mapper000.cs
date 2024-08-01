@@ -13,7 +13,7 @@ public static class Mapper000 {
         public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
             return address switch {
                 >= 0x6000 and < 0x8000 => BusDeviceHandlers.ReadWrite(_prgRamMemory, address, accessMode, ref bus),
-                >= 0x8000 and <= 0xFFFF => BusDeviceHandlers.ReadWrite(_prgRomMemory, address, accessMode, ref bus),
+                >= 0x8000 and <= 0xFFFF => BusDeviceHandlers.ReadOnly(_prgRomMemory, address, accessMode, ref bus),
                 _ => false
             };
         }

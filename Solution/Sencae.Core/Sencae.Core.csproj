@@ -15,4 +15,7 @@
       </PackageReference>
       <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
     </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Sencae.Nes20File\Sencae.Nes20File.csproj" />
+    </ItemGroup>
 </Project>

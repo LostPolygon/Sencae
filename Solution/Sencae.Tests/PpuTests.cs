@@ -26,7 +26,7 @@ public class PpuTests {
         ), new () { AfterResetAction = AfterReset });
 
         machine.Dispose();
-        Assert.AreEqual(254, machine.State.Cpu.A);
+        Assert.AreEqual(254, machine.State.Cpu.Registers.A);
         
         machine = Emulate(CreateCodeCartridge(
             """
@@ -40,6 +40,6 @@ public class PpuTests {
         ), new () { AfterResetAction = AfterReset });
         
         machine.Dispose();
-        Assert.AreEqual(254, machine.State.Cpu.A);
+        Assert.AreEqual(254, machine.State.Cpu.Registers.A);
     }
 }

@@ -6,8 +6,8 @@ public static class NintendulatorLogCompare {
     public static void ResetMachineToNintendulatorInitialState(Machine machine) {
         MachineCpuMemoryBus cpuMemoryBus = machine.CpuMemoryBus;
 
-        machine.State.Ppu.PPUCTRL = (PpuControlRegisterFlags) 0x0;
-        machine.State.Ppu.PPUSTATUS =  (PpuStatusRegisterFlags) 0x0;
+        machine.State.Ppu.Registers.PPUCTRL = (PpuControlRegisterFlags) 0x0;
+        machine.State.Ppu.Registers.PPUSTATUS =  (PpuStatusRegisterFlags) 0x0;
         machine.State.Cpu.Internal.Cycles = 7;
         machine.State.MachineCycles = 7 * 3;
         //cpuMemoryBus.Write(0x2000, 0xFF);
@@ -31,7 +31,7 @@ public static class NintendulatorLogCompare {
             cpuMemoryBus.Write(i, 0xFF);
         }
         
-        machine.State.Cpu.P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) 0x24);
+        machine.State.Cpu.Registers.P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) 0x24);
     }
     
     public static List<string> ReadLogFromFile(string path) {

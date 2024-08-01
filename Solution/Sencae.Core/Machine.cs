@@ -18,6 +18,8 @@ public sealed class Machine : IDisposable {
 
     public MapperDevice MapperDevice;
 
+    public StandardControllersDevice StandardControllersDevice;
+
     public MachineState State;
 
     public event Action? PpuClocked;
@@ -35,8 +37,9 @@ public sealed class Machine : IDisposable {
         PpuMemoryBus = new PpuMemoryBus(PpuBusDevice, MapperDevice.CartridgeToPpuBusDevice);
         PpuCpuBusDevice = new PpuCpuBusDevice(State, State.Ppu, PpuMemoryBus);
 
+        StandardControllersDevice = new StandardControllersDevice();
         CpuBusDevice = new CpuBusDevice(State.Cpu);
-        CpuMemoryBus = new MachineCpuMemoryBus(CpuBusDevice, PpuCpuBusDevice, MapperDevice.CartridgeToCpuBusDevice);
+        CpuMemoryBus = new MachineCpuMemoryBus(CpuBusDevice, PpuCpuBusDevice, MapperDevice.CartridgeToCpuBusDevice, StandardControllersDevice);
         OamDmaDevice = new OamDmaDevice(State.Cpu.OamDmaDevice, State.Cpu, CpuMemoryBus, State.Ppu);
         CpuMemoryBus.OamDmaDevice = OamDmaDevice;
         
@@ -67,8 +70,8 @@ public sealed class Machine : IDisposable {
         if (State.MachineCycles % 3 == 0) {
             CpuClock();
         }
-
         PpuClock();
+
         State.MachineCycles++;
     }
 

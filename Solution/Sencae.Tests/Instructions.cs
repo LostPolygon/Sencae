@@ -23,10 +23,10 @@ public class Instructions {
             machine.CpuMemoryBus.Write(0x1234, 0x13);
         }
         
-        Assert.AreEqual(4, machine.State.Cpu.A);
-        Assert.AreEqual(5, machine.State.Cpu.X);
-        Assert.AreEqual(0x13, machine.State.Cpu.Y);
-        Assert.AreEqual(0x8008, machine.State.Cpu.PC.Value);
+        Assert.AreEqual(4, machine.State.Cpu.Registers.A);
+        Assert.AreEqual(5, machine.State.Cpu.Registers.X);
+        Assert.AreEqual(0x13, machine.State.Cpu.Registers.Y);
+        Assert.AreEqual(0x8008, machine.State.Cpu.Registers.PC.Value);
         Assert.AreEqual(2 + 2 + 4 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
     
@@ -42,7 +42,7 @@ public class Instructions {
         ));
 
         machine.Dispose();
-        Assert.AreEqual(0x02, machine.State.Cpu.A);
+        Assert.AreEqual(0x02, machine.State.Cpu.Registers.A);
         Assert.AreEqual(4 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
         
         machine = Emulate(CreateCodeCartridge(
@@ -90,8 +90,8 @@ public class Instructions {
             """
         ));
 
-        Assert.AreEqual(2, machine.State.Cpu.X);
-        Assert.AreEqual(0x8103, machine.State.Cpu.PC.Value);
+        Assert.AreEqual(2, machine.State.Cpu.Registers.X);
+        Assert.AreEqual(0x8103, machine.State.Cpu.Registers.PC.Value);
         Assert.AreEqual(16 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
     
@@ -120,11 +120,11 @@ public class Instructions {
         static void AfterReset(Machine machine) {
             machine.CpuMemoryBus.Write(0x01FE, 0xFF); // in cartridge space
             machine.CpuMemoryBus.Write(0x01FF, 0x80);
-            machine.State.Cpu.SP = 0xFD;
+            machine.State.Cpu.Registers.SP = 0xFD;
         }
         
-        Assert.AreEqual(2, machine.State.Cpu.X);
-        Assert.AreEqual(0x8103, machine.State.Cpu.PC.Value);
+        Assert.AreEqual(2, machine.State.Cpu.Registers.X);
+        Assert.AreEqual(0x8103, machine.State.Cpu.Registers.PC.Value);
         Assert.AreEqual(2 + 2 + 2 + 6 + 2 + 2 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
     
@@ -143,9 +143,9 @@ public class Instructions {
         ));
         machine.Dispose();
 
-        Assert.AreEqual(true, machine.State.Cpu.P.Carry);
-        Assert.AreEqual(true, machine.State.Cpu.P.Zero);
-        Assert.AreEqual(false, machine.State.Cpu.P.NegativeOrSign);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Zero);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign);
         
         machine = Emulate(CreateCodeCartridge(
             """
@@ -159,9 +159,9 @@ public class Instructions {
         ));
         machine.Dispose();
 
-        Assert.AreEqual(true, machine.State.Cpu.P.Carry);
-        Assert.AreEqual(false, machine.State.Cpu.P.Zero);
-        Assert.AreEqual(false, machine.State.Cpu.P.NegativeOrSign);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.Zero);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign);
         
         machine = Emulate(CreateCodeCartridge(
             """
@@ -174,9 +174,9 @@ public class Instructions {
         ));
         machine.Dispose();
 
-        Assert.AreEqual(true, machine.State.Cpu.P.Carry);
-        Assert.AreEqual(true, machine.State.Cpu.P.Zero);
-        Assert.AreEqual(false, machine.State.Cpu.P.NegativeOrSign);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Carry);
+        Assert.AreEqual(true, machine.State.Cpu.Registers.P.Zero);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.NegativeOrSign);
     }
     
     [Test]
@@ -221,7 +221,7 @@ public class Instructions {
             machine.CpuMemoryBus.Write(0xFFFF, 0x81);
         }
 
-        Assert.AreEqual(2, machine.State.Cpu.X);
-        Assert.AreEqual(1, machine.State.Cpu.Y);
+        Assert.AreEqual(2, machine.State.Cpu.Registers.X);
+        Assert.AreEqual(1, machine.State.Cpu.Registers.Y);
     }
 }

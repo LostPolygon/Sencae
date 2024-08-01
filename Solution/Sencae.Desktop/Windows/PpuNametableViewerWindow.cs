@@ -115,7 +115,7 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
         Span<PpuNametable.PpuNametableRow> nametableRowsSpan = nametable.Rows.AsSpan();
 
         ref PpuPreviewState.PpuPatternTableTiles patternTable =
-            ref (Emulator.Machine.State.Ppu.PPUCTRL & PpuControlRegisterFlags.BackgroundPatternTableAddress) == 0 ?
+            ref (Emulator.Machine.State.Ppu.Registers.PPUCTRL & PpuControlRegisterFlags.BackgroundPatternTableAddress) == 0 ?
                 ref _patternTables.PatternTable0 :
                 ref _patternTables.PatternTable1;
 
@@ -145,7 +145,8 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
                     byte pixelPaletteColorIndex = patternTableTilePaletteColorIndices[tilePixelIndex];
                     ref PpuObjectPalette palette = ref _palettes.Background[tilePaletteIndex];
 
-                    surfacePixels[surfacePixelIndex] = (int) Context.SharedResources.PpuPalette.Colors[palette.ColorIndices[pixelPaletteColorIndex]];
+                    byte color = palette.ColorIndices[pixelPaletteColorIndex];
+                    surfacePixels[surfacePixelIndex] = (int) Context.SharedResources.PpuPalette.Colors[color];
 
                     //surfacePixels[surfacePixelIndex] = (int) paletteColors[pixelPaletteColorIndex];
                 }
@@ -188,7 +189,7 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
         ReadOnlySpan<byte> oamMemoryBytes = Emulator.Machine.State.Ppu.OamMemory.AsSpan();
         ReadOnlySpan<PpuObjectAttributes> oamObjects = MemoryMarshal.Cast<byte, PpuObjectAttributes>(oamMemoryBytes);
 
-        bool is8X16Sprite = (Emulator.Machine.State.Ppu.PPUCTRL & PpuControlRegisterFlags.SpriteSize) != 0;
+        bool is8X16Sprite = (Emulator.Machine.State.Ppu.Registers.PPUCTRL & PpuControlRegisterFlags.SpriteSize) != 0;
         Vector2 previewSpriteSize = (is8X16Sprite ? new Vector2(8, 16) : new Vector2(8, 8)) * previewScale;
         for (int i = 0; i < oamObjects.Length; i++) {
             PpuObjectAttributes oamObject = oamObjects[i];

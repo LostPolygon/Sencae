@@ -55,8 +55,8 @@ public class BasicTests {
 
         using Machine machine = Emulate(mapperDevice, new() { FormatState = FormatCpuStateNesTest });
 
-        Assert.AreEqual(0xC1, machine.State.Cpu.X);
-        Assert.AreEqual(0x84, machine.State.Cpu.A);
-        Assert.AreEqual(false, machine.State.Cpu.P.Overflow);
+        Assert.AreEqual(0xC1, machine.State.Cpu.Registers.X);
+        Assert.AreEqual(0x84, machine.State.Cpu.Registers.A);
+        Assert.AreEqual(false, machine.State.Cpu.Registers.P.Overflow);
     }
 }

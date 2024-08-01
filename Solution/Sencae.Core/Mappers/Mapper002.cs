@@ -27,19 +27,24 @@ public static class Mapper002 {
                                 case <= 0xBFFF:
                                     bank = state.BankSelect;
                                     address -= 0x8000;
+                                    //address = (ushort) (address % 0x8000);
                                     break;
 
                                 // 0xC000-0xFFFF: 16 KB PRG ROM bank, fixed to the last bank
                                 case >= 0xC000:
                                     bank = _prgRomMemory.Length / 0x4000 - 1;
                                     address -= 0xC000;
+                                    //address = (ushort) (address % 0xC000);
                                     break;
                             }
 
                             int realAddress = 0x4000 * bank + address;
+                            realAddress %= _prgRomMemory.Length;
                             return BusDeviceHandlers.ReadOnlyIndexed(_prgRomMemory, realAddress, accessMode, ref bus);
                         case MemoryAccessMode.Write:
-                            state.BankSelect = bus;
+                            //state.BankSelect = (byte) (bus & 0b0000_1111);
+                            state.BankSelect = (byte) (bus);
+                            //Console.WriteLine($"Bus: {bus}");
                             return false;
                     }
 

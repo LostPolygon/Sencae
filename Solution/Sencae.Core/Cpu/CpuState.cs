@@ -4,22 +4,10 @@ public sealed class CpuState {
     public byte[] Memory = null!;
     public byte[] IORegisters = null!;
 
-    // General purpose registers
-    public byte A = 0;
-    public byte X = 0;
-    public byte Y = 0;
-
-    public CpuStatusRegisterFlags P = default;
-
-    // Program Counter
-    public UInt16Bytes PC = default;
-
-    // Stack pointer
-    public byte SP = 0;
-
+    public CpuRegistersState Registers;
+    public CpuInternalState Internal;
+    
     public DmaDeviceState OamDmaDevice = new();
-
-    public CpuInternalState Internal = default;
 
     public CpuState() {
         Reset();
@@ -29,10 +17,7 @@ public sealed class CpuState {
         Memory = new byte[2048];
         IORegisters = new byte[32];
 
-        A = X = Y = SP = 0;
-        P = default;
-        PC = default;
-
+        Registers = default;
         Internal = default;
     }
 }

@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using Sencae.Mappers;
 using Sixty502DotNet.Shared;
 using static Sencae.SharedUtility.AssemblerUtility;
 
@@ -12,6 +14,8 @@ public static class DebugEmulationRunner {
         CodeOutput codeOutput = AssembleFromListing(assembly);
         byte[] assembledCode = codeOutput.GetCompilation().ToArray();
         byte[] programRom = new byte[programRomSize];
+        byte[] programRam = new byte[programRamSize];
+        byte[] characterRam = new byte[8 * 1024];
 
         assembledCode.AsSpan().CopyTo(programRom);
 
@@ -19,11 +23,12 @@ public static class DebugEmulationRunner {
         programRom[^4] = (byte) resetVector;
         programRom[^3] = (byte) (resetVector >> 8);
 
-        byte[] characterRam = new byte[8 * 1024];
-        byte[] programRam = new byte[programRamSize];
-
         CartridgeData cartridgeData = new(0, programRom, null, characterRam);
-        MapperDevice mapperDevice = MapperDeviceFactory.Create(cartridgeData, programRam);
+        MapperDevice mapperDevice = new(
+            new Mapper000CartridgeToCpuBusDeviceWriteable(cartridgeData.PrgRom, programRam),
+            new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam)
+        );
+
         return mapperDevice;
     }
 
@@ -84,7 +89,7 @@ public static class DebugEmulationRunner {
             return _ => {
             };
         }
-        
+
         return Console.WriteLine;
     }
 
@@ -98,5 +103,27 @@ public static class DebugEmulationRunner {
         public bool SkipOutputState { get; init; }
         public Func<Machine, string>? FormatState { get; init; }
         public Action<string>? OutputState { get; init; }
-    };
+    }
+
+    private readonly struct Mapper000CartridgeToCpuBusDeviceWriteable(byte[] prgRom, byte[]? prgRam = null) : IMapperDevice {
+        private readonly DirectArray<byte> _prgRomMemory = new(prgRom, 0x8000);
+        private readonly DirectArray<byte>? _prgRamMemory = DirectArray.FromNullable(prgRam, 0x6000);
+
+        public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
+            return address switch {
+                >= 0x6000 and < 0x8000 => BusDeviceHandlers.ReadWrite(_prgRamMemory, address, accessMode, ref bus),
+                >= 0x8000 and <= 0xFFFF => BusDeviceHandlers.ReadWrite(_prgRomMemory, address, accessMode, ref bus),
+                _ => false
+            };
+        }
+
+        public void Reset() {
+            _prgRamMemory?.AsSpan().Clear();
+        }
+
+        public void Dispose() {
+            _prgRomMemory.Dispose();
+            _prgRamMemory?.Dispose();
+        }
+    }
 }

@@ -19,7 +19,7 @@ public class AddressingModes {
             """
         ));
 
-        Assert.AreEqual(3, machine.State.Cpu.X);
+        Assert.AreEqual(3, machine.State.Cpu.Registers.X);
         Assert.AreEqual(2 * 3 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
@@ -34,7 +34,7 @@ public class AddressingModes {
             """
         ));
 
-        Assert.AreEqual(42, machine.State.Cpu.A);
+        Assert.AreEqual(42, machine.State.Cpu.Registers.A);
         Assert.AreEqual(2 * 2 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
@@ -109,7 +109,7 @@ public class AddressingModes {
             machine.CpuMemoryBus.Write(0x20 + 3, 42);
         }
 
-        Assert.AreEqual(42, machine.State.Cpu.Y);
+        Assert.AreEqual(42, machine.State.Cpu.Registers.Y);
         Assert.AreEqual(2 + 2 + 2 + 4 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
@@ -127,7 +127,7 @@ public class AddressingModes {
             machine.CpuMemoryBus.Write(0x20, 42);
         }
 
-        Assert.AreEqual(42, machine.State.Cpu.A);
+        Assert.AreEqual(42, machine.State.Cpu.Registers.A);
         Assert.AreEqual(3 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
@@ -148,7 +148,7 @@ public class AddressingModes {
             machine.CpuMemoryBus.Write(0x20 + 3, 42);
         }
 
-        Assert.AreEqual(42, machine.State.Cpu.X);
+        Assert.AreEqual(42, machine.State.Cpu.Registers.X);
         Assert.AreEqual(2 + 2 + 2 + 4 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
@@ -170,7 +170,7 @@ public class AddressingModes {
             machine.CpuMemoryBus.Write(0x20, 0x42);
         }
 
-        Assert.AreEqual(0x42, machine.State.Cpu.A);
+        Assert.AreEqual(0x42, machine.State.Cpu.Registers.A);
         Assert.AreEqual(2 + 2 + 2 + 6 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
@@ -192,7 +192,7 @@ public class AddressingModes {
             machine.CpuMemoryBus.Write(0x23, 0x42);
         }
 
-        Assert.AreEqual(0x42, machine.State.Cpu.A);
+        Assert.AreEqual(0x42, machine.State.Cpu.Registers.A);
         Assert.AreEqual(2 + 2 + 2 + 5 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 
@@ -220,8 +220,8 @@ public class AddressingModes {
             machine.CpuMemoryBus.Write(0x42 + 1, 0x82);
         }
 
-        Assert.AreEqual(3, machine.State.Cpu.X);
-        Assert.AreEqual(0x8212, machine.State.Cpu.PC.Value);
+        Assert.AreEqual(3, machine.State.Cpu.Registers.X);
+        Assert.AreEqual(0x8212, machine.State.Cpu.Registers.PC.Value);
         Assert.AreEqual(5 + 2 + 2 + 2 + BRK_Cycles, machine.State.Cpu.Internal.Cycles);
     }
 }

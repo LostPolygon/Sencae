@@ -8,6 +8,8 @@ public class CpuDebuggerWindow : AppWindow {
 
     private Vector2 TestVector2;
 
+    private bool IsActive;
+
     public CpuDebuggerWindow(AppWindowContext context, Emulator emulator) : base(
         nameof(CpuDebuggerWindow),
         "CPU Debugger",
@@ -17,9 +19,9 @@ public class CpuDebuggerWindow : AppWindow {
     }
 
     protected override void DrawContent(float deltaTime) {
+        IsActive = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
+        
         ImGui.SetWindowSize(new Vector2(150, 300), ImGuiCond.FirstUseEver);
-
-
 
         //ImGui.PushFont(Context.SharedResources.FontFontAwesomeIconsSolid);
         /*ImGui.TextColored(new Vector4(1, 0, 0, 1), IconsFontAwesome5.FolderOpen);
@@ -30,10 +32,10 @@ public class CpuDebuggerWindow : AppWindow {
             Console.WriteLine($"Changed: {TestVector2}");
         }
         */
-        
-        
+
         if (!Emulator.IsLoaded)
             return;
+
         //ImGui.PopFont();
 
         bool isRunning = Emulator.IsRunning;
@@ -57,7 +59,7 @@ public class CpuDebuggerWindow : AppWindow {
         if (ImGui.Button("Step Instruction")) {
             Emulator.SingleInstructionStep();
         }
-        
+
         if (ImGui.Button("Run To Interrupt")) {
             Emulator.RunToInterrupt();
         }
@@ -68,13 +70,14 @@ public class CpuDebuggerWindow : AppWindow {
         }
 
         ImGui.Separator();
-        
+
         ImGui.TextUnformatted($"PPU position: {Emulator.Machine.State.Ppu.Internal.CyclesInScanline,3}, {Emulator.Machine.State.Ppu.Internal.Scanline,3}");
         ImGui.TextUnformatted($"Frames: {Emulator.Machine.State.Ppu.Internal.Frames}");
-        
+
         ImGui.Separator();
 
-        CpuState cpu = Emulator.Machine.State.Cpu;
+        ref CpuRegistersState cpuRegisters = ref Emulator.Machine.State.Cpu.Registers;
+        ref CpuInternalState cpuInternal = ref Emulator.Machine.State.Cpu.Internal;
 
         static int DrawRegister(string label, int value, string format, int maxValue) {
             ImGui.TableNextRow();
@@ -99,7 +102,7 @@ public class CpuDebuggerWindow : AppWindow {
             ImGui.Text("CPU Cycles: ");
 
             ImGui.TableSetColumnIndex(1);
-            ImGui.Text(Emulator.Machine.State.Cpu.Internal.Cycles.ToString());
+            ImGui.Text(cpuInternal.Cycles.ToString());
 
             ImGui.TableNextRow();
 
@@ -115,19 +118,77 @@ public class CpuDebuggerWindow : AppWindow {
 
         ImGui.BeginTable("Registers", 2);
         {
-            cpu.A = (byte) DrawRegister("A: ", cpu.A, "%02X", Byte.MaxValue);
-            cpu.X = (byte) DrawRegister("X: ", cpu.X, "%02X", Byte.MaxValue);
-            cpu.Y = (byte) DrawRegister("Y: ", cpu.Y, "%02X", Byte.MaxValue);
-            cpu.SP = (byte) DrawRegister("SP: ", cpu.SP, "%02X", Byte.MaxValue);
-            cpu.PC.Value = (ushort) DrawRegister("PC: ", cpu.PC.Value, "%04X", UInt16.MaxValue);
-            
-            cpu.Internal.AddressBus.Value = (ushort) DrawRegister("AB: ", cpu.Internal.AddressBus.Value, "%04X", UInt16.MaxValue);
-            cpu.Internal.DataBus = (byte) DrawRegister("DB: ", cpu.Internal.DataBus, "%02X", UInt16.MaxValue);
-            
-            ImGui.TextUnformatted(cpu.Internal.Instruction.Mnemonic);
+            cpuRegisters.A = (byte) DrawRegister("A: ", cpuRegisters.A, "%02X", Byte.MaxValue);
+            cpuRegisters.X = (byte) DrawRegister("X: ", cpuRegisters.X, "%02X", Byte.MaxValue);
+            cpuRegisters.Y = (byte) DrawRegister("Y: ", cpuRegisters.Y, "%02X", Byte.MaxValue);
+            cpuRegisters.SP = (byte) DrawRegister("SP: ", cpuRegisters.SP, "%02X", Byte.MaxValue);
+            cpuRegisters.PC.Value = (ushort) DrawRegister("PC: ", cpuRegisters.PC.Value, "%04X", UInt16.MaxValue);
+
+            cpuInternal.AddressBus.Value = (ushort) DrawRegister("AB: ", cpuInternal.AddressBus.Value, "%04X", UInt16.MaxValue);
+            cpuInternal.DataBus = (byte) DrawRegister("DB: ", cpuInternal.DataBus, "%02X", UInt16.MaxValue);
+
+            ImGui.TextUnformatted(cpuInternal.Instruction.Mnemonic);
         }
         ImGui.EndTable();
 
         ImGui.Separator();
+        
+        ImGui.TextUnformatted(_controller1Input.ToString());
+    }
+
+    private StandardControllerInput _controller1Input;
+    
+    public bool HandleSdlEvent(in SDL_Event evt) {
+        if (!Emulator.IsLoaded || !IsActive)
+            return false;
+        
+        /*
+        A = 1 << 0,
+        B = 1 << 1,
+        Select = 1 << 2,
+        Start = 1 << 3,
+        Up = 1 << 4,
+        Down = 1 << 5,
+        Left = 1 << 6,
+        Right = 1 << 7,
+        */
+        SDL_Keycode[] keyMapping = [
+            SDL_Keycode.SDLK_z,
+            SDL_Keycode.SDLK_x,
+
+            SDL_Keycode.SDLK_a,
+            SDL_Keycode.SDLK_s,
+
+            SDL_Keycode.SDLK_UP,
+            SDL_Keycode.SDLK_DOWN,
+            SDL_Keycode.SDLK_LEFT,
+            SDL_Keycode.SDLK_RIGHT
+        ];
+
+        bool handled = false;
+        switch (evt.type) {
+            case SDL_EventType.SDL_KEYDOWN:
+                for (int i = 0; i < keyMapping.Length; i++) {
+                    if (evt.key.keysym.sym == keyMapping[i]) {
+                        _controller1Input |= (StandardControllerInput) (1 << i);
+                        handled = true;
+                    }
+                }
+
+                break;
+            case SDL_EventType.SDL_KEYUP:
+                for (int i = 0; i < keyMapping.Length; i++) {
+                    if (evt.key.keysym.sym == keyMapping[i]) {
+                        _controller1Input &= (StandardControllerInput) ~(1 << i);
+                        handled = true;
+                    }
+                }
+
+                break;
+        }
+
+        Emulator.Machine.StandardControllersDevice.SetController1Input(_controller1Input);
+
+        return handled;
     }
 }

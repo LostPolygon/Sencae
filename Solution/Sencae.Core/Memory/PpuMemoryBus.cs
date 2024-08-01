@@ -18,14 +18,11 @@ public sealed class PpuMemoryBus : IBusDevice {
 
     [MethodImpl(HotPath)]
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
-        if (PpuBusDevice.HandleBus(address, accessMode, ref bus))
-            return true;
-
-        if (CartridgeToPpuBusDevice.HandleBus(address, accessMode, ref bus))
-            return true;
+        bool ppuBusDevice = PpuBusDevice.HandleBus(address, accessMode, ref bus);
+        bool cartridgeToPpuBusDevice = CartridgeToPpuBusDevice.HandleBus(address, accessMode, ref bus);
 
         //BusDeviceHandlers.AssertNotOpenBus(address);
-        return false;
+        return ppuBusDevice || cartridgeToPpuBusDevice;
     }
 
     [MethodImpl(HotPath)]
