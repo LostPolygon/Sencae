@@ -2,7 +2,7 @@ using System;
 
 namespace Sencae;
 
-public class StandardControllersDevice : IBusDevice {
+public sealed class StandardControllersDevice : IBusDevice {
     private int _controller1Shift;
     private int _controller2Shift;
     private StandardControllerInput _controller1Input;

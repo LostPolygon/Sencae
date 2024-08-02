@@ -425,6 +425,19 @@
                 }
 
                 switch (opcodeInstructionType) {
+                    case "BCS":
+                    case "BCC":
+                    case "BEQ":
+                    case "BNE":
+                    case "BMI":
+                    case "BPL":
+                    case "BVS":
+                    case "BVC":
+                        instructionFlags += (instructionFlags ? " | " : "") + "BranchOperation";
+                        break;
+                }
+
+                switch (opcodeInstructionType) {
                     case "STA":
                     case "STX":
                     case "STY":
@@ -521,15 +534,44 @@
                 }
 
                 switch (opcodeInstructionType) {
-                    case "BCS":
-                    case "BCC":
-                    case "BEQ":
-                    case "BNE":
-                    case "BMI":
-                    case "BPL":
-                    case "BVS":
-                    case "BVC":
-                        instructionFlags += (instructionFlags ? " | " : "") + "BranchOperation";
+                    case "NOP":
+
+                    case "STA":
+                    case "STX":
+                    case "STY":
+
+                    case "PHA":
+                    case "PHP":
+
+                    case "LSR":
+                    case "ASL":
+                    case "ROL":
+                    case "ROR":
+
+                    case "JSR":
+                    case "BRK":
+                    case "RTS":
+                    case "RTI":
+
+                    case "SAX":
+                    case "SHX":
+                    case "SHY":
+                    case "AHX":
+                        let addFlag = true;
+                        switch (opcodeInstructionType) {
+                            case "LSR":
+                            case "ASL":
+                            case "ROL":
+                            case "ROR":
+                                if (opcodeAddressMode == "Implied") {
+                                    addFlag = false;
+                                }
+                                break;
+                        }
+
+                        if (addFlag) {
+                            instructionFlags += (instructionFlags ? " | " : "") + "NoAfterNextOpcodeFetchedLogic";
+                        }
                         break;
                 }
 

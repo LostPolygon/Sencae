@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using Sencae.Ppu;
 
@@ -8,11 +9,13 @@ public sealed class OamDmaDevice(
     CpuState cpuState,
     MachineCpuMemoryBus cpuMemoryBus,
     PpuState ppuState
-) : DmaDevice(state) {
+) : DmaDevice(state), IDisposable {
     public readonly CpuState CpuState = cpuState;
     public readonly MachineCpuMemoryBus CpuMemoryBus = cpuMemoryBus;
     public readonly PpuState PpuState = ppuState;
-    private readonly DirectArray<byte> _oamMemory = new DirectArray<byte>(ppuState.OamMemory);
+    
+    private readonly DirectArray<byte> _oamMemory = new(ppuState.OamMemory);
+    private readonly DirectArray<byte> _ioRegisters = new(cpuState.IORegisters);
 
     [MethodImpl(HotPath)]
     protected override void ExecuteCycle() {
@@ -37,7 +40,7 @@ public sealed class OamDmaDevice(
         switch (address) {
             case CpuInternalState.OamDmaRegister: {
                 // OAMDMA
-                ref byte mappedData = ref CpuState.IORegisters[CpuInternalState.OamDmaRegisterIndex];
+                ref byte mappedData = ref _ioRegisters[CpuInternalState.OamDmaRegisterIndex];
                 switch (accessMode) {
                     case MemoryAccessMode.Read:
                     case MemoryAccessMode.ReadObserve:
@@ -57,5 +60,10 @@ public sealed class OamDmaDevice(
         }
 
         return false;
+    }
+
+    public void Dispose() {
+        _oamMemory.Dispose();
+        _ioRegisters.Dispose();
     }
 }

@@ -17,9 +17,9 @@ public class Benchmark {
         public static bool AddNativeAotJob;
 
         public Config() {
-            Add(new InliningDiagnoser(
+            /*AddDiagnoser(new InliningDiagnoser(
                 allowedNamespaces: ["Sencae"]
-            ));
+            ));*/
             
             AddJob(
                 Job.Default

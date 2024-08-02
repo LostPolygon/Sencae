@@ -5,6 +5,8 @@ public readonly record struct InstructionDescriptorSlim(
     InstructionType Type,
     AddressingMode AddressingMode,
     bool HasMemoryReadWriteLogic,
+    bool HasAfterNextOpcodeFetchedLogic,
     bool FetchesNextOpcode,
-    bool MemoryDataOperation
+    bool MemoryDataOperation,
+    bool CanSkipToNextOpcode
 );

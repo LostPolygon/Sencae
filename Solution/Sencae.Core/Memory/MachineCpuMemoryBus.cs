@@ -23,7 +23,7 @@ public sealed class MachineCpuMemoryBus : CpuMemoryBusBase {
         StandardControllersDevice = standardControllersDevice;
     }
 
-    [MethodImpl(HotPath)]
+    [MethodImpl(HotPathBlock)]
     public override bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
         /*if (address == 0x2001 && accessMode == MemoryAccessMode.Read) {
             Debug.WriteLine("Read from 0x2001");
@@ -41,6 +41,6 @@ public sealed class MachineCpuMemoryBus : CpuMemoryBusBase {
         bool ppuCpuBusDevice = PpuCpuBusDevice.HandleBus(address, accessMode, ref bus);
 
         //BusDeviceHandlers.OpenBus(address);
-        return standardControllersDevice || cpuBusDevice || cartridgeToCpuBusDevice || ppuCpuBusDevice || oamDmaDevice;
+        return cpuBusDevice || cartridgeToCpuBusDevice || standardControllersDevice || oamDmaDevice || ppuCpuBusDevice;
     }
 }

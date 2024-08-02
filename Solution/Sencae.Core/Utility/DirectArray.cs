@@ -28,7 +28,7 @@ public readonly struct DirectArray<T> : IDisposable where T : unmanaged {
     }
 
     public DirectArray(T[]? data, int offset = 0) {
-        if (data == null)
+        if (data == null!)
             throw new ArgumentNullException(nameof(data));
         
         Debug.Assert(offset is > -UInt16.MaxValue and < UInt16.MaxValue);

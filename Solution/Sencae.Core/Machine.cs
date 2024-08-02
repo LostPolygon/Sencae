@@ -99,6 +99,7 @@ public sealed class Machine : IDisposable {
 
         //PpuMemoryBus.Dispose();
         PpuBusDevice.Dispose();
+        OamDmaDevice.Dispose();
 
         MapperDevice.Dispose();
     }

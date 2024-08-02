@@ -1,9 +1,9 @@
 using System;
 
-namespace Sencae; 
+namespace Sencae;
 
 [Flags]
-public enum InstructionFlags : byte {
+public enum InstructionFlags : ushort {
     None = 0,
     Unofficial = 1 << 0,
     FetchesNextOpcode = 1 << 2,
@@ -12,4 +12,5 @@ public enum InstructionFlags : byte {
     StoreOperation = 1 << 5,
     ReadModifyWriteOperation = 1 << 6,
     BranchOperation = 1 << 7,
+    NoAfterNextOpcodeFetchedLogic = 1 << 8
 }
