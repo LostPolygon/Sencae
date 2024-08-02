@@ -15,7 +15,7 @@ public static class InstructionLogic {
     #region Dispatcher
 
     // Enabling inlining here actually reduces perf on x64 by about 25%!
-    [MethodImpl(NoInlining)]
+    //[MethodImpl(HotPath)]
     public static bool Dispatch(ref CpuRegistersState cpu, ref CpuInternalState cpuInternal, InstructionType instructionType) {
         int operationCycle = cpuInternal.OperationCycle;
 
@@ -435,7 +435,7 @@ public static class InstructionLogic {
         cpu.P.Carry = result16 > Byte.MaxValue;
         SetGenericZeroAndNegativeSignFlags(ref cpu.P, result);
 
-        cpu.P.Overflow = (byte) ((cpu.A ^ result) & (data ^ result) & 1 << 7);
+        cpu.P.Overflow = (byte)((cpu.A ^ result) & (data ^ result) & 1 << 7);
         cpu.A = result;
 
         return false;
@@ -496,7 +496,7 @@ public static class InstructionLogic {
             value = (byte) (value << 1);
 
             SetGenericZeroAndNegativeSignFlags(ref cpu.P, value);
-            cpu.P.Carry = (byte) (input & 1 << 7);
+            cpu.P.Carry = (byte)(input & 1 << 7);
         }
 
         return completed;
@@ -518,8 +518,8 @@ public static class InstructionLogic {
             byte input = value;
             value = (byte) ((value << 1) | (cpu.P.Carry.BoolValue ? 1 : 0));
 
-            cpu.P.Carry = (byte) (input & 1 << 7);
-            cpu.P.NegativeOrSign = (byte) (input & 1 << 6);
+            cpu.P.Carry = (byte)(input & 1 << 7);
+            cpu.P.NegativeOrSign = (byte)(input & 1 << 6);
             cpu.P.Zero = value == 0;
         }
 
@@ -549,7 +549,7 @@ public static class InstructionLogic {
             value |= (byte) (cpu.P.Carry.BoolValue ? 1 << 7 : 0);
 
             cpu.P.NegativeOrSign = cpu.P.Carry;
-            cpu.P.Carry = (byte) (input & 1 << 0);
+            cpu.P.Carry = (byte)(input & 1 << 0);
             cpu.P.Zero = value == 0;
         }
 
@@ -573,7 +573,7 @@ public static class InstructionLogic {
 
             cpu.P.NegativeOrSign = false;
             cpu.P.Zero = value == 0;
-            cpu.P.Carry = (byte) (input & 1 << 0);
+            cpu.P.Carry = (byte)(input & 1 << 0);
         }
 
         return completed;
@@ -867,7 +867,7 @@ public static class InstructionLogic {
     public static bool BIT(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
         byte result = (byte) (cpu.A & cpuInternal.DataBus);
         cpu.P.NegativeOrSign = (byte) (cpuInternal.DataBus & 1 << 7);
-        cpu.P.Overflow = (byte) (cpuInternal.DataBus & 1 << 6);
+        cpu.P.Overflow = (byte)(cpuInternal.DataBus & 1 << 6);
         cpu.P.Zero = result == 0;
 
         return false;
@@ -1077,7 +1077,6 @@ public static class InstructionLogic {
     public static bool XXX(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
         //Debug.WriteLine($"!!! Unhandled opcode ({cpuInternal.Instruction})");
         throw new NotImplementedException($"!!! Unhandled opcode ({cpuInternal.Instruction})");
-
         //return true;
     }
 
@@ -1086,7 +1085,9 @@ public static class InstructionLogic {
     [MethodImpl(HotPath)]
     private static void SetGenericZeroAndNegativeSignFlags(ref CpuStatusRegisterFlags status, byte value) {
         status.Zero = value == 0;
-        status.NegativeOrSign = (byte) (value & 1 << 7);
+        status.NegativeOrSign = (byte)(value & 1 << 7);
+        /*status.Zero = value == 0;
+        status.NegativeOrSign = (byte)(value & 1 << 7);*/
     }
 
     [MethodImpl(HotPath)]

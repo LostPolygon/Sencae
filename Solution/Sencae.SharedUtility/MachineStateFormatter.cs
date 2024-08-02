@@ -25,14 +25,15 @@ public static class MachineStateFormatter {
     public static string FormatCpuState(in MachineState state) {
         ref CpuRegistersState cpu = ref state.Cpu.Registers;
         ref CpuInternalState cpuInternal = ref state.Cpu.Internal;
-        
+        InstructionDescriptor instructionDescriptor = Instructions.DescriptorByOpcode[cpuInternal.Instruction.OpCode];
+
         return
             $"Cycle: {state.Cpu.Internal.Cycles}, " +
             $"AB: {cpuInternal.AddressBus.Value:X4}, " +
             $"DB: {cpuInternal.DataBus:X2}, " +
             $"PC: {cpu.PC.Value:X4}, " +
             $"RW: {(cpuInternal.Read ? "R" : "W")}, " +
-            $"OP: {cpuInternal.Instruction.Mnemonic} ({cpuInternal.Instruction.Opcode:X2}), " +
+            $"OP: {instructionDescriptor.Mnemonic} ({instructionDescriptor.Opcode:X2}), " +
             $"A: {cpu.A:X2}, " +
             $"X: {cpu.X:X2}, " +
             $"Y: {cpu.Y:X2}, " +

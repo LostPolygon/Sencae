@@ -148,8 +148,7 @@ public static class AddressingModeLogic {
                 cpuInternal.AddressBus.Low = newAddressBus.Low;
 
                 return
-                    cpuInternal.PageBoundaryCrossedCarry == 0 &&
-                    (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0;
+                    cpuInternal.PageBoundaryCrossedCarry == 0 && !cpuInternal.Instruction.HasMemoryReadWriteLogic;
             case 3:
                 cpuInternal.AddressBus.High = (byte) (cpuInternal.AddressBus.High + cpuInternal.PageBoundaryCrossedCarry);
                 return true;
@@ -169,8 +168,7 @@ public static class AddressingModeLogic {
                 cpuInternal.AddressBus.Low = newAddressBus.Low;
 
                 return
-                    cpuInternal.PageBoundaryCrossedCarry == 0 &&
-                    (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0;
+                    cpuInternal.PageBoundaryCrossedCarry == 0 && !cpuInternal.Instruction.HasMemoryReadWriteLogic;
             case 2:
                 cpuInternal.AddressBus.High = (byte) (cpuInternal.AddressBus.High + cpuInternal.PageBoundaryCrossedCarry);
                 return true;

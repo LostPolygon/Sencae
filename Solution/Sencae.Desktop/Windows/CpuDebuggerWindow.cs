@@ -127,7 +127,7 @@ public class CpuDebuggerWindow : AppWindow {
             cpuInternal.AddressBus.Value = (ushort) DrawRegister("AB: ", cpuInternal.AddressBus.Value, "%04X", UInt16.MaxValue);
             cpuInternal.DataBus = (byte) DrawRegister("DB: ", cpuInternal.DataBus, "%02X", UInt16.MaxValue);
 
-            ImGui.TextUnformatted(cpuInternal.Instruction.Mnemonic);
+            ImGui.TextUnformatted(Instructions.DescriptorByOpcode[cpuInternal.Instruction.OpCode].Mnemonic);
         }
         ImGui.EndTable();
 

@@ -31,7 +31,7 @@ public sealed partial class PpuDevice {
         _ppuState.PaletteMemory.AsSpan().Clear();
     }
 
-    [MethodImpl(HotPath)]
+    [MethodImpl(HotPathBlock)]
     public void Clock() {
         ref PpuState.PpuRegisterState registers = ref _ppuState.Registers;
         ref PpuState.PpuInternalState internalState = ref _ppuState.Internal;

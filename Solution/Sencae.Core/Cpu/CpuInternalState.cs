@@ -11,7 +11,7 @@ public struct CpuInternalState {
 
     public int OperationCycle;
 
-    public InstructionDescriptor Instruction;
+    public InstructionDescriptorSlim Instruction;
 
     public UInt16Bytes Temporary;
 
@@ -28,9 +28,9 @@ public struct CpuInternalState {
     public ulong Cycles;
 
     public enum ExecutionState {
-        ExecutingInstruction,
         FinishingCurrentInstructionAndFetchingNextOpcode,
+        InterpretingFetchedOpcode,
         ExecutingAddressing,
-        InterpretingFetchedOpcode
+        ExecutingInstruction
     }
 }

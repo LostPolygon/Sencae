@@ -9,12 +9,14 @@ using static InstructionFlags;
 
 public static class Instructions {
     public static readonly InstructionDescriptor[] DescriptorByOpcode;
+    public static readonly InstructionDescriptorSlim[] DescriptorSlimByOpcode;
     public static readonly AddressingMode[] AddressModeByOpcode;
     public static readonly InstructionType[] InstructionTypeByOpcode;
 
     static Instructions() {
         Debug.Assert(Map.Count == 256);
         DescriptorByOpcode = new InstructionDescriptor[Map.Count];
+        DescriptorSlimByOpcode = new InstructionDescriptorSlim[Map.Count];
         AddressModeByOpcode = new AddressingMode[Map.Count];
         InstructionTypeByOpcode = new InstructionType[Map.Count];
 
@@ -22,6 +24,15 @@ public static class Instructions {
             DescriptorByOpcode[opcode] = descriptor;
             AddressModeByOpcode[opcode] = descriptor.AddressingMode;
             InstructionTypeByOpcode[opcode] = descriptor.Type;
+
+            DescriptorSlimByOpcode[opcode] = new InstructionDescriptorSlim(
+                descriptor.Opcode,
+                descriptor.Type,
+                descriptor.AddressingMode,
+                (descriptor.Flags & HasMemoryReadWriteLogic) != 0,
+                (descriptor.Flags & FetchesNextOpcode) != 0,
+                (descriptor.Flags & MemoryDataOperation) != 0
+            );
         }
     }
 

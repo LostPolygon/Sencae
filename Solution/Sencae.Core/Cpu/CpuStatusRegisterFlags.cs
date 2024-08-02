@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Sencae;
@@ -27,15 +28,15 @@ public record struct CpuStatusRegisterFlags {
     [MethodImpl(HotPath)]
     public static CpuStatusRegisterFlags FromFlags(CpuStatusRegisterPackedFlags flags) {
         CpuStatusRegisterFlags result = new() {
-            Carry = (byte) (flags & CpuStatusRegisterPackedFlags.Carry),
-            Zero = (byte) (flags & CpuStatusRegisterPackedFlags.Zero),
-            InterruptDisable = (byte) (flags & CpuStatusRegisterPackedFlags.InterruptDisable),
-            DecimalMode = (byte) (flags & CpuStatusRegisterPackedFlags.DecimalMode),
-            BreakFlag = (byte) (flags & CpuStatusRegisterPackedFlags.BreakFlag),
-            Overflow = (byte) (flags & CpuStatusRegisterPackedFlags.Overflow),
-            NegativeOrSign = (byte) (flags & CpuStatusRegisterPackedFlags.NegativeOrSign),
+            Carry = ByteBool.Create((byte) (flags & CpuStatusRegisterPackedFlags.Carry)),
+            Zero = ByteBool.Create((byte) (flags & CpuStatusRegisterPackedFlags.Zero)),
+            InterruptDisable = ByteBool.Create((byte) (flags & CpuStatusRegisterPackedFlags.InterruptDisable)),
+            DecimalMode = ByteBool.Create((byte) (flags & CpuStatusRegisterPackedFlags.DecimalMode)),
+            BreakFlag = ByteBool.Create((byte) (flags & CpuStatusRegisterPackedFlags.BreakFlag)),
+            Overflow = ByteBool.Create((byte) (flags & CpuStatusRegisterPackedFlags.Overflow)),
+            NegativeOrSign = ByteBool.Create((byte) (flags & CpuStatusRegisterPackedFlags.NegativeOrSign)),
         };
-
+        
         return result;
     }
 }
