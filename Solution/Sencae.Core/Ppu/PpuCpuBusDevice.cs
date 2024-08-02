@@ -133,29 +133,26 @@ bus = cpuDataBusLatch;*/
                 ref byte mappedData = ref Unsafe.As<PpuStatusRegisterFlags, byte>(ref registerState.PPUSTATUS);
                 byte oldBus = bus;
 
-                if (accessMode != MemoryAccessMode.Write) {
-                    BusDeviceHandlers.ReadOnlyRaw(ref mappedData, accessMode, ref bus);
+                switch (accessMode) {
+                    case MemoryAccessMode.Read:
+                    case MemoryAccessMode.ReadObserve:
+                        BusDeviceHandlers.ReadOnlyRaw(ref mappedData, accessMode, ref bus);
+                        bus = (byte) (bus | (oldBus & (int) PpuStatusRegisterFlags.StatusMask));
+                        
+                        if (accessMode == MemoryAccessMode.Read) {
+                            internalState.LastPPUSTATUS_ReadCycle = _machineState.MachineCycles;
+                            internalState.PpuAddressRegisterLatch = false;
+                            internalState.PpuScrollRegisterLatch = false;
+
+                            //internalState.Address = default;
+
+                            mappedData &= (byte) ~PpuStatusRegisterFlags.VerticalBlankStarted;
+                        }
+                        
+                        break;
                 }
 
-                bus = (byte) (
-                    (bus & (int) ~PpuStatusRegisterFlags.StatusMask) |
-                    (oldBus & (int) PpuStatusRegisterFlags.StatusMask)
-                );
-
-                if (accessMode == MemoryAccessMode.Read) {
-                    internalState.LastPPUSTATUS_ReadCycle = _machineState.MachineCycles;
-                    internalState.PpuAddressRegisterLatch = false;
-                    internalState.PpuScrollRegisterLatch = false;
-
-                    //internalState.Address = default;
-
-                    mappedData &= (byte) ~PpuStatusRegisterFlags.VerticalBlankStarted;
-                }
-
-                bus = (byte) (
-                    (bus & (int) ~PpuStatusRegisterFlags.StatusMask) |
-                    (oldBus & (int) PpuStatusRegisterFlags.StatusMask)
-                );
+                //bus = (byte) (bus | (oldBus & (int) PpuStatusRegisterFlags.StatusMask));
 
                 return true;
             }
