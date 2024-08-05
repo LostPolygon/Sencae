@@ -29,7 +29,7 @@ public class Benchmark {
                     .AsBaseline()
             );
 
-            AddJob(
+            /*AddJob(
                 Job.Default
                     .WithPlatform(Platform.X64)
                     .WithRuntime(CoreRuntime.Core80)
@@ -50,7 +50,7 @@ public class Benchmark {
                         new EnvironmentVariable("DOTNET_TieredPGO", "0"),
                         new EnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1")
                     )
-            );
+            );*/
 
             if (AddNativeAotJob) {
                 AddJob(
@@ -107,7 +107,7 @@ public class Benchmark {
 
     public const ulong CyclesPerFrame = 29780 * 3;
     public const ulong FramesPerSecond = 60;
-    public const ulong TotalFrames = FramesPerSecond * 60;
+    public const ulong TotalFrames = FramesPerSecond * 30;
     public const ulong TotalCycleCount = TotalFrames * CyclesPerFrame; // ~60s of gameplay
 
     [Benchmark]

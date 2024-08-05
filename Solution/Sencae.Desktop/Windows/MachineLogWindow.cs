@@ -62,11 +62,18 @@ public unsafe class MachineLogWindow(AppWindowContext context, Emulator emulator
 
         if (ImGui.Button("Save To File")) {
             string fileName = $"MachineLog_{DateTime.UtcNow.ToFileTimeUtc()}.txt";
-            string text = String.Join(
-                Environment.NewLine,
-                _logOutput.Select(x => NintendulatorLog.FormatMachineLogEntry(x, new NintendulatorLog.FormatOptions(IncludePpu: true)))
-            );
-            File.WriteAllText(fileName, text);
+            using FileStream fileStream = new FileStream(fileName, FileMode.Create);
+            Span<char> logEntryData = stackalloc char[105];
+            Span<byte> logEntryDataUtf8 = stackalloc byte[Encoding.UTF8.GetMaxByteCount(105)];
+            Span<byte> separator = [0x0D, 0x0A];
+            foreach (MachineLogEntry machineLogEntry in _logOutput) {
+                NintendulatorLog.FormatMachineLogEntry(machineLogEntry, new NintendulatorLog.FormatOptions(IncludePpu: true), logEntryData, out int charsWritten);
+                int bytesWritten = Encoding.UTF8.GetBytes(logEntryData, logEntryDataUtf8);
+                fileStream.Write(logEntryDataUtf8[..bytesWritten]);
+                fileStream.Write(separator);
+            }
+
+            fileStream.Close();
         }
 
         if (ImGui.Button("Clear")) {

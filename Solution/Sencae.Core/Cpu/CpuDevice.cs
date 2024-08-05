@@ -167,7 +167,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
 
                     byte instructionOpcode = cpuInternal.DataBus;
                     cpuInternal.Instruction = Instructions.DescriptorSlimByOpcode[instructionOpcode];
-                    
+
                     cpuInternal.InterruptType = InterruptType.Break;
 
                     cpu.PC.Value++;
@@ -207,13 +207,13 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
                     continue;
                 }
                 case CpuInternalState.ExecutionState.ExecutingInstruction: {
-                    /*Debug.Assert(
-                        !(
-                            cpuInternal.OperationCycle == InstructionLogic.AfterAddressingFinished &&
-                            (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0 &&
-                            (cpuInternal.Instruction.Flags & InstructionFlags.MemoryDataOperation) == 0
-                        )
-                    );*/
+                    //Debug.Assert(
+                    //    !(
+                    //        cpuInternal.OperationCycle == InstructionLogic.AfterAddressingFinished &&
+                    //        (cpuInternal.Instruction.Flags & InstructionFlags.HasMemoryReadWriteLogic) == 0 &&
+                    //        (cpuInternal.Instruction.Flags & InstructionFlags.MemoryDataOperation) == 0
+                    //    )
+                    //);
                     bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
                     cpuInternal.OperationCycle++;
 
@@ -237,6 +237,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
         }
     }
 
+    [MethodImpl(HotPath)]
     private static bool CheckCpuNmi(ref CpuInternalState cpuInternal) {
         if (!cpuInternal.NmiFlipFlop ||
             cpuInternal.Instruction.Type == InstructionType.BRK)

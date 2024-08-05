@@ -30,7 +30,7 @@
 
     <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseNativeAot' ">
         <Optimize>True</Optimize>
-        <StripSymbols>false</StripSymbols>
+        <StripSymbols>true</StripSymbols>
 
         <PublishAot>True</PublishAot>
         <PublishTrimmed>true</PublishTrimmed>
@@ -45,9 +45,9 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'ReleaseNativeAot' ">
-        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+        <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
         <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
-        <DebuggerSupport>True</DebuggerSupport>
+        <DebuggerSupport>false</DebuggerSupport>
         <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
         <EventSourceSupport>false</EventSourceSupport>
         <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
@@ -55,15 +55,14 @@
         <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
         <UseNativeHttpHandler>true</UseNativeHttpHandler>
         <UseSystemResourceKeys>true</UseSystemResourceKeys>
-        <StripSymbols>false</StripSymbols>
 
         <IlcScanReflection>false</IlcScanReflection>
-        <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
-        <IlcTrimMetadata>true</IlcTrimMetadata>
-        <IlcInvariantGlobalization>false</IlcInvariantGlobalization>
-        <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+        <IlcFoldIdenticalMethodBodies>false</IlcFoldIdenticalMethodBodies>
+        <IlcInvariantGlobalization>true</IlcInvariantGlobalization>
+        <IlcGenerateStackTraceData>true</IlcGenerateStackTraceData>
         <IlcGenerateCompleteTypeMetadata>false</IlcGenerateCompleteTypeMetadata>
         <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+        <IlcDisableReflection>false</IlcDisableReflection>
 
         <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
     </PropertyGroup>

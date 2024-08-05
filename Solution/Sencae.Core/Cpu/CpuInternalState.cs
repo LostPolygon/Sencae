@@ -5,17 +5,15 @@ public struct CpuInternalState {
     public const int OamDmaRegisterIndex = 0x14;
     
     public UInt16Bytes AddressBus;
-
     public byte DataBus;
     public bool Read;
-
-    public int OperationCycle;
-
+    
     public InstructionDescriptorSlim Instruction;
 
     public UInt16Bytes Temporary;
 
     public ExecutionState State;
+    public int OperationCycle;
     public sbyte PageBoundaryCrossedCarry;
     public bool Halted;
 

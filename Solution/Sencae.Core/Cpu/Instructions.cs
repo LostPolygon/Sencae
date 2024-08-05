@@ -24,16 +24,7 @@ public static class Instructions {
             AddressModeByOpcode[opcode] = descriptor.AddressingMode;
             InstructionTypeByOpcode[opcode] = descriptor.Type;
 
-            DescriptorSlimByOpcode[opcode] = new InstructionDescriptorSlim(
-                descriptor.Opcode,
-                descriptor.Type,
-                descriptor.AddressingMode,
-                (descriptor.Flags & HasMemoryReadWriteLogic) != 0,
-                (descriptor.Flags & NoAfterNextOpcodeFetchedLogic) == 0,
-                (descriptor.Flags & FetchesNextOpcode) != 0,
-                (descriptor.Flags & MemoryDataOperation) != 0,
-                descriptor.AddressingMode is Implied or Immediate && (descriptor.Flags & HasMemoryReadWriteLogic) == 0
-            );
+            DescriptorSlimByOpcode[opcode] = new InstructionDescriptorSlim(descriptor);
         }
     }
 
