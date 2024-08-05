@@ -2,7 +2,8 @@
 #define USE_DATA_POINTER
 #endif
 
-using System;
+#define ASSUME_POWER_OF_TWO_LENGTH1
+
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 #if USE_DATA_POINTER
@@ -15,6 +16,9 @@ public readonly struct DirectArray<T> : IDisposable where T : unmanaged {
     public readonly T[] DataRaw;
     public readonly int Length;
     public readonly int Offset;
+#if ASSUME_POWER_OF_TWO_LENGTH
+    private readonly int _lengthMask;
+#endif
 #if USE_DATA_POINTER
     private readonly GCHandle _gcHandle;
     private readonly unsafe T* _data;
@@ -36,6 +40,9 @@ public readonly struct DirectArray<T> : IDisposable where T : unmanaged {
         Offset = offset;
         DataRaw = data;
         Length = DataRaw.Length;
+#if ASSUME_POWER_OF_TWO_LENGTH
+        _lengthMask = Length - 1;
+#endif
 #if USE_DATA_POINTER
         _gcHandle = GCHandle.Alloc(DataRaw, GCHandleType.Pinned);
         unsafe {
@@ -52,7 +59,11 @@ public readonly struct DirectArray<T> : IDisposable where T : unmanaged {
         Debug.Assert(_gcHandle.IsAllocated, "GCHandle.IsAllocated");
 #endif
 
+#if ASSUME_POWER_OF_TWO_LENGTH
+        int index = (address - Offset) & _lengthMask;
+#else        
         int index = (address - Offset) % Length;
+#endif
         Debug.Assert(
             index is >= 0 and <= UInt16.MaxValue && index < Length,
             "index is >= 0 and <= UInt16.MaxValue",

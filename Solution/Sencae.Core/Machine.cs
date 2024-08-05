@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Sencae.Ppu;
 
@@ -100,6 +99,7 @@ public sealed class Machine : IDisposable {
         CpuBusDevice.Dispose();
         PpuCpuBusDevice.Dispose();
 
+        PpuDevice.Dispose();
         //PpuMemoryBus.Dispose();
         PpuBusDevice.Dispose();
         OamDmaDevice.Dispose();

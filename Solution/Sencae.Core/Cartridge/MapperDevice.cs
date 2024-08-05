@@ -1,4 +1,3 @@
-using System;
 using Sencae.Mappers;
 
 namespace Sencae;

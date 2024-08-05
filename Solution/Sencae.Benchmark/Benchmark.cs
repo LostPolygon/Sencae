@@ -29,7 +29,7 @@ public class Benchmark {
                     .AsBaseline()
             );
 
-            /*AddJob(
+            AddJob(
                 Job.Default
                     .WithPlatform(Platform.X64)
                     .WithRuntime(CoreRuntime.Core80)
@@ -38,7 +38,7 @@ public class Benchmark {
                         new EnvironmentVariable("DOTNET_TieredPGO", "1"),
                         new EnvironmentVariable("DOTNET_TC_QuickJitForLoops", "0")
                     )
-                    .AsBaseline()
+                    //.AsBaseline()
             );
 
             AddJob(
@@ -50,31 +50,7 @@ public class Benchmark {
                         new EnvironmentVariable("DOTNET_TieredPGO", "0"),
                         new EnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1")
                     )
-            );*/
-
-            /*CoreRuntime dotnet9Runtime = CoreRuntime.CreateForNewVersion("net9.0", ".NET 9.0");
-
-            AddJob(
-                Job.Default
-                    .WithPlatform(Platform.X64)
-                    .WithRuntime(dotnet9Runtime)
-                    .WithJit(Jit.RyuJit)
-                    .WithEnvironmentVariables(
-                        new EnvironmentVariable("DOTNET_TieredPGO", "1"),
-                        new EnvironmentVariable("DOTNET_TC_QuickJitForLoops", "0")
-                    )
             );
-
-            AddJob(
-                Job.Default
-                    .WithPlatform(Platform.X64)
-                    .WithRuntime(dotnet9Runtime)
-                    .WithJit(Jit.RyuJit)
-                    .WithEnvironmentVariables(
-                        new EnvironmentVariable("DOTNET_TieredPGO", "0"),
-                        new EnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1")
-                    )
-            );*/
 
             if (AddNativeAotJob) {
                 AddJob(

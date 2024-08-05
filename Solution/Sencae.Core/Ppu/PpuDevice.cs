@@ -1,11 +1,10 @@
-using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Sencae.Ppu;
 
-public sealed partial class PpuDevice {
+public sealed class PpuDevice : IDisposable {
     private static readonly byte[] PowerUpPalette = [
         0x09, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02, 0x0D, 0x08, 0x10, 0x08, 0x24, 0x00, 0x00, 0x04, 0x2C,
         0x09, 0x01, 0x34, 0x03, 0x00, 0x04, 0x00, 0x14, 0x08, 0x3A, 0x00, 0x02, 0x00, 0x20, 0x2C, 0x08
@@ -13,12 +12,12 @@ public sealed partial class PpuDevice {
 
     private readonly PpuState _ppuState;
     private readonly CpuState _cpuState;
-    private readonly PpuCycleOperation[] _operations;
+    private readonly DirectArray<PpuCycleOperation> _operations;
 
     public PpuDevice(PpuState ppuState, CpuState cpuState) {
         _ppuState = ppuState;
         _cpuState = cpuState;
-        _operations = PpuOperationTableGenerator.Generate();
+        _operations = new DirectArray<PpuCycleOperation>(PpuOperationTableGenerator.Generate());
     }
 
     public void SoftReset() {
@@ -61,7 +60,8 @@ public sealed partial class PpuDevice {
                 registers.PPUSTATUS &= ~(PpuStatusRegisterFlags.VerticalBlankStarted | PpuStatusRegisterFlags.SpriteOverflow | PpuStatusRegisterFlags.Sprite0Hit);
                 break;
             default:
-                throw new ArgumentOutOfRangeException();
+                Debug.Assert(false, $"Unhandled PpuCycleOperation.Flag {operation.Flag}");
+                break;
         }
 
         switch (operation.Register) {
@@ -80,7 +80,8 @@ public sealed partial class PpuDevice {
             case PpuCycleOperation.PpuCycleRegisterOperation.SetVerticalVToVerticalT:
                 break;
             default:
-                throw new ArgumentOutOfRangeException();
+                Debug.Assert(false, $"Unhandled PpuCycleOperation.Register {operation.Register}");
+                break;
         }
         
         // If the control register tells us to emit a NMI when-
@@ -123,5 +124,9 @@ public sealed partial class PpuDevice {
 
         internalState.FrameCycle = frameCycle;
         internalState.Cycles++;
+    }
+
+    public void Dispose() {
+        _operations.Dispose();
     }
 }

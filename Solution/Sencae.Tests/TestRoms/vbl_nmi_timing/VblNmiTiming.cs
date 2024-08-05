@@ -36,12 +36,12 @@ public class VblNmiTiming {
     [Test]
     public void _6_nmi_disable() {
         using Machine machine = RunGenericTest("6.nmi_disable");
-        AssertPpuNametableMessage(machine, 6, 2, "$01"u8);
+        AssertPpuNametableMessage(machine, 2, 6, "$01"u8);
     }
     
     [Test]
     public void _7_nmi_timing() {
         using Machine machine = RunGenericTest("7.nmi_timing");
-        AssertPpuNametableMessage(machine, 6, 2, "$01"u8);
+        AssertPpuNametableMessage(machine, 2, 6, "$01"u8);
     }
 }

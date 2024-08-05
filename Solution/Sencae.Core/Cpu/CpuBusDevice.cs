@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.CompilerServices;
 
 namespace Sencae;
@@ -14,7 +13,7 @@ public sealed class CpuBusDevice(CpuState cpuState) : IBusDevice, IDisposable {
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
         switch (address) {
             case >= 0x0000 and <= 0x1FFF: {
-                ref byte mappedData = ref _memory[address % 0x800];
+                ref byte mappedData = ref _memory[address & (0x800 - 1)];
                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
                 return true;
             }

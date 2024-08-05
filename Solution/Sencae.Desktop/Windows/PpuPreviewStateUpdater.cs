@@ -3,8 +3,7 @@ using Sencae.Ppu;
 
 namespace Sencae.Desktop;
 
-public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevice, PpuMemoryBus ppuMemoryBus) {
-    //public readonly PpuBusDevice PpuBusDevice = ppuBusDevice;
+public readonly unsafe ref struct PpuPreviewStateUpdater(PpuMemoryBus ppuMemoryBus) {
     public readonly PpuMemoryBus PpuMemoryBus = ppuMemoryBus;
 
     public void FillPalettes(PpuPreviewState.PalettesData palettes) {
@@ -111,7 +110,7 @@ public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevi
         for (int tilePixelIndex = 0; tilePixelIndex < PpuConstants.BytesPerDecodedTile; tilePixelIndex++) {
             int tilePixelRow = tilePixelIndex / PpuConstants.TileSize;
 
-            int bit = 7 - tilePixelIndex % 8;
+            int bit = ~tilePixelIndex & (8 - 1); // 0..7 range
             ushort address = (ushort) (baseAddress + tilePixelRow);
 
             byte pixelPaletteValue = (byte) (

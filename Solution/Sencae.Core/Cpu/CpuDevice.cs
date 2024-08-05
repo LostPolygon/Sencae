@@ -1,7 +1,4 @@
-using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Sencae.Ppu;
 
 namespace Sencae;
 
@@ -84,7 +81,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
             case CpuMemoryResetState.Uninitialized:
                 break;
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException("options.CpuMemoryResetState", options.CpuMemoryResetState, "");
         }
 
         Cpu.Registers.P = new CpuStatusRegisterFlags {

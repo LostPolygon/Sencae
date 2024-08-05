@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Sencae;
+﻿namespace Sencae;
 
 public class SimpleLazy<T>(Func<T> valueFactory) {
     private bool _isCreated;

@@ -1,5 +1,3 @@
-using System;
-
 namespace Sencae.Ppu;
 
 public static class PpuConstants {

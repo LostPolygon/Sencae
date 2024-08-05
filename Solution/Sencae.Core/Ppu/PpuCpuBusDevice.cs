@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.CompilerServices;
 
 namespace Sencae.Ppu;
@@ -24,7 +23,7 @@ public sealed class PpuCpuBusDevice(MachineState machineState, PpuState ppuState
         ref PpuState.PpuInternalState internalState = ref ppuState.Internal;
 
         // Normalize mirrored addresses
-        address = (ushort) (address % 0x8 + FirstRegisterAddress);
+        address = (ushort) (address & (0x08 - 1) + FirstRegisterAddress);
 
         switch (accessMode) {
             case MemoryAccessMode.Read: {
@@ -252,7 +251,7 @@ bus = cpuDataBusLatch;*/
                              */
                             ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
                             ppuMemoryBus.HandleBus(
-                                (ushort) (vramAddress % 0x1000 + Nametable0StartAddress), // FIXME: is this correct?
+                                (ushort) (vramAddress & (0x1000 - 1) + Nametable0StartAddress), // FIXME: is this correct?
                                 accessMode,
                                 ref internalState.DataBusLatch
                             );

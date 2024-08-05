@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Sencae;
 
-/*[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit)]
 public struct ByteBool {
     [FieldOffset(0)]
     public byte Value;
@@ -24,10 +24,9 @@ public struct ByteBool {
 
     [MethodImpl(AggressiveInlining)]
     public static implicit operator ByteBool(byte value) => new() { Value = value };
-}*/
+}
 
-
-public struct ByteBool {
+/*public struct ByteBool {
     public byte Value;
 
     public bool BoolValue => Value != 0 ? true : false;
@@ -45,4 +44,4 @@ public struct ByteBool {
 
     [MethodImpl(AggressiveInlining)]
     public static implicit operator ByteBool(byte value) => new() { Value = value };
-}
+}*/

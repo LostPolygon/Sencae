@@ -1,4 +1,3 @@
-using System;
 using Sencae.Mappers;
 
 namespace Sencae;
@@ -11,7 +10,7 @@ public static class MapperDeviceFactory {
             case 0:
                 return new MapperDevice(
                     new Mapper000.CartridgeToCpuBusDevice(cartridgeData.PrgRom, prgRam),
-                    new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam)
+                    new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam, cartridgeData.PpuNametableMirroringType)
                 );
             case 1: {
                 Mapper001.State state = new();
@@ -24,14 +23,14 @@ public static class MapperDeviceFactory {
                 Mapper002.State state = new();
                 return new MapperDevice(
                     new Mapper002.CartridgeToCpuBusDevice(state, cartridgeData.PrgRom, prgRam),
-                    new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam)
+                    new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam, cartridgeData.PpuNametableMirroringType)
                 );
             }
             case 3: {
                 Mapper003.State state = new();
                 return new MapperDevice(
                     new Mapper003.CartridgeToCpuBusDevice(state, cartridgeData.PrgRom, prgRam),
-                    new Mapper003.CartridgeToPpuBusDevice(state, cartridgeData.ChrRom, cartridgeData.ChrRam)
+                    new Mapper003.CartridgeToPpuBusDevice(state, cartridgeData.ChrRom, cartridgeData.ChrRam, cartridgeData.PpuNametableMirroringType)
                 );
             }
             default:

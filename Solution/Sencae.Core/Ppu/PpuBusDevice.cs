@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.CompilerServices;
 
 namespace Sencae.Ppu;
@@ -20,9 +19,9 @@ public sealed class PpuBusDevice : IBusDevice, IDisposable {
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
         switch (address) {
             case >= 0x2000 and <= 0x3EFF: // Nametables
-                return BusDeviceHandlers.ReadWriteIndexed(_memory, address % 0x800, accessMode, ref bus);
+                return BusDeviceHandlers.ReadWriteIndexed(_memory, address & (0x800 - 1), accessMode, ref bus);
             case >= 0x3F00 and <= 0x3FFF: // Palette RAM
-                address = (ushort) (address % 0x20);
+                address = (ushort) (address & (0x20 - 1));
 
                 // #3F00 is universal background color
                 // $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C
@@ -37,9 +36,9 @@ public sealed class PpuBusDevice : IBusDevice, IDisposable {
                 const int colorIndexBits = 1 << 6;
                 ref byte mappedData = ref _paletteMemory[address];
                 if (accessMode == MemoryAccessMode.Write) {
-                    mappedData = (byte) (bus % colorIndexBits);
+                    mappedData = (byte) (bus & (colorIndexBits - 1));
                 } else {
-                    bus = (byte) (mappedData % colorIndexBits);
+                    bus = (byte) (mappedData & (colorIndexBits - 1));
                 }
 
                 return true;

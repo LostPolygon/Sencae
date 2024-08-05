@@ -1,5 +1,3 @@
-using System;
-
 namespace Sencae;
 
 public sealed class StandardControllersDevice : IBusDevice {

@@ -37,10 +37,7 @@ public unsafe class PpuPatternTableViewerWindow : AppWindow, IDisposable {
         if (!Emulator.IsLoaded)
             return;
 
-        PpuPreviewStateUpdater previewStateUpdater = new(
-            Emulator.Machine.PpuBusDevice,
-            Emulator.Machine.PpuMemoryBus
-        );
+        PpuPreviewStateUpdater previewStateUpdater = new(Emulator.Machine.PpuMemoryBus);
         previewStateUpdater.FillPatternTables(_patternTables);
 
         Span<uint> patternTablePalette = stackalloc uint[4];

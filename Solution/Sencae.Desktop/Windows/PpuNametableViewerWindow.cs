@@ -43,10 +43,7 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
         if (!Emulator.IsLoaded)
             return;
 
-        PpuPreviewStateUpdater previewStateUpdater = new(
-            Emulator.Machine.PpuBusDevice,
-            Emulator.Machine.PpuMemoryBus
-        );
+        PpuPreviewStateUpdater previewStateUpdater = new(Emulator.Machine.PpuMemoryBus);
 
         previewStateUpdater.FillPalettes(_palettes);
         previewStateUpdater.FillPatternTables(_patternTables);

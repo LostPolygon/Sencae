@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.CompilerServices;
 
 // ReSharper disable InconsistentNaming
@@ -820,7 +819,7 @@ public static class InstructionLogic {
                 InterruptType.Break => CpuConstants.IrqVector,
                 InterruptType.Irq => CpuConstants.IrqVector,
                 InterruptType.Nmi => CpuConstants.NmiVector,
-                _ => throw new ArgumentOutOfRangeException()
+                _ => throw new ArgumentOutOfRangeException("cpuInternal.InterruptType", cpuInternal.InterruptType, "")
             },
             cpuInternal.InterruptType == InterruptType.Break
         );

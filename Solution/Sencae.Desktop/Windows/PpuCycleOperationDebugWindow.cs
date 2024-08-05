@@ -24,6 +24,9 @@ public class PpuCycleOperationDebugWindow : AppWindow {
     }
 
     protected override void DrawContent(float deltaTime) {
+        if (Emulator.Machine == null!)
+            return;
+        
         const int scanlines = 262;
         const int cyclesInScanline = 341;
 

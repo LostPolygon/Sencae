@@ -25,10 +25,7 @@ public unsafe class PpuPalettesViewerWindow(
         if (!Emulator.IsLoaded)
             return;
 
-        PpuPreviewStateUpdater previewStateUpdater = new(
-            Emulator.Machine.PpuBusDevice,
-            Emulator.Machine.PpuMemoryBus
-        );
+        PpuPreviewStateUpdater previewStateUpdater = new(Emulator.Machine.PpuMemoryBus);
 
         previewStateUpdater.FillPalettes(_palettes);
 

@@ -27,7 +27,7 @@ public static class DebugEmulationRunner {
         CartridgeData cartridgeData = new(0, programRom, null, characterRam, PpuNametableMirroringType.TwoScreenVerticalMirroring);
         MapperDevice mapperDevice = new(
             new Mapper000CartridgeToCpuBusDeviceWriteable(cartridgeData.PrgRom, programRam),
-            new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam)
+            new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam, cartridgeData.PpuNametableMirroringType)
         );
 
         return mapperDevice;

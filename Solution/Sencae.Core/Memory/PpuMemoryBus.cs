@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using Sencae.Mappers;
 using Sencae.Ppu;
 
 namespace Sencae;
