@@ -13,6 +13,13 @@ public static class MapperDeviceFactory {
                     new Mapper000.CartridgeToCpuBusDevice(cartridgeData.PrgRom, prgRam),
                     new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam)
                 );
+            case 1: {
+                Mapper001.State state = new();
+                return new MapperDevice(
+                    new Mapper001.CartridgeToCpuBusDevice(state, cartridgeData.PrgRom, prgRam),
+                    new Mapper001.CartridgeToPpuBusDevice(state, cartridgeData.ChrRom, cartridgeData.ChrRam)
+                );
+            }
             case 2: {
                 Mapper002.State state = new();
                 return new MapperDevice(

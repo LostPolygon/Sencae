@@ -185,7 +185,6 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
 
         Tooltips.TileTooltip(Context, imageMin, Vector2.One * previewTileSize, 0xFFFF0000, null);
         
-        ImDrawListPtr drawListPtr = ImGui.GetWindowDrawList();
         ReadOnlySpan<byte> oamMemoryBytes = Emulator.Machine.State.Ppu.OamMemory.AsSpan();
         ReadOnlySpan<PpuObjectAttributes> oamObjects = MemoryMarshal.Cast<byte, PpuObjectAttributes>(oamMemoryBytes);
 
@@ -196,7 +195,7 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
 
             Vector2 spriteRectMin = imageMin + new Vector2(oamObject.SpriteX, oamObject.SpriteY) * previewScale;
             Vector2 spriteRectMax = spriteRectMin + Vector2.One * previewSpriteSize;
-            drawListPtr.AddRect(spriteRectMin, spriteRectMax, 0xFF0000FF, 0, ImDrawFlags.None, 1);
+            drawList.AddRect(spriteRectMin, spriteRectMax, 0xFF0000FF, 0, ImDrawFlags.None, 1);
         }
 
         ImGui.EndGroup();
@@ -229,17 +228,13 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
         }
     }
 
-    private class NametableContainer : IDisposable {
-        public DynamicSdlTexture Texture;
-
-        public NametableContainer(AppWindowContext context) {
-            Texture = new DynamicSdlTexture(
-                context.Renderer,
-                PpuConstants.NametableWidthPixels,
-                PpuConstants.NametableHeightPixels,
-                SDL_PIXELFORMAT_ARGB8888
-            );
-        }
+    private class NametableContainer(AppWindowContext context) : IDisposable {
+        public DynamicSdlTexture Texture = new(
+            context.Renderer,
+            PpuConstants.NametableWidthPixels,
+            PpuConstants.NametableHeightPixels,
+            SDL_PIXELFORMAT_ARGB8888
+        );
 
         public void Dispose() {
             Texture.Dispose();

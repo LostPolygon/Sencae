@@ -18,16 +18,12 @@ public class AnimatedWindow {
     public float CurrentTime;
 }
 
-public unsafe class EmulatorRunner {
+public unsafe class EmulatorRunner(CommandLineOptions commandLineOptions) {
     private const int ScreenScale = 15;
 
-    private readonly CommandLineOptions _commandLineOptions;
+    private readonly CommandLineOptions _commandLineOptions = commandLineOptions;
     private uint _sdlAudioDevice;
     private CircularBuffer<short> _soundCircularBuffer = new CircularBuffer<short>(8192);
-
-    public EmulatorRunner(CommandLineOptions commandLineOptions) {
-        _commandLineOptions = commandLineOptions;
-    }
 
     public void Run() {
         // Create window

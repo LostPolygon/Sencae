@@ -3,20 +3,14 @@ using ImGuiNET;
 
 namespace Sencae.Desktop;
 
-public class CpuMemoryEditor : HexEditorWindowBase {
-    public Emulator Emulator { get; }
-
-    public CpuMemoryEditor(
-        AppWindowContext context,
-        Emulator emulator
-    ) : base(
-        nameof(CpuMemoryEditor),
-        "CPU Memory",
-        context,
-        UInt16.MaxValue
-    ) {
-        Emulator = emulator;
-    }
+public class CpuMemoryEditor(
+    AppWindowContext context,
+    Emulator emulator
+) : HexEditorWindowBase(nameof(CpuMemoryEditor),
+    "CPU Memory",
+    context,
+    UInt16.MaxValue) {
+    public Emulator Emulator { get; } = emulator;
 
     protected override void DrawContent(float deltaTime) {
         ImGui.SetWindowSize(new Vector2(400, 500), ImGuiCond.FirstUseEver);

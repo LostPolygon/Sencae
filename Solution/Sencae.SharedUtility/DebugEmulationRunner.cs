@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Sencae.Mappers;
+using Sencae.Ppu;
 using Sixty502DotNet.Shared;
 using static Sencae.SharedUtility.AssemblerUtility;
 
@@ -23,7 +24,7 @@ public static class DebugEmulationRunner {
         programRom[^4] = (byte) resetVector;
         programRom[^3] = (byte) (resetVector >> 8);
 
-        CartridgeData cartridgeData = new(0, programRom, null, characterRam);
+        CartridgeData cartridgeData = new(0, programRom, null, characterRam, PpuNametableMirroringType.TwoScreenVerticalMirroring);
         MapperDevice mapperDevice = new(
             new Mapper000CartridgeToCpuBusDeviceWriteable(cartridgeData.PrgRom, programRam),
             new Mapper000.CartridgeToPpuBusDevice(cartridgeData.ChrRom, cartridgeData.ChrRam)

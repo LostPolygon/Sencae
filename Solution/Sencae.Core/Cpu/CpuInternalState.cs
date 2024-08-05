@@ -22,7 +22,8 @@ public struct CpuInternalState {
     public bool IrqPending;
     public bool NmiPulledDown;
     public bool NmiFlipFlop;
-    
+
+    public InterruptType InterruptType;
     //public bool IsRdyInputAsserted;
 
     public ulong Cycles;

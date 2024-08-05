@@ -19,6 +19,15 @@ public struct PpuNametable {
 
         public const int Length = 30;
         public const int ByteLength = PpuNametableRow.Length * Length;
+
+        public PpuNametableRow this[int row] {
+            get {
+                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(row, Length);
+                ArgumentOutOfRangeException.ThrowIfNegative(row);
+                return Unsafe.Add(ref _element0, row);
+            }
+        }
+        
         public Span<PpuNametableRow> AsSpan() => MemoryMarshal.CreateSpan(ref _element0, Length);
 #if !NETSTANDARD
         public readonly ReadOnlySpan<PpuNametableRow> AsReadOnlySpan() => MemoryMarshal.CreateReadOnlySpan(in _element0, Length);
@@ -33,7 +42,7 @@ public struct PpuNametable {
 
         public const int Length = AttributeTableSize;
         public const int ByteLength = sizeof(PpuAttributeTableEntryFlags) * AttributeTableSize;
-
+        
         public Span<PpuAttributeTableEntryFlags> AsSpan() => MemoryMarshal.CreateSpan(ref _element0, Length);
 
 #if !NETSTANDARD
@@ -68,6 +77,14 @@ public struct PpuNametable {
 
         public const int Length = 32;
         public const int ByteLength = sizeof(byte) * Length;
+        
+        public byte this[int column] {
+            get {
+                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(column, Length);
+                ArgumentOutOfRangeException.ThrowIfNegative(column);
+                return Unsafe.Add(ref _element0, column);
+            }
+        }
         
         public Span<byte> AsSpan() => MemoryMarshal.CreateSpan(ref _element0, Length);
 

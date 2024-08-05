@@ -4,24 +4,18 @@ using Sencae.Ppu;
 
 namespace Sencae;
 
-public sealed class MachineCpuMemoryBus : CpuMemoryBusBase {
-    public readonly CpuBusDevice CpuBusDevice;
-    public readonly PpuCpuBusDevice PpuCpuBusDevice;
-    public readonly IBusDevice CartridgeToCpuBusDevice;
-    public readonly StandardControllersDevice StandardControllersDevice;
+public sealed class MachineCpuMemoryBus(
+    CpuBusDevice cpuBusDevice,
+    PpuCpuBusDevice ppuCpuBusDevice,
+    IBusDevice cartridgeToCpuBusDevice,
+    StandardControllersDevice standardControllersDevice
+)
+    : CpuMemoryBusBase {
+    public readonly CpuBusDevice CpuBusDevice = cpuBusDevice;
+    public readonly PpuCpuBusDevice PpuCpuBusDevice = ppuCpuBusDevice;
+    public readonly IBusDevice CartridgeToCpuBusDevice = cartridgeToCpuBusDevice;
+    public readonly StandardControllersDevice StandardControllersDevice = standardControllersDevice;
     public OamDmaDevice OamDmaDevice;
-
-    public MachineCpuMemoryBus(
-        CpuBusDevice cpuBusDevice,
-        PpuCpuBusDevice ppuCpuBusDevice,
-        IBusDevice cartridgeToCpuBusDevice,
-        StandardControllersDevice standardControllersDevice
-    ) {
-        CpuBusDevice = cpuBusDevice;
-        PpuCpuBusDevice = ppuCpuBusDevice;
-        CartridgeToCpuBusDevice = cartridgeToCpuBusDevice;
-        StandardControllersDevice = standardControllersDevice;
-    }
 
     [MethodImpl(HotPathBlock)]
     public override bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {

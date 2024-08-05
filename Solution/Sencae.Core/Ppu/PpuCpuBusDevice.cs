@@ -6,17 +6,8 @@ namespace Sencae.Ppu;
 using static PpuConstants;
 using static PpuConstants.RegisterAddresses;
 
-public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
-    private readonly MachineState _machineState;
-    private readonly PpuState _ppuState;
-    private readonly PpuMemoryBus _ppuMemoryBus;
-
-    public PpuCpuBusDevice(MachineState machineState, PpuState ppuState, PpuMemoryBus ppuBusDevice) {
-        _machineState = machineState;
-        _ppuState = ppuState;
-        _ppuMemoryBus = ppuBusDevice;
-    }
-
+public sealed class PpuCpuBusDevice(MachineState machineState, PpuState ppuState, PpuMemoryBus ppuMemoryBus)
+    : IBusDevice, IDisposable {
     [MethodImpl(HotPath)]
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
         /*
@@ -29,16 +20,16 @@ public sealed class PpuCpuBusDevice : IBusDevice, IDisposable {
         if (!isPpuAddress)
             return false;
 
-        ref PpuState.PpuRegisterState registerState = ref _ppuState.Registers;
-        ref PpuState.PpuInternalState internalState = ref _ppuState.Internal;
+        ref PpuState.PpuRegisterState registerState = ref ppuState.Registers;
+        ref PpuState.PpuInternalState internalState = ref ppuState.Internal;
 
         // Normalize mirrored addresses
         address = (ushort) (address % 0x8 + FirstRegisterAddress);
 
         switch (accessMode) {
             case MemoryAccessMode.Read: {
-                bus = internalState.CpuDataBusLatch;
                 bool result = HandleBusInternal(address, accessMode, ref internalState.CpuDataBusLatch, ref registerState, ref internalState);
+                bus = internalState.CpuDataBusLatch;
                 return result;
             }
             case MemoryAccessMode.Write: {
@@ -140,7 +131,7 @@ bus = cpuDataBusLatch;*/
                         bus = (byte) (bus | (oldBus & (int) PpuStatusRegisterFlags.StatusMask));
                         
                         if (accessMode == MemoryAccessMode.Read) {
-                            internalState.LastPPUSTATUS_ReadCycle = _machineState.MachineCycles;
+                            internalState.LastPPUSTATUS_ReadCycle = machineState.MachineCycles;
                             internalState.PpuAddressRegisterLatch = false;
                             internalState.PpuScrollRegisterLatch = false;
 
@@ -172,7 +163,7 @@ bus = cpuDataBusLatch;*/
 
             // 0x2004
             case OAMDATA: {
-                ref byte mappedData = ref _ppuState.OamMemory[registerState.OAMADDR];
+                ref byte mappedData = ref ppuState.OamMemory[registerState.OAMADDR];
                 BusDeviceHandlers.ReadWriteRaw(ref mappedData, accessMode, ref bus);
                 if (accessMode == MemoryAccessMode.Write) {
                     registerState.OAMADDR++;
@@ -248,7 +239,7 @@ bus = cpuDataBusLatch;*/
                         case <= 0x3EFF:
                             bus = internalState.DataBusLatch;
 
-                            _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref internalState.DataBusLatch);
+                            ppuMemoryBus.HandleBus(vramAddress, accessMode, ref internalState.DataBusLatch);
                             break;
                         case <= 0x3FFF:
                             /*
@@ -259,8 +250,8 @@ bus = cpuDataBusLatch;*/
                              * but the data placed in it is the mirrored nametable data
                              * that would appear "underneath" the palette."
                              */
-                            _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
-                            _ppuMemoryBus.HandleBus(
+                            ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
+                            ppuMemoryBus.HandleBus(
                                 (ushort) (vramAddress % 0x1000 + Nametable0StartAddress), // FIXME: is this correct?
                                 accessMode,
                                 ref internalState.DataBusLatch
@@ -270,7 +261,7 @@ bus = cpuDataBusLatch;*/
                             break;
                     }
                 } else {
-                    _ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
+                    ppuMemoryBus.HandleBus(vramAddress, accessMode, ref bus);
                 }
 
                 if (accessMode != MemoryAccessMode.ReadObserve) {

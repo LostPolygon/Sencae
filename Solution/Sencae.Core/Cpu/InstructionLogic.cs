@@ -104,7 +104,6 @@ public static class InstructionLogic {
             // Interrupts
 
             I.BRK => BRK(operationCycle, ref cpu, ref cpuInternal), // break / software interrupt
-            I.SpecialNmiHandler => NmiHandler(operationCycle, ref cpu, ref cpuInternal),
             I.RTI => RTI(operationCycle, ref cpu, ref cpuInternal), // return from interrupt 
 
             // Other
@@ -817,8 +816,13 @@ public static class InstructionLogic {
             operationCycle,
             ref cpu,
             ref cpuInternal,
-            CpuConstants.IrqVector,
-            true
+            cpuInternal.InterruptType switch {
+                InterruptType.Break => CpuConstants.IrqVector,
+                InterruptType.Irq => CpuConstants.IrqVector,
+                InterruptType.Nmi => CpuConstants.NmiVector,
+                _ => throw new ArgumentOutOfRangeException()
+            },
+            cpuInternal.InterruptType == InterruptType.Break
         );
     }
 
@@ -1087,11 +1091,6 @@ public static class InstructionLogic {
     [MethodImpl(HotPath)]
     private static ushort CalculateStackAddress(byte stackPointer)
         => (ushort) (0x100 + stackPointer);
-
-    [MethodImpl(HotPath)]
-    private static bool NmiHandler(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
-        return InterruptSequence(operationCycle, ref cpu, ref cpuInternal, CpuConstants.NmiVector, false);
-    }
     
     [MethodImpl(HotPath)]
     private static bool InterruptSequence(

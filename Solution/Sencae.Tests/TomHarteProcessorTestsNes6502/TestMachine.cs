@@ -12,12 +12,10 @@ public class TestMachine : IDisposable {
     public TestMachine() {
         CpuState = new CpuState();
 
-        CpuMemoryBus = new TestCpuMemoryBus(
-            new Test64kRamCpuBusDevice(ExtraRam)
-        );
+        CpuMemoryBus = new TestCpuMemoryBus(new Test64KRamCpuBusDevice(ExtraRam));
         CpuDevice = new CpuDevice<TestCpuMemoryBus, DummyDmaDevice>(CpuState, CpuMemoryBus, new DummyDmaDevice(CpuState.OamDmaDevice));
         CpuDevice.HardReset(new CpuResetOptions {
-            // Initializing memory is very slow in debug,
+            // Initializing memory is very slow in debug for some reason,
             // but since we create a new 0-filled array each time,
             // it's fine here
             CpuMemoryResetState = CpuMemoryResetState.Uninitialized,

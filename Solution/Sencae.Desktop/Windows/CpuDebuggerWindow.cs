@@ -3,24 +3,21 @@ using ImGuiNET;
 
 namespace Sencae.Desktop;
 
-public class CpuDebuggerWindow : AppWindow {
-    public Emulator Emulator { get; }
+public class CpuDebuggerWindow(AppWindowContext context, Emulator emulator) :
+    AppWindow(
+        nameof(CpuDebuggerWindow),
+        "CPU Debugger",
+        context
+    ) {
+    public Emulator Emulator { get; } = emulator;
 
     private Vector2 TestVector2;
 
     private bool IsActive;
 
-    public CpuDebuggerWindow(AppWindowContext context, Emulator emulator) : base(
-        nameof(CpuDebuggerWindow),
-        "CPU Debugger",
-        context
-    ) {
-        Emulator = emulator;
-    }
-
     protected override void DrawContent(float deltaTime) {
         IsActive = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
-        
+
         ImGui.SetWindowSize(new Vector2(150, 300), ImGuiCond.FirstUseEver);
 
         //ImGui.PushFont(Context.SharedResources.FontFontAwesomeIconsSolid);
@@ -55,13 +52,19 @@ public class CpuDebuggerWindow : AppWindow {
         if (ImGui.Button("Step Cycle")) {
             Emulator.SingleCycleStep();
         }
-
+        
         if (ImGui.Button("Step Instruction")) {
             Emulator.SingleInstructionStep();
         }
 
         if (ImGui.Button("Run To Interrupt")) {
             Emulator.RunToInterrupt();
+        }
+        
+        if (ImGui.Button("Run To VBlank")) {
+            do {
+                Emulator.Machine.Clock();
+            } while (Emulator.Machine.State.Ppu.Internal.FrameCycle != 82182);
         }
 
         double timeScale = Emulator.TimeScale;
@@ -132,16 +135,16 @@ public class CpuDebuggerWindow : AppWindow {
         ImGui.EndTable();
 
         ImGui.Separator();
-        
+
         ImGui.TextUnformatted(_controller1Input.ToString());
     }
 
     private StandardControllerInput _controller1Input;
-    
+
     public bool HandleSdlEvent(in SDL_Event evt) {
         if (!Emulator.IsLoaded || !IsActive)
             return false;
-        
+
         /*
         A = 1 << 0,
         B = 1 << 1,

@@ -112,17 +112,13 @@ public unsafe class PpuPatternTableViewerWindow : AppWindow, IDisposable {
         }
     }
 
-    private class PatternTableContainer : IDisposable {
-        public DynamicSdlTexture Texture;
-
-        public PatternTableContainer(AppWindowContext context) {
-            Texture = new DynamicSdlTexture(
-                context.Renderer,
-                PpuConstants.PatternTableWidth,
-                PpuConstants.PatternTableHeight,
-                SDL_PIXELFORMAT_ARGB8888
-            );
-        }
+    private class PatternTableContainer(AppWindowContext context) : IDisposable {
+        public DynamicSdlTexture Texture = new(
+            context.Renderer,
+            PpuConstants.PatternTableWidth,
+            PpuConstants.PatternTableHeight,
+            SDL_PIXELFORMAT_ARGB8888
+        );
 
         public void Dispose() {
             Texture.Dispose();

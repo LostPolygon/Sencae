@@ -88,7 +88,7 @@ public enum InstructionType : byte {
     // Interrupts
 
     BRK, // break / software interrupt
-    SpecialNmiHandler,
+    //SpecialNmiHandler,
     RTI, // return from interrupt 
 
     // Other

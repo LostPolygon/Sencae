@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Sencae.Nes20File;
+using Sencae.Ppu;
 
 namespace Sencae;
 
@@ -33,7 +34,10 @@ public static unsafe class NesFileParser {
             mapper,
             prgRom.ToArray(),
             chrRomArray,
-            chrRam
+            chrRam,
+            (header.Flags6 & Nes20Header.Flags.Flags6.VerticalMirroring) != 0 ? 
+                PpuNametableMirroringType.TwoScreenVerticalMirroring :
+                PpuNametableMirroringType.TwoScreenHorizontalMirroring
         );
     }
 }

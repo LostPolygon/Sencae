@@ -16,6 +16,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
     protected PpuPatternTableViewerWindow PpuPatternTableViewerWindow { get; set; }
     protected PpuNametableViewerWindow PpuNametableViewerWindow { get; set; }
     protected PpuPalettesViewerWindow PpuPalettesViewerWindow { get; set; }
+    protected PpuCycleOperationDebugWindow PpuCycleOperationDebugWindow { get; set; }
     protected ProfilerWindow ProfilerWindow { get; set; }
     protected CpuMemoryEditor CpuMemoryEditor { get; set; }
     protected MachineLogWindow MachineLogWindow { get; set; }
@@ -71,6 +72,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         PpuPatternTableViewerWindow = new PpuPatternTableViewerWindow(appWindowContext, Emulator);
         PpuNametableViewerWindow = new PpuNametableViewerWindow(appWindowContext, Emulator);
         PpuPalettesViewerWindow = new PpuPalettesViewerWindow(appWindowContext, Emulator);
+        PpuCycleOperationDebugWindow = new PpuCycleOperationDebugWindow(appWindowContext, Emulator);
 
         ProfilerWindow = new ProfilerWindow(appWindowContext);
         CpuMemoryEditor = new CpuMemoryEditor(appWindowContext, Emulator);
@@ -180,6 +182,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         PpuPatternTableViewerWindow.Draw(deltaTime);
         PpuNametableViewerWindow.Draw(deltaTime);
         PpuPalettesViewerWindow.Draw(deltaTime);
+        PpuCycleOperationDebugWindow.Draw(deltaTime);
         ProfilerWindow.Draw(deltaTime);
 
         CpuMemoryEditor.Draw(deltaTime);
@@ -227,6 +230,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
                 DrawWindowItem(PpuPatternTableViewerWindow.Title, PpuPatternTableViewerWindow);
                 DrawWindowItem(PpuNametableViewerWindow.Title, PpuNametableViewerWindow);
                 DrawWindowItem(PpuPalettesViewerWindow.Title, PpuPalettesViewerWindow);
+                DrawWindowItem(PpuCycleOperationDebugWindow.Title, PpuCycleOperationDebugWindow);
                 DrawWindowItem("Profiler", ProfilerWindow);
                 DrawWindowItem("Machine Log", MachineLogWindow);
                 ImGui.Separator();

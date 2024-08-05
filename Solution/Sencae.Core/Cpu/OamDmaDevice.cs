@@ -24,7 +24,8 @@ public sealed class OamDmaDevice(
             dmaCpuAddress.Low = (byte) (dmaCpuAddress.Low + State.BytesCopied);
             CpuMemoryBus.HandleBus(dmaCpuAddress.Value, MemoryAccessMode.Read, ref State.Data);
         } else {
-            _oamMemory[State.BytesCopied] = State.Data;
+            int oamAddress = (State.BytesCopied + PpuState.Registers.OAMADDR) % (0xFF + 1);
+            _oamMemory[oamAddress] = State.Data;
             if (State.BytesCopied == 255) {
                 State.IsActive = false;
             } else {

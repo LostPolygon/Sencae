@@ -3,17 +3,15 @@
 namespace Sencae; 
 
 [StructLayout(LayoutKind.Explicit)]
-public struct UInt16Bytes {
+public struct UInt16Bytes(ushort value) {
     [FieldOffset(0)]
-    public ushort Value;
+    public ushort Value = value;
     
     [FieldOffset(0)]
     public byte Low;
     
     [FieldOffset(1)]
     public byte High;
-
-    public UInt16Bytes(ushort value) => Value = value;
 
     public override string ToString() => $"{Value} (0x{Value:X00})";
 

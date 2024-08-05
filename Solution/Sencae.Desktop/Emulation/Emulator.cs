@@ -1,7 +1,7 @@
 namespace Sencae.Desktop;
 
-public class Emulator : IDisposable {
-    public NesConstants.NesVariantConstants NesVariantConstants { get; }
+public class Emulator(NesConstants.NesVariantConstants nesVariantConstants) : IDisposable {
+    public NesConstants.NesVariantConstants NesVariantConstants { get; } = nesVariantConstants;
     public Machine Machine = null!;
 
     public bool IsRunning { get; set; }
@@ -15,10 +15,6 @@ public class Emulator : IDisposable {
     public ulong CyclesAtLastCyclesPrint;
 
     public double TimeScale { get; set; } = 1.0;
-    
-    public Emulator(NesConstants.NesVariantConstants nesVariantConstants) {
-        NesVariantConstants = nesVariantConstants;
-    }
 
     public void LoadRom(string romFilePath) {
         CartridgeData cartridgeData = NesFileParser.Parse(File.ReadAllBytes(romFilePath));
@@ -87,7 +83,7 @@ public class Emulator : IDisposable {
     public void RunToInterrupt() {
         do {
             Machine.Clock();
-        } while (Machine.State.Cpu.Internal.Instruction.Type is not InstructionType.SpecialNmiHandler);
+        } while (Machine.State.Cpu.Internal.Instruction.Type is not InstructionType.BRK);
     }
 
     public void Dispose() {

@@ -4,25 +4,21 @@ using Sencae.Ppu;
 
 namespace Sencae;
 
-public sealed class PpuMemoryBus : IBusDevice {
-    public readonly PpuBusDevice PpuBusDevice;
-    public readonly IBusDevice CartridgeToPpuBusDevice;
-
-    public PpuMemoryBus(
-        PpuBusDevice ppuBusDevice,
-        IBusDevice cartridgeToPpuBusDevice
-    ) {
-        PpuBusDevice = ppuBusDevice;
-        CartridgeToPpuBusDevice = cartridgeToPpuBusDevice;
-    }
+public sealed class PpuMemoryBus(
+    PpuBusDevice ppuBusDevice,
+    IBusDevice cartridgeToPpuBusDevice
+)
+    : IBusDevice {
+    public readonly PpuBusDevice PpuBusDevice = ppuBusDevice;
+    public readonly IBusDevice CartridgeToPpuBusDevice = cartridgeToPpuBusDevice;
 
     [MethodImpl(HotPath)]
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
-        bool ppuBusDevice = PpuBusDevice.HandleBus(address, accessMode, ref bus);
+        //bool ppuBusDevice = PpuBusDevice.HandleBus(address, accessMode, ref bus);
         bool cartridgeToPpuBusDevice = CartridgeToPpuBusDevice.HandleBus(address, accessMode, ref bus);
 
         //BusDeviceHandlers.AssertNotOpenBus(address);
-        return ppuBusDevice || cartridgeToPpuBusDevice;
+        return cartridgeToPpuBusDevice;
     }
 
     [MethodImpl(HotPath)]

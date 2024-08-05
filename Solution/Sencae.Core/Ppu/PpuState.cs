@@ -59,8 +59,8 @@ public sealed class PpuState {
         public ulong Frames;
         public ulong LastPPUSTATUS_ReadCycle;
 
-        public bool Reset;
-        
         public ulong Cycles;
+        
+        public ulong LastNmiStartCycle;
     }
 }

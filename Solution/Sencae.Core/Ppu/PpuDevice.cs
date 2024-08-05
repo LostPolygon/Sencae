@@ -6,6 +6,11 @@ using System.Runtime.CompilerServices;
 namespace Sencae.Ppu;
 
 public sealed partial class PpuDevice {
+    private static readonly byte[] PowerUpPalette = [
+        0x09, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02, 0x0D, 0x08, 0x10, 0x08, 0x24, 0x00, 0x00, 0x04, 0x2C,
+        0x09, 0x01, 0x34, 0x03, 0x00, 0x04, 0x00, 0x14, 0x08, 0x3A, 0x00, 0x02, 0x00, 0x20, 0x2C, 0x08
+    ];
+
     private readonly PpuState _ppuState;
     private readonly CpuState _cpuState;
     private readonly PpuCycleOperation[] _operations;
@@ -13,7 +18,7 @@ public sealed partial class PpuDevice {
     public PpuDevice(PpuState ppuState, CpuState cpuState) {
         _ppuState = ppuState;
         _cpuState = cpuState;
-        _operations = CreatePpuCycleOperationTable();
+        _operations = PpuOperationTableGenerator.Generate();
     }
 
     public void SoftReset() {
@@ -24,11 +29,11 @@ public sealed partial class PpuDevice {
         _ppuState.Registers.OAMADDR = 0;
 
         _ppuState.Internal = default;
-        _ppuState.Internal.Reset = true;
 
         _ppuState.Memory.AsSpan().Clear();
         _ppuState.OamMemory.AsSpan().Clear();
         _ppuState.PaletteMemory.AsSpan().Clear();
+        PowerUpPalette.CopyTo(_ppuState.PaletteMemory.AsSpan());
     }
 
     [MethodImpl(HotPathBlock)]
@@ -39,17 +44,20 @@ public sealed partial class PpuDevice {
         int frameCycle = internalState.FrameCycle;
         PpuCycleOperation operation = _operations[frameCycle];
         switch (operation.Flag) {
-            case PpuCycleFlagOperation.None:
+            case PpuCycleOperation.PpuCycleFlagOperation.None:
                 break;
-            case PpuCycleFlagOperation.Scanline0Cycle0:
+            case PpuCycleOperation.PpuCycleFlagOperation.Scanline0Cycle0:
                 break;
-            case PpuCycleFlagOperation.ScanlineNon0Cycle0:
+            case PpuCycleOperation.PpuCycleFlagOperation.ScanlineNon0Cycle0:
                 break;
-            case PpuCycleFlagOperation.SetVerticalBlankFlag:
+            case PpuCycleOperation.PpuCycleFlagOperation.SetVerticalBlankFlag:
                 registers.PPUSTATUS |= PpuStatusRegisterFlags.VerticalBlankStarted;
-                internalState.Reset = false;
+                //internalState.LastNmiStartCycle = _ppuState.Internal.Cycles;
                 break;
-            case PpuCycleFlagOperation.ClearFlags:
+            case PpuCycleOperation.PpuCycleFlagOperation.ClearFlags:
+                //ulong nmiDuration = _ppuState.Internal.Cycles - internalState.LastNmiStartCycle;
+                //Console.WriteLine($"nmiDuration = {nmiDuration} PPU cycles");
+                
                 registers.PPUSTATUS &= ~(PpuStatusRegisterFlags.VerticalBlankStarted | PpuStatusRegisterFlags.SpriteOverflow | PpuStatusRegisterFlags.Sprite0Hit);
                 break;
             default:
@@ -57,32 +65,24 @@ public sealed partial class PpuDevice {
         }
 
         switch (operation.Register) {
-            case PpuCycleRegisterOperation.None:
+            case PpuCycleOperation.PpuCycleRegisterOperation.None:
                 break;
-            case PpuCycleRegisterOperation.SpriteAttributeFetch:
+            case PpuCycleOperation.PpuCycleRegisterOperation.SpriteAttributeFetch:
                 break;
-            case PpuCycleRegisterOperation.SpriteXFetch:
+            case PpuCycleOperation.PpuCycleRegisterOperation.SpriteXFetch:
                 break;
-            case PpuCycleRegisterOperation.IncrementHorizontalV:
+            case PpuCycleOperation.PpuCycleRegisterOperation.IncrementHorizontalV:
                 break;
-            case PpuCycleRegisterOperation.IncrementHorizontalAndVerticalV:
+            case PpuCycleOperation.PpuCycleRegisterOperation.IncrementHorizontalAndVerticalV:
                 break;
-            case PpuCycleRegisterOperation.SetHorizontalVToHorizontalT:
+            case PpuCycleOperation.PpuCycleRegisterOperation.SetHorizontalVToHorizontalT:
                 break;
-            case PpuCycleRegisterOperation.SetVerticalVToVerticalT:
+            case PpuCycleOperation.PpuCycleRegisterOperation.SetVerticalVToVerticalT:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
-
-        frameCycle++;
-        if (frameCycle == _operations.Length - 1) {
-            bool mustSkipDot = !registers.IsRenderingDisabled && internalState.Frames % 2 == 0;
-
-            frameCycle = mustSkipDot ? 1 : 0;
-            internalState.Frames++;
-        }
-
+        
         // If the control register tells us to emit a NMI when-
         // entering vertical blanking period, do it! The CPU
         // will be informed that rendering is complete so it can
@@ -99,6 +99,10 @@ public sealed partial class PpuDevice {
 
         if (cpuInternalState.NmiPulledDown && !nmiPulledDownOld) {
             cpuInternalState.NmiFlipFlop = true;
+            
+            ulong nmiDuration = internalState.Cycles - internalState.LastNmiStartCycle;
+            //Console.WriteLine($"nmiDuration = {nmiDuration} PPU cycles");
+            internalState.LastNmiStartCycle = internalState.Cycles;
         }
 
         // HACK
@@ -109,47 +113,15 @@ public sealed partial class PpuDevice {
             }
         }
 
+        frameCycle++;
+        if (frameCycle == _operations.Length - 1) {
+            bool mustSkipDot = !registers.IsRenderingDisabled && internalState.Frames % 2 != 0;
+
+            frameCycle = mustSkipDot ? 1 : 0;
+            internalState.Frames++;
+        }
+
         internalState.FrameCycle = frameCycle;
         internalState.Cycles++;
-    }
-
-    public record struct PpuCycleOperation(
-        PpuCycleVRamFetchOperation VRamFetch,
-        PpuCycleRegisterOperation Register = PpuCycleRegisterOperation.None,
-        PpuCycleFlagOperation Flag = PpuCycleFlagOperation.None
-    );
-
-    public enum PpuCycleFlagOperation : byte {
-        None,
-
-        Scanline0Cycle0,
-        ScanlineNon0Cycle0,
-        SetVerticalBlankFlag,
-        ClearFlags,
-    }
-
-    public enum PpuCycleRegisterOperation : byte {
-        None,
-
-        SpriteAttributeFetch,
-        SpriteXFetch,
-
-        IncrementHorizontalV,
-        IncrementHorizontalAndVerticalV,
-        SetHorizontalVToHorizontalT,
-        SetVerticalVToVerticalT
-    }
-
-    public enum PpuCycleVRamFetchOperation : byte {
-        Idle,
-
-        NametableFetchCycle0,
-        NametableFetchCycle1,
-        AttributeTableFetchCycle0,
-        AttributeTableFetchCycle1,
-        PatternTableLsbFetchCycle0,
-        PatternTableLsbFetchCycle1,
-        PatternTableMsbFetchCycle0,
-        PatternTableMsbFetchCycle1
     }
 }

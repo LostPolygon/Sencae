@@ -3,21 +3,15 @@ using Perfolizer.Horology;
 
 namespace Sencae.Desktop;
 
-public abstract class AppWindow {
+public abstract class AppWindow(string id, string title, AppWindowContext context) {
     private readonly AnimationTimer _shadowAnimation = new(0.1f);
 
     private bool _isOpen = true;
 
-    public string Id { get; protected set; }
-    public string Title { get; set; }
+    public string Id { get; protected set; } = id;
+    public string Title { get; set; } = title;
     public ImGuiWindowFlags Flags { get; set; }
-    protected AppWindowContext Context { get; }
-
-    protected AppWindow(string id, string title, AppWindowContext context) {
-        Context = context;
-        Id = id;
-        Title = title;
-    }
+    protected AppWindowContext Context { get; } = context;
 
     public bool IsOpen => _isOpen;
 

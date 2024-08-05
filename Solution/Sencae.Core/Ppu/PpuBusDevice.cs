@@ -7,7 +7,7 @@ public sealed class PpuBusDevice : IBusDevice, IDisposable {
     private readonly DirectArray<byte> _memory;
     private readonly DirectArray<byte> _oamMemory;
     private readonly DirectArray<byte> _paletteMemory;
-    private PpuState _state;
+    private readonly PpuState _state;
 
     public PpuBusDevice(Machine machine) {
         _state = machine.State.Ppu;

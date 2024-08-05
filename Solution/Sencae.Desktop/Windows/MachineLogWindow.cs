@@ -7,21 +7,15 @@ using Sencae.SharedUtility;
 
 namespace Sencae.Desktop;
 
-public unsafe class MachineLogWindow : AppWindow {
-    public Emulator Emulator { get; }
+public unsafe class MachineLogWindow(AppWindowContext context, Emulator emulator) : AppWindow(nameof(MachineLogWindow),
+    "Machine Log",
+    context) {
+    public Emulator Emulator { get; } = emulator;
 
     private readonly List<MachineLogEntry> _logOutput = new();
     private bool _autoScroll;
     private bool _logging;
     private bool _autoScrollTrigger;
-
-    public MachineLogWindow(AppWindowContext context, Emulator emulator) : base(
-        nameof(MachineLogWindow),
-        "Machine Log",
-        context
-    ) {
-        Emulator = emulator;
-    }
 
     protected override void DrawWindow(float deltaTime) {
         ImGui.PushStyleVar(ImGuiStyleVar.GrabMinSize, 30);

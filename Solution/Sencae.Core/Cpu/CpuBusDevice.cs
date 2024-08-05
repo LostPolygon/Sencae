@@ -3,18 +3,12 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public sealed class CpuBusDevice : IBusDevice, IDisposable {
-    private readonly CpuState _cpuState;
-    private readonly DirectArray<byte> _memory;
-    private readonly DirectArray<byte> _ioRegisters;
+public sealed class CpuBusDevice(CpuState cpuState) : IBusDevice, IDisposable {
+    private readonly CpuState _cpuState = cpuState;
+    private readonly DirectArray<byte> _memory = new(cpuState.Memory);
+    private readonly DirectArray<byte> _ioRegisters = new(cpuState.IORegisters);
 
     public DirectArray<byte> Memory => _memory;
-
-    public CpuBusDevice(CpuState cpuState) {
-        _cpuState = cpuState;
-        _memory = new DirectArray<byte>(cpuState.Memory);
-        _ioRegisters = new DirectArray<byte>(cpuState.IORegisters);
-    }
 
     [MethodImpl(HotPath)]
     public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {

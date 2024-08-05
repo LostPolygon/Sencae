@@ -32,7 +32,7 @@ public static class Mapper003 {
 
             return false;
         }
-        
+
         public void Reset() {
             _prgRamMemory?.AsSpan().Clear();
         }
@@ -43,36 +43,14 @@ public static class Mapper003 {
         }
     }
 
-    public sealed class CartridgeToPpuBusDevice(State state, byte[]? chrRom, byte[]? chrRam) : IMapperDevice {
-        private readonly DirectArray<byte>? _chrRomMemory = DirectArray.FromNullable(chrRom);
-        private readonly DirectArray<byte>? _chrRamMemory = DirectArray.FromNullable(chrRam);
-
+    public sealed class CartridgeToPpuBusDevice(State state, byte[]? chrRom, byte[]? chrRam) :
+        CartridgeToPpuBusDeviceBase(chrRom, chrRam) {
         [MethodImpl(HotPath)]
-        public bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
-            switch (address) {
-                case >= 0x0000 and <= 0x1FFF:
-                    int realRomBank = state.BankSelect & 0b_0000_0011;
-                    int realAddress = 0x2000 * realRomBank + address;
-                    if (_chrRomMemory != null)
-                        return BusDeviceHandlers.ReadOnlyIndexed(_chrRomMemory.Value, realAddress, accessMode, ref bus);
-
-                    if (_chrRamMemory != null)
-                        return BusDeviceHandlers.ReadWriteIndexed(_chrRamMemory.Value, realAddress, accessMode, ref bus);
-
-                    Debug.Assert(_chrRomMemory != null || _chrRamMemory != null, "_chrRomMemory != null || _chrRamMemory != null");
-                    return false;
-                default:
-                    return false;
-            }
-        }
-        
-        public void Reset() {
-            _chrRamMemory?.AsSpan().Clear();
-        }
-
-        public void Dispose() {
-            _chrRomMemory?.Dispose();
-            _chrRamMemory?.Dispose();
+        public override bool HandleBus(ushort address, MemoryAccessMode accessMode, ref byte bus) {
+            return address switch {
+                >= 0x0000 and <= 0x1FFF => HandleChrRomOrRamIndexed(address, accessMode, ref bus),
+                _ => HandlePpuBus(address, accessMode, ref bus)
+            };
         }
     }
 }

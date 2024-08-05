@@ -1,6 +1,5 @@
 using System.Runtime.ExceptionServices;
 using NUnit.Framework;
-using Sencae.SharedUtility;
 using SharpCompress;
 using SharpCompress.Archives;
 
@@ -52,12 +51,12 @@ public class TomHarteProcessorTestsNes6502 {
                     X = testCaseDto.Initial.X,
                     Y = testCaseDto.Initial.Y,
                     SP = testCaseDto.Initial.S,
-                    PC = new UInt16Bytes((ushort) (testCaseDto.Initial.PC  -0)),
+                    PC = new UInt16Bytes(testCaseDto.Initial.PC),
                     P = CpuStatusRegisterFlags.FromFlags((CpuStatusRegisterPackedFlags) testCaseDto.Initial.P),
                 },
 
                 Internal = {
-                    AddressBus = new UInt16Bytes((ushort) (testCaseDto.Initial.PC -0)),
+                    AddressBus = new UInt16Bytes(testCaseDto.Initial.PC),
                     State = CpuInternalState.ExecutionState.FinishingCurrentInstructionAndFetchingNextOpcode
                 }
             },

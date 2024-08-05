@@ -4,7 +4,7 @@ using Sencae.Ppu;
 namespace Sencae.Desktop;
 
 public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevice, PpuMemoryBus ppuMemoryBus) {
-    public readonly PpuBusDevice PpuBusDevice = ppuBusDevice;
+    //public readonly PpuBusDevice PpuBusDevice = ppuBusDevice;
     public readonly PpuMemoryBus PpuMemoryBus = ppuMemoryBus;
 
     public void FillPalettes(PpuPreviewState.PalettesData palettes) {
@@ -80,7 +80,7 @@ public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevi
 
         Span<byte> nametableDataRaw = MemoryMarshal.CreateSpan(ref nametable, 1).AsBytes();
         for (ushort i = 0; i < PpuNametable.Size; i++) {
-            nametableDataRaw[i] = PpuBusDevice.ReadObserve((ushort) (baseAddress + i));
+            nametableDataRaw[i] = PpuMemoryBus.ReadObserve((ushort) (baseAddress + i));
         }
 
         FillNametableAttributes(ref nametable, ref nametableAttributes);
@@ -89,10 +89,10 @@ public readonly unsafe ref struct PpuPreviewStateUpdater(PpuBusDevice ppuBusDevi
     private PpuObjectPalette FillPalette(ushort address) {
         PpuObjectPalette palette;
 
-        byte bgColorIndex = PpuBusDevice.ReadObserve(0x3F00);
+        byte bgColorIndex = PpuMemoryBus.ReadObserve(0x3F00);
         palette.ColorIndices[0] = bgColorIndex;
         for (int i = 0; i < 3; i++) {
-            byte colorIndex = PpuBusDevice.ReadObserve((ushort) (address + i));
+            byte colorIndex = PpuMemoryBus.ReadObserve((ushort) (address + i));
             palette.ColorIndices[i + 1] = colorIndex;
         }
 

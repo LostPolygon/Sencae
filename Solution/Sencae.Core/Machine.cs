@@ -44,6 +44,9 @@ public sealed class Machine : IDisposable {
         CpuMemoryBus.OamDmaDevice = OamDmaDevice;
         
         CpuDevice = new CpuDevice<MachineCpuMemoryBus, OamDmaDevice>(State.Cpu, CpuMemoryBus, OamDmaDevice);
+        
+        MapperDevice.CartridgeToCpuBusDevice.Connect(this);
+        MapperDevice.CartridgeToPpuBusDevice.Connect(this);
     }
 
     public void Reset(CpuResetOptions? options = null, bool hardReset = true) {

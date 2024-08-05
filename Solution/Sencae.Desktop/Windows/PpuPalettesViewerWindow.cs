@@ -5,21 +5,16 @@ using Sencae.Ppu;
 
 namespace Sencae.Desktop;
 
-public unsafe class PpuPalettesViewerWindow : AppWindow, IDisposable {
+public unsafe class PpuPalettesViewerWindow(
+    AppWindowContext context,
+    Emulator emulator
+) : AppWindow(nameof(PpuPalettesViewerWindow),
+        "PPU Palettes",
+        context),
+    IDisposable {
     private readonly PpuPreviewState.PalettesData _palettes = new();
 
-    public Emulator Emulator { get; }
-
-    public PpuPalettesViewerWindow(
-        AppWindowContext context,
-        Emulator emulator
-    ) : base(
-        nameof(PpuPalettesViewerWindow),
-        "PPU Palettes",
-        context
-    ) {
-        Emulator = emulator;
-    }
+    public Emulator Emulator { get; } = emulator;
 
     public void Dispose() {
     }

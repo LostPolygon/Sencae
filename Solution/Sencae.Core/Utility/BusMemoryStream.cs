@@ -3,12 +3,8 @@ using System.IO;
 
 namespace Sencae;
 
-public class BusMemoryStream : Stream {
-    public IBusDevice BusDevice { get; }
-
-    public BusMemoryStream(IBusDevice busDevice) {
-        BusDevice = busDevice;
-    }
+public class BusMemoryStream(IBusDevice busDevice) : Stream {
+    public IBusDevice BusDevice { get; } = busDevice;
 
     private long _position;
 

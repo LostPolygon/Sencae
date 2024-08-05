@@ -2,14 +2,9 @@ using ImGuiNET;
 
 namespace Sencae.Desktop;
 
-public class ProfilerWindow : AppWindow {
-    public ProfilerWindow(AppWindowContext context) : base(
-        nameof(ProfilerWindow),
-        "Internal Profiler",
-        context
-    ) {
-    }
-
+public class ProfilerWindow(AppWindowContext context) : AppWindow(nameof(ProfilerWindow),
+    "Internal Profiler",
+    context) {
     protected override void DrawContent(float deltaTime) {
         if (ImGui.Button("Reset")) {
             Profiler.Instance.Reset();

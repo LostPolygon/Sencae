@@ -3,19 +3,17 @@ using Sencae.Desktop.Sdl;
 
 namespace Sencae.Desktop; 
 
-public abstract class AppSdlWindow : BaseAppSdlWindow {
-    protected AppSdlWindow(
-        SdlMainLoop mainLoop, 
-        string title, 
-        int x,
-        int y,
-        int w, 
-        int h,
-        SDL_WindowFlags windowFlags,
-        SDL_RendererFlags rendererFlags
-    ) : base(mainLoop, title, x, y, w, h, windowFlags, rendererFlags) {
-    }
-
+public abstract class AppSdlWindow(
+    SdlMainLoop mainLoop,
+    string title,
+    int x,
+    int y,
+    int w,
+    int h,
+    SDL_WindowFlags windowFlags,
+    SDL_RendererFlags rendererFlags
+)
+    : BaseAppSdlWindow(mainLoop, title, x, y, w, h, windowFlags, rendererFlags) {
     protected override NanoProfiler<string> Profiler { get; } = Sencae.Desktop.Profiler.Instance;
 
     protected override void RenderImGui() {

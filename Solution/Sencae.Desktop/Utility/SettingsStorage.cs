@@ -4,14 +4,11 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace Sencae.Desktop;
 
-public class SettingsStorage<TDto> where TDto : new() {
-    public string FilePath { get; }
+public class SettingsStorage<TDto>(string filePath)
+    where TDto : new() {
+    public string FilePath { get; } = filePath;
 
     public TDto Value { get; private set; } = default!;
-
-    public SettingsStorage(string filePath) {
-        FilePath = filePath;
-    }
 
     public void Load() {
         TDto value;

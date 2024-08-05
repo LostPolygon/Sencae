@@ -20,20 +20,12 @@ namespace Sencae
 
     public class MemoryEditor
     {
-        bool AllowEdits;
-        int Rows;
-        int DataEditingAddr;
-        bool DataEditingTakeFocus;
+        bool AllowEdits = true;
+        int Rows = 16;
+        int DataEditingAddr = -1;
+        bool DataEditingTakeFocus = false;
         byte[] DataInput = new byte[32];
         byte[] AddrInput = new byte[32];
-
-        public MemoryEditor()
-        {
-            Rows = 16;
-            DataEditingAddr = -1;
-            DataEditingTakeFocus = false;
-            AllowEdits = true;
-        }
 
         private static string FixedHex(int v, int count)
         {

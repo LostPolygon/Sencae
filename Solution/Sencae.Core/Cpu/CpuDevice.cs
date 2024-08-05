@@ -5,22 +5,16 @@ using Sencae.Ppu;
 
 namespace Sencae;
 
-public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
+public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMemoryBus cpuMemoryBus, TOamDmaDevice oamDmaDevice)
     where TCpuMemoryBus : CpuMemoryBusBase
     where TOamDmaDevice : DmaDevice {
-    public readonly CpuState Cpu;
-    public readonly TCpuMemoryBus CpuMemoryBus;
-    public readonly TOamDmaDevice OamDmaDevice;
+    public readonly CpuState Cpu = cpu;
+    public readonly TCpuMemoryBus CpuMemoryBus = cpuMemoryBus;
+    public readonly TOamDmaDevice OamDmaDevice = oamDmaDevice;
 
     public delegate void CpuBusHandlingDelegate(ushort address, bool isRead, byte busData);
 
     public event CpuBusHandlingDelegate? CpuBusHandling;
-
-    public CpuDevice(CpuState cpu, TCpuMemoryBus cpuMemoryBus, TOamDmaDevice oamDmaDevice) {
-        Cpu = cpu;
-        CpuMemoryBus = cpuMemoryBus;
-        OamDmaDevice = oamDmaDevice;
-    }
 
     [MethodImpl(HotPathBlock)]
     public bool Clock() {
@@ -149,10 +143,9 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
                     // Execute current opcode
                     cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
 
-                    //if (cpuInternal.Instruction.HasAfterNextOpcodeFetchedLogic) {
-                    InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
-
-                    //}
+                    if (cpuInternal.Instruction.HasAfterNextOpcodeFetchedLogic) {
+                        InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                    }
 
                     // Set up fetching next opcode
                     cpuInternal.Read = true;
@@ -177,6 +170,8 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
 
                     byte instructionOpcode = cpuInternal.DataBus;
                     cpuInternal.Instruction = Instructions.DescriptorSlimByOpcode[instructionOpcode];
+                    
+                    cpuInternal.InterruptType = InterruptType.Break;
 
                     cpu.PC.Value++;
                     cpuInternal.AddressBus = cpu.PC;
@@ -247,12 +242,11 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>
 
     private static bool CheckCpuNmi(ref CpuInternalState cpuInternal) {
         if (!cpuInternal.NmiFlipFlop ||
-            cpuInternal.Instruction.Type == InstructionType.SpecialNmiHandler)
+            cpuInternal.Instruction.Type == InstructionType.BRK)
             return false;
 
-        cpuInternal.Instruction = Instructions.DescriptorSlimByOpcode[0x00] with {
-            Type = InstructionType.SpecialNmiHandler
-        };
+        cpuInternal.Instruction = Instructions.DescriptorSlimByOpcode[0x00];
+        cpuInternal.InterruptType = InterruptType.Nmi;
 
         return true;
     }
