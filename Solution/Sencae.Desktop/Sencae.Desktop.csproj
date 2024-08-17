@@ -12,7 +12,7 @@
 
         <ApplicationIcon>ResourcesEmbedded/icon.ico</ApplicationIcon>
 
-        <Configurations>Debug;Release</Configurations>
+        <Configurations>Debug;Release;ReleaseNativeAot</Configurations>
 
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>

@@ -77,7 +77,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
         ProfilerWindow = new ProfilerWindow(appWindowContext);
         CpuMemoryEditor = new CpuMemoryEditor(appWindowContext, Emulator);
         MachineLogWindow = new MachineLogWindow(appWindowContext, Emulator);
-        
+
         DearImGuiDemoWindow = new DearImGuiDemoWindow(appWindowContext);
         DearImGuiDemoWindow.Close();
     }
@@ -120,7 +120,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
             case SDL_EventType.SDL_DROPFILE:
                 IntPtr droppedFile = evt.drop.file;
                 string droppedFileStr = Marshal.PtrToStringUTF8(droppedFile)!;
-                SdlNative.SDL_free(droppedFile);   
+                SdlNative.SDL_free(droppedFile);
                 _loadingRomPath = droppedFileStr;
 
                 break;
@@ -161,7 +161,7 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
     private void DrawContentInternal() {
         DrawMainMenu();
         DrawDockSpace();
-        
+
         float deltaTime = (float) DeltaTime;
 
         if (_loadingRomPath != null) {
@@ -174,9 +174,9 @@ public unsafe class MainAppSdlWindow : AppSdlWindow {
             _loadingRomPath = null;
         }
 
-        using (Profiler.Begin("Emulator_Update", TimeUnit.Millisecond)) {
+        /*using (Profiler.Begin("Emulator_Update", TimeUnit.Millisecond)) {
             Emulator.Update(DeltaTime);
-        }
+        }*/
 
         CpuDebuggerWindow.Draw(deltaTime);
         PpuPatternTableViewerWindow.Draw(deltaTime);

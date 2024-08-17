@@ -2,14 +2,23 @@ using System.Runtime.CompilerServices;
 
 namespace Sencae;
 
-public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMemoryBus cpuMemoryBus, TOamDmaDevice oamDmaDevice)
+public unsafe class CpuDevice<TCpuMemoryBus, TOamDmaDevice> : IDisposable
     where TCpuMemoryBus : CpuMemoryBusBase
     where TOamDmaDevice : DmaDevice {
-    public readonly CpuState Cpu = cpu;
-    public readonly TCpuMemoryBus CpuMemoryBus = cpuMemoryBus;
-    public readonly TOamDmaDevice OamDmaDevice = oamDmaDevice;
-
     public delegate void CpuBusHandlingDelegate(ushort address, bool isRead, byte busData);
+
+    public readonly CpuState Cpu;
+    public readonly TCpuMemoryBus CpuMemoryBus;
+    public readonly TOamDmaDevice OamDmaDevice;
+
+    public CpuDevice(CpuState cpu, TCpuMemoryBus cpuMemoryBus, TOamDmaDevice oamDmaDevice) {
+        Cpu = cpu;
+        CpuMemoryBus = cpuMemoryBus;
+        OamDmaDevice = oamDmaDevice;
+    }
+
+    public void Dispose() {
+    }
 
     public event CpuBusHandlingDelegate? CpuBusHandling;
 
@@ -133,15 +142,17 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
     }
 
     [MethodImpl(HotPathBlock)]
-    private static void ExecuteState(ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
+    private void ExecuteState(ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
+        ref InstructionDescriptorSlim instruction = ref cpuInternal.Instruction;
         while (true) {
             switch (cpuInternal.State) {
                 case CpuInternalState.ExecutionState.FinishingCurrentInstructionAndFetchingNextOpcode: {
-                    // Execute current opcode
-                    cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
+                    if (instruction.HasAfterNextOpcodeFetchedLogic) {
+                        // Execute current opcode
+                        cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
 
-                    if (cpuInternal.Instruction.HasAfterNextOpcodeFetchedLogic) {
-                        InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                        //InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                        instruction.InstructionHandler.Value(cpuInternal.OperationCycle, ref cpu, ref cpuInternal);
                     }
 
                     // Set up fetching next opcode
@@ -149,7 +160,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
 
                     // Implied mode operations read the same address the second time
                     // and throw the result away
-                    if (cpuInternal.Instruction.AddressingMode != AddressingMode.Implied) {
+                    if (instruction.AddressingMode != AddressingMode.Implied) {
                         cpu.PC.Value++;
                         cpuInternal.AddressBus = cpu.PC;
                     }
@@ -167,17 +178,16 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
 
                     byte instructionOpcode = cpuInternal.DataBus;
                     cpuInternal.Instruction = Instructions.DescriptorSlimByOpcode[instructionOpcode];
-
                     cpuInternal.InterruptType = InterruptType.Break;
 
-                    cpu.PC.Value++;
-                    cpuInternal.AddressBus = cpu.PC;
+                    cpuInternal.AddressBus.Value++;
+                    cpu.PC.Value = cpuInternal.AddressBus.Value;
 
-                    if (cpuInternal.Instruction.Type == InstructionType.JSR ||
-                        cpuInternal.Instruction.AddressingMode is AddressingMode.Implied or AddressingMode.Immediate
+                    if (instruction.Type == InstructionType.JSR ||
+                        instruction.AddressingMode is AddressingMode.Implied or AddressingMode.Immediate
                        ) {
                         cpuInternal.OperationCycle++;
-                        if (cpuInternal.Instruction.MemoryDataOperation) {
+                        if (instruction.MemoryDataOperation) {
                             cpuInternal.State = CpuInternalState.ExecutionState.FinishingCurrentInstructionAndFetchingNextOpcode;
                         }
                     }
@@ -186,18 +196,18 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
                 }
                 case CpuInternalState.ExecutionState.ExecutingAddressing: {
                     bool completed =
-                        AddressingModeLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.AddressingMode);
+                        AddressingModeLogic.Dispatch(ref cpu, ref cpuInternal, instruction.AddressingMode);
 
                     cpuInternal.OperationCycle++;
                     if (!completed)
                         break;
 
-                    if (cpuInternal.Instruction.MemoryDataOperation) {
+                    if (instruction.MemoryDataOperation) {
                         cpuInternal.State = CpuInternalState.ExecutionState.FinishingCurrentInstructionAndFetchingNextOpcode;
                         break;
                     }
 
-                    if (cpuInternal.Instruction.CanSkipToNextOpcode) {
+                    if (instruction.CanSkipToNextOpcode) {
                         cpuInternal.State = CpuInternalState.ExecutionState.FinishingCurrentInstructionAndFetchingNextOpcode;
                     } else {
                         cpuInternal.State = CpuInternalState.ExecutionState.ExecutingInstruction;
@@ -214,7 +224,9 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
                     //        (cpuInternal.Instruction.Flags & InstructionFlags.MemoryDataOperation) == 0
                     //    )
                     //);
-                    bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+
+                    //bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
+                    bool completed = instruction.InstructionHandler.Value(cpuInternal.OperationCycle, ref cpu, ref cpuInternal);
                     cpuInternal.OperationCycle++;
 
                     if (completed) {
@@ -222,7 +234,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
                         // other instructions can just reuse common logic
                         // for incrementing PC and fetching the next opcode
                         cpuInternal.State =
-                            cpuInternal.Instruction.FetchesNextOpcode ?
+                            instruction.FetchesNextOpcode ?
                                 CpuInternalState.ExecutionState.InterpretingFetchedOpcode :
                                 CpuInternalState.ExecutionState.FinishingCurrentInstructionAndFetchingNextOpcode;
 
@@ -238,7 +250,7 @@ public sealed class CpuDevice<TCpuMemoryBus, TOamDmaDevice>(CpuState cpu, TCpuMe
     }
 
     [MethodImpl(HotPath)]
-    private static bool CheckCpuNmi(ref CpuInternalState cpuInternal) {
+    private bool CheckCpuNmi(ref CpuInternalState cpuInternal) {
         if (!cpuInternal.NmiFlipFlop ||
             cpuInternal.Instruction.Type == InstructionType.BRK)
             return false;

@@ -11,6 +11,8 @@ public static class InstructionLogic {
     public const int AfterAddressingFinished = -1;
     public const int AfterNextOpcodeFetched = -2;
 
+    public delegate bool InstructionHandler(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal);
+
     #region Dispatcher
 
     // Enabling inlining here actually reduces perf on x64 by about 25%!
@@ -1058,9 +1060,13 @@ public static class InstructionLogic {
     /////////////
 
     public static bool STP(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
-        cpuInternal.Halted = true;
-
-        return true;
+        switch (operationCycle) {
+            case AfterNextOpcodeFetched:
+                cpuInternal.Halted = true;
+                return true;
+        }
+        
+        return false;
     }
 
     [MethodImpl(NoInlining)]
@@ -1069,6 +1075,21 @@ public static class InstructionLogic {
         cpu.X = CMP_Internal_SetCompareFlags(operationCycle, ref cpu, ref cpuInternal, andResult);
 
         return true;
+    }
+    
+    [MethodImpl(NoInlining)]
+    public static bool XAA(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
+        return XXX(operationCycle, ref cpu, ref cpuInternal);
+    }
+    
+    [MethodImpl(NoInlining)]
+    public static bool TAS(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
+        return XXX(operationCycle, ref cpu, ref cpuInternal);
+    }
+    
+    [MethodImpl(NoInlining)]
+    public static bool LAS(int operationCycle, ref CpuRegistersState cpu, ref CpuInternalState cpuInternal) {
+        return XXX(operationCycle, ref cpu, ref cpuInternal);
     }
 
     [MethodImpl(NoInlining)]

@@ -33,6 +33,9 @@ public class CpuDebuggerWindow(AppWindowContext context, Emulator emulator) :
         if (!Emulator.IsLoaded)
             return;
 
+        ref CpuRegistersState cpuRegisters = ref Emulator.Machine.State.Cpu.Registers;
+        ref CpuInternalState cpuInternal = ref Emulator.Machine.State.Cpu.Internal;
+
         //ImGui.PopFont();
 
         bool isRunning = Emulator.IsRunning;
@@ -52,7 +55,7 @@ public class CpuDebuggerWindow(AppWindowContext context, Emulator emulator) :
         if (ImGui.Button("Step Cycle")) {
             Emulator.SingleCycleStep();
         }
-        
+
         if (ImGui.Button("Step Instruction")) {
             Emulator.SingleInstructionStep();
         }
@@ -60,7 +63,7 @@ public class CpuDebuggerWindow(AppWindowContext context, Emulator emulator) :
         if (ImGui.Button("Run To Interrupt")) {
             Emulator.RunToInterrupt();
         }
-        
+
         if (ImGui.Button("Run To VBlank")) {
             do {
                 Emulator.Machine.Clock();
@@ -79,10 +82,7 @@ public class CpuDebuggerWindow(AppWindowContext context, Emulator emulator) :
 
         ImGui.Separator();
 
-        ref CpuRegistersState cpuRegisters = ref Emulator.Machine.State.Cpu.Registers;
-        ref CpuInternalState cpuInternal = ref Emulator.Machine.State.Cpu.Internal;
-
-        static int DrawRegister(string label, int value, string format, int maxValue) {
+        void DrawRegister<T>(string label, ref T value, string format, T minValue, T maxValue) where T : unmanaged, IComparable<T> {
             ImGui.TableNextRow();
 
             ImGui.TableSetColumnIndex(0);
@@ -90,11 +90,18 @@ public class CpuDebuggerWindow(AppWindowContext context, Emulator emulator) :
 
             ImGui.TableSetColumnIndex(1);
 
-            if (ImGuiEx.InputScalar("##" + label, ref value, null, null, format, ImGuiInputTextFlags.CharsHexadecimal | ImGuiInputTextFlags.EnterReturnsTrue)) {
-                value = Math.Clamp(value, 0, maxValue);
-            }
+            T newValue = value;
+            if (ImGuiEx.InputScalar("##" + label, ref newValue, null, null, format, ImGuiInputTextFlags.CharsHexadecimal | ImGuiInputTextFlags.EnterReturnsTrue)) {
+                lock (Emulator.EmulationThreadState.Lock) {
+                    if (newValue.CompareTo(minValue) < 0) {
+                        newValue = minValue;
+                    } else if (value.CompareTo(maxValue) > 0) {
+                        newValue = maxValue;
+                    }
 
-            return value;
+                    value = newValue;
+                }
+            }
         }
 
         ImGui.BeginTable("Stats", 2);
@@ -121,14 +128,14 @@ public class CpuDebuggerWindow(AppWindowContext context, Emulator emulator) :
 
         ImGui.BeginTable("Registers", 2);
         {
-            cpuRegisters.A = (byte) DrawRegister("A: ", cpuRegisters.A, "%02X", Byte.MaxValue);
-            cpuRegisters.X = (byte) DrawRegister("X: ", cpuRegisters.X, "%02X", Byte.MaxValue);
-            cpuRegisters.Y = (byte) DrawRegister("Y: ", cpuRegisters.Y, "%02X", Byte.MaxValue);
-            cpuRegisters.SP = (byte) DrawRegister("SP: ", cpuRegisters.SP, "%02X", Byte.MaxValue);
-            cpuRegisters.PC.Value = (ushort) DrawRegister("PC: ", cpuRegisters.PC.Value, "%04X", UInt16.MaxValue);
+            DrawRegister("A: ", ref cpuRegisters.A, "%02X", Byte.MinValue, Byte.MaxValue);
+            DrawRegister("X: ", ref cpuRegisters.X, "%02X", Byte.MinValue, Byte.MaxValue);
+            DrawRegister("Y: ", ref cpuRegisters.Y, "%02X", Byte.MinValue, Byte.MaxValue);
+            DrawRegister("SP: ", ref cpuRegisters.SP, "%02X", Byte.MinValue, Byte.MaxValue);
+            DrawRegister("PC: ", ref cpuRegisters.PC.Value, "%04X", UInt16.MinValue, UInt16.MaxValue);
 
-            cpuInternal.AddressBus.Value = (ushort) DrawRegister("AB: ", cpuInternal.AddressBus.Value, "%04X", UInt16.MaxValue);
-            cpuInternal.DataBus = (byte) DrawRegister("DB: ", cpuInternal.DataBus, "%02X", UInt16.MaxValue);
+            DrawRegister("AB: ", ref cpuInternal.AddressBus.Value, "%04X", UInt16.MinValue, UInt16.MaxValue);
+            DrawRegister("DB: ", ref cpuInternal.DataBus, "%02X", Byte.MinValue, Byte.MaxValue);
 
             ImGui.TextUnformatted(Instructions.DescriptorByOpcode[cpuInternal.Instruction.OpCode].Mnemonic);
         }

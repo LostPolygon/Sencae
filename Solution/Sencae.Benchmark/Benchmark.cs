@@ -21,6 +21,7 @@ public class Benchmark {
                 allowedNamespaces: ["Sencae"]
             ));*/
             
+            
             AddJob(
                 Job.Default
                     .WithPlatform(Platform.X64)
@@ -28,6 +29,13 @@ public class Benchmark {
                     .WithJit(Jit.RyuJit)
                     .AsBaseline()
             );
+            
+            /*AddJob(
+                Job.Default
+                    .WithPlatform(Platform.X64)
+                    .WithRuntime(CoreRuntime.Core90)
+                    .WithJit(Jit.RyuJit)
+            );*/
 
             /*AddJob(
                 Job.Default
@@ -51,6 +59,7 @@ public class Benchmark {
                         new EnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1")
                     )
             );*/
+
 
             if (AddNativeAotJob) {
                 AddJob(
@@ -107,8 +116,8 @@ public class Benchmark {
 
     public const ulong CyclesPerFrame = 29780 * 3;
     public const ulong FramesPerSecond = 60;
-    public const ulong TotalFrames = FramesPerSecond * 30;
-    public const ulong TotalCycleCount = TotalFrames * CyclesPerFrame; // ~60s of gameplay
+    public const ulong TotalFrames = FramesPerSecond * 45;
+    public const ulong TotalCycleCount = TotalFrames * CyclesPerFrame; // ~45s of gameplay
 
     [Benchmark]
     public void ContraAutodemo() {

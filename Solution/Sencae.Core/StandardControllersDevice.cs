@@ -33,8 +33,6 @@ public sealed class StandardControllersDevice : IBusDevice {
                 }
 
                 return true;
-                break;
-
             //case 0x4017:
             //    break;
         }
