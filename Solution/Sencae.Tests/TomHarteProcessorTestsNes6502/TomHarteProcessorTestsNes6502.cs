@@ -105,7 +105,6 @@ public class TomHarteProcessorTestsNes6502 {
             Assert.AreEqual(testCaseDto.Cycles[i].BusData, busCycles[i].busData, $"Bus cycle {i} BusData mismatch");
         }
 
-
         return true;
     }
 

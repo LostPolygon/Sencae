@@ -123,6 +123,9 @@ public unsafe class PpuNametableViewerWindow : AppWindow, IDisposable {
 
         int* surfacePixels = (int*) surface->pixels;
         for (int tileRow = 0; tileRow < PpuConstants.NametableHeightTiles; tileRow++) {
+            nametableRowsSpan[tileRow].AsReadOnlySpan();
+            nametableRowsSpan[tileRow].AsReadOnlySpan();
+            
             ReadOnlySpan<byte> nametableRowSpan = PpuNametable.PpuNametableRow.AsReadOnlySpan(ref nametableRowsSpan[tileRow]);
             
             for (int tileColumn = 0; tileColumn < PpuConstants.NametableWidthTiles; tileColumn++) {

@@ -1,8 +1,8 @@
-#if !DEBUG
+#if !DEBUG || true
 #define USE_DATA_POINTER
 #endif
 
-#define ASSUME_POWER_OF_TWO_LENGTH1
+#define ASSUME_POWER_OF_TWO_LENGTH
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;

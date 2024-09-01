@@ -14,8 +14,7 @@ public unsafe class ImGuiProto2 {
 
         public readonly bool IsUtf8;
         public readonly bool IsEmpty;
-        public readonly bool IsNull;
-        internal readonly void* Pointer;
+        public readonly void* Pointer;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public StringSpan(ReadOnlySpan<byte> utf8Span) {
@@ -24,7 +23,6 @@ public unsafe class ImGuiProto2 {
             IsUtf8 = true;
             IsEmpty = !utf8Span.IsEmpty;
             Pointer = SpanToPointer(utf8Span);
-            IsNull = Pointer == null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -34,7 +32,6 @@ public unsafe class ImGuiProto2 {
             IsUtf8 = false;
             IsEmpty = !charSpan.IsEmpty;
             Pointer = SpanToPointer(charSpan);
-            IsNull = Pointer == null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -58,7 +55,7 @@ public unsafe class ImGuiProto2 {
         stackAllocBytes = 0;
         pooledMemoryPin = default;
 
-        if (stringSpan.IsNull)
+        if (stringSpan.Pointer == null)
             return null;
 
         if (stringSpan.IsEmpty) {

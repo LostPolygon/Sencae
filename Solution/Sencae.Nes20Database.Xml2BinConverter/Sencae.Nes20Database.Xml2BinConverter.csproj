@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <RootNamespace>Sencae.Nes20Db.JsonConverter</RootNamespace>
         <OutputType>Exe</OutputType>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,6 +17,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Sencae.Nes20Database.Binary\Sencae.Nes20Database.Binary.csproj" />
+      <ProjectReference Include="..\Sencae.Nes20Database\Sencae.Nes20Database.csproj" />
       <ProjectReference Include="..\Sencae.Nes20File\Sencae.Nes20File.csproj" />
     </ItemGroup>
 

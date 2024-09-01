@@ -30,11 +30,11 @@ public class Nes20DbDto {
             reader = XmlReader.Create(new StringReader(innerXml));
             reader.Read();
             if (reader.LocalName != "game")
-                throw new SerializationException("Excepted a node with a name 'game'");
+                throw new SerializationException("Expected a node with a name 'game'");
 
             reader.Read();
             if (reader.NodeType != XmlNodeType.Comment)
-                throw new SerializationException("Excepted a comment node");
+                throw new SerializationException("Expected a comment node");
 
             Comment = reader.Value.Trim();
 
@@ -43,10 +43,20 @@ public class Nes20DbDto {
 
             reader = XmlReader.Create(new StringReader(innerXml));
             Value = (GameDto) xmlSerializer.Deserialize(reader)!;
+            
+            ArgumentNullException.ThrowIfNull(Value.Rom);
+            ArgumentNullException.ThrowIfNull(Value.PrgRom);
+            ArgumentNullException.ThrowIfNull(Value.Pcb);
+            ArgumentNullException.ThrowIfNull(Value.Console);
+            ArgumentNullException.ThrowIfNull(Value.Expansion);
         }
 
         public void WriteXml(XmlWriter writer) {
             throw new NotImplementedException();
+        }
+
+        public override string ToString() {
+            return $"{nameof(Comment)}: {Comment}";
         }
     }
 
@@ -66,18 +76,18 @@ public class Nes20DbDto {
     [XmlRoot("game")]
     public class GameDto {
         [XmlElement("prgrom")] public PrgRomAndChrRomDto PrgRom;
-        [XmlElement("chrrom")] public PrgRomAndChrRomDto ChrRom;
-        [XmlElement("trainer")] public RomDto Trainer;
+        [XmlElement("chrrom")] public PrgRomAndChrRomDto? ChrRom;
+        [XmlElement("trainer")] public RomDto? Trainer;
         [XmlElement("rom")] public RomDto Rom;
-        [XmlElement("miscrom")] public MiscRomDto MiscRomSize;
-        [XmlElement("prgram")] public RamSizeDto PrgRamSize;
-        [XmlElement("chrram")] public RamSizeDto ChrRamSize;
-        [XmlElement("chrnvram")] public RamSizeDto ChrNvramSize;
-        [XmlElement("prgnvram")] public RamSizeDto PrgNvramSize;
+        [XmlElement("miscrom")] public MiscRomDto? MiscRom;
+        [XmlElement("prgram")] public RamSizeDto? PrgRam;
+        [XmlElement("chrram")] public RamSizeDto? ChrRam;
+        [XmlElement("chrnvram")] public RamSizeDto? ChrNvram;
+        [XmlElement("prgnvram")] public RamSizeDto? PrgNvram;
         [XmlElement("pcb")] public PcbDto Pcb;
         [XmlElement("console")] public ConsoleDto Console;
         [XmlElement("expansion")] public ExpansionDto Expansion;
-        [XmlElement("vs")] public VsSystemDto VsSystem;
+        [XmlElement("vs")] public VsSystemDto? VsSystem;
     }
 
     public class RomDto {

@@ -86,6 +86,7 @@ public abstract unsafe class HexEditorWindowBase : AppWindow {
         Encoding.UTF8.GetBytes(byteFormat, byteFormatUtf8Bytes);
         byteFormatUtf8Bytes[^1] = 0;
 
+        //byte* rowDataHexPtr = (byte*) Unsafe.AsPointer(ref rowDataHex[0]);
         byte* rowDataHexPtr = (byte*) Unsafe.AsPointer(ref rowDataHex[0]);
         byte* rowAddressHexPtr = (byte*) Unsafe.AsPointer(ref rowAddressHex[0]);
         byte* byteFormatUtf8BytesPtr = (byte*) Unsafe.AsPointer(ref byteFormatUtf8Bytes[0]);

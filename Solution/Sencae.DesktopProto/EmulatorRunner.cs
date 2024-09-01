@@ -319,7 +319,7 @@ public unsafe class EmulatorRunner(CommandLineOptions commandLineOptions) {
 
                 //_emulator.HandleSdlEvent(in evt);
             }
-
+/*
             int screenLength = NesConstants.Ntsc.ScreenWidth * NesConstants.Ntsc.ScreenHeight * 4;
             byte* pixels = (byte*) emulatorSurface->pixels;
 
@@ -348,7 +348,7 @@ public unsafe class EmulatorRunner(CommandLineOptions commandLineOptions) {
             tRect.y = 50;
             tRect.w = NesConstants.Ntsc.ScreenWidth * ScreenScale;
             tRect.h = NesConstants.Ntsc.ScreenHeight * ScreenScale;
-
+*/
             // Blit the emulator view
 
             //Update(_emulator, emulatorSurface, renderer);
@@ -359,11 +359,11 @@ public unsafe class EmulatorRunner(CommandLineOptions commandLineOptions) {
                 Sdl2Renderer.ImGui_ImplSDLRenderer2_NewFrame();
                 ImGui.NewFrame();
 
-                SubmitUI(window);
+                //SubmitUI(window);
 
-                //ImGui.ShowDemoWindow();
+                ImGui.ShowDemoWindow();
 
-                ImGui.Begin("SDL2/SDL_Renderer Texture Test");
+                /*ImGui.Begin("SDL2/SDL_Renderer Texture Test");
 
                 if (ImGui.IsWindowFocused()) {
                     RenderDropShadow(shadowTexture, 70.0f, 255);
@@ -376,12 +376,13 @@ public unsafe class EmulatorRunner(CommandLineOptions commandLineOptions) {
                 ImDrawListPtr imDrawListPtr = ImGui.GetWindowDrawList();
                 
 
-                ImGui.End();
+                ImGui.End();*/
 
                 //imDrawListPtr.AddCircleFilled(new Vector2(100, 100), 100, 0xFFFFFFFF, 100);
                 
                 //////////////////
     
+                /*
                 static Vector4 RgbColorToVector(uint color) {
                     byte a = (byte) (color >> 24);
                     byte r = (byte) (color >> 16);
@@ -424,7 +425,7 @@ public unsafe class EmulatorRunner(CommandLineOptions commandLineOptions) {
                     }
                 }
 
-                
+                */
 
                 //delegate* unmanaged[Cdecl] <ImDrawList*, ImDrawCmd*, void> ptr1 = &ImGuiDrawListCallback;
                 //IntPtr fnPtr1 = (IntPtr) ptr1;

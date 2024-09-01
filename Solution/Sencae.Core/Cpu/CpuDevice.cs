@@ -83,7 +83,7 @@ public unsafe class CpuDevice<TCpuMemoryBus, TOamDmaDevice> : IDisposable
                 break;
             case CpuMemoryResetState.AllOne:
                 for (ushort i = 0x0000; i < 0x2000; i++) {
-                    CpuMemoryBus.Write(i, 0);
+                    CpuMemoryBus.Write(i, 0xFF);
                 }
 
                 break;
@@ -151,7 +151,6 @@ public unsafe class CpuDevice<TCpuMemoryBus, TOamDmaDevice> : IDisposable
                         // Execute current opcode
                         cpuInternal.OperationCycle = InstructionLogic.AfterNextOpcodeFetched;
 
-                        //InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
                         instruction.InstructionHandler.Value(cpuInternal.OperationCycle, ref cpu, ref cpuInternal);
                     }
 
@@ -177,11 +176,13 @@ public unsafe class CpuDevice<TCpuMemoryBus, TOamDmaDevice> : IDisposable
                         break;
 
                     byte instructionOpcode = cpuInternal.DataBus;
-                    cpuInternal.Instruction = Instructions.DescriptorSlimByOpcode[instructionOpcode];
+                    instruction = Instructions.DescriptorSlimByOpcode[instructionOpcode];
                     cpuInternal.InterruptType = InterruptType.Break;
 
                     cpuInternal.AddressBus.Value++;
-                    cpu.PC.Value = cpuInternal.AddressBus.Value;
+                    if (instruction.Type != InstructionType.STP) {
+                        cpu.PC.Value = cpuInternal.AddressBus.Value;
+                    }
 
                     if (instruction.Type == InstructionType.JSR ||
                         instruction.AddressingMode is AddressingMode.Implied or AddressingMode.Immediate
@@ -225,7 +226,6 @@ public unsafe class CpuDevice<TCpuMemoryBus, TOamDmaDevice> : IDisposable
                     //    )
                     //);
 
-                    //bool completed = InstructionLogic.Dispatch(ref cpu, ref cpuInternal, cpuInternal.Instruction.Type);
                     bool completed = instruction.InstructionHandler.Value(cpuInternal.OperationCycle, ref cpu, ref cpuInternal);
                     cpuInternal.OperationCycle++;
 

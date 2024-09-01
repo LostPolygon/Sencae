@@ -15,7 +15,9 @@ public static partial class Instructions {
         AddressModeByOpcode = new AddressingMode[Map.Count];
         InstructionTypeByOpcode = new InstructionType[Map.Count];
 
-        foreach ((byte opcode, InstructionDescriptor descriptor) in Map) {
+        foreach (KeyValuePair<byte, InstructionDescriptor> pair in Map) {
+            (byte opcode, InstructionDescriptor descriptor) = (pair.Key, pair.Value);
+            
             DescriptorByOpcode[opcode] = descriptor;
             AddressModeByOpcode[opcode] = descriptor.AddressingMode;
             InstructionTypeByOpcode[opcode] = descriptor.Type;

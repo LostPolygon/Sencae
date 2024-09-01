@@ -49,7 +49,7 @@ public sealed class Machine : IDisposable {
     }
 
     public void Reset(CpuResetOptions? options = null, bool hardReset = true) {
-        AssertNotDisposed();
+        //AssertNotDisposed();
 
         State.ResetCounters();
 
@@ -67,7 +67,7 @@ public sealed class Machine : IDisposable {
 
     [MethodImpl(HotPath)]
     public void Clock() {
-        AssertNotDisposed();
+        //AssertNotDisposed();
 
         if (State.MachineCycles % 3 == 0) {
             CpuClock();

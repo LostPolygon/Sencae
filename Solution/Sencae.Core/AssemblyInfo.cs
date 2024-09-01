@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-#if true||!NETSTANDARD
+#if !NETSTANDARD2_0_OR_GREATER
 [module: SkipLocalsInit]
 #endif
 [assembly: InternalsVisibleTo("Sencae.Desktop")]

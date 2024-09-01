@@ -6,10 +6,18 @@
         <Nullable>enable</Nullable>
         <RootNamespace>Sencae.Nes20Database</RootNamespace>
         <LangVersion>12</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Sencae.Nes20File\Sencae.Nes20File.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Polyfill" Version="6.4.1">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
 </Project>

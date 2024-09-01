@@ -14,7 +14,6 @@ public class CpuMemoryEditor(
 
     protected override void DrawContent(float deltaTime) {
         ImGui.SetWindowSize(new Vector2(400, 500), ImGuiCond.FirstUseEver);
-        
         if (!Emulator.IsLoaded)
             return;
         

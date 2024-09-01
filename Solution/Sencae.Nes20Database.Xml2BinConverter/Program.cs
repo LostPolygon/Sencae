@@ -33,7 +33,14 @@ internal class Program {
 
         string jsonWithoutComments = Encoding.UTF8.GetString(jsonStream.ToArray());
 
-        Console.WriteLine(jsonWithoutComments);
+        //Console.WriteLine(jsonWithoutComments);
+        
+        using FileStream binaryDatabaseStream = new FileStream("nes20db.bin", FileMode.Create);
+        BinaryDatabaseWriter binaryDatabaseWriter = new BinaryDatabaseWriter(binaryDatabaseStream);
+        binaryDatabaseWriter.Write(deserializedDto.Date, deserializedDto.Games);
+        
+        Console.WriteLine($"Binary database size: {binaryDatabaseStream.Position / 1024} kb");
+
         Console.WriteLine("Done!");
     }
 }

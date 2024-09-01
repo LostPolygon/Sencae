@@ -55,7 +55,7 @@ public class Emulator(NesConstants.NesVariantConstants nesVariantConstants) : ID
                 }
             }
 
-            Thread.Sleep(TimeSpan.FromSeconds(deltaTimeScaled));
+            //Thread.Sleep(TimeSpan.FromSeconds(deltaTimeScaled));
         }
     }
 

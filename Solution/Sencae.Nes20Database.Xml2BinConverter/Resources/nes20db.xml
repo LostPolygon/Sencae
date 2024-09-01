@@ -47179,7 +47179,7 @@
 		<prgrom size="131072" crc32="A7D227EF" sha1="8AC3C587F66A309F26EC8FF8652A0D6826467D6B" sum16="6E8D" />
 		<rom size="131072" crc32="A7D227EF" sha1="8AC3C587F66A309F26EC8FF8652A0D6826467D6B" />
 		<chrram size="8192" />
-		<pcb mapper="2" submapper="2" mirroring="V" battery="0" />
+		<pcb mapper="2" submapper="2" mirroring="V" battery="0" /> 
 		<console type="0" region="0" />
 		<expansion type="1" />
 	</game>
